@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Management - Admin{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/authority/fees">
+            <i class="bi bi-cash-coin me-2"></i>Fee Management
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/fee-structure">
+            <i class="bi bi-receipt me-2"></i>Fee Structure
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Fee Management{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <a href="/authority/add-fee" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Add Fee
+    </a>
+    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#bulkActionModal">
+        <i class="bi bi-lightning me-1"></i>Bulk Actions
+    </button>
+    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <i class="bi bi-download me-1"></i>Export
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Fee Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Collection</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">₹2,84,750</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>12.5%
+                            </span>
+                            <span class="text-muted small">this quarter</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cash-coin fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Collection Rate</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">94.2%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>3.1%
+                            </span>
+                            <span class="text-muted small">improvement</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-percent fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending Fees</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">₹17,500</div>
+                        <div class="mt-2">
+                            <span class="text-danger small fw-bold">
+                                <i class="bi bi-arrow-down me-1"></i>8.2%
+                            </span>
+                            <span class="text-muted small">reduction</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">Overdue Fees</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">₹8,250</div>
+                        <div class="mt-2">
+                            <span class="text-danger small fw-bold">49 Students</span>
+                            <span class="text-muted small">overdue</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Quick Actions -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Grade Level</label>
+                <select class="form-select" id="gradeFilter">
+                    <option value="">All Grades</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                    <option value="12">Grade 12</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Fee Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="partial">Partial Payment</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Fee Type</label>
+                <select class="form-select" id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="tuition">Tuition Fee</option>
+                    <option value="admission">Admission Fee</option>
+                    <option value="exam">Exam Fee</option>
+                    <option value="transport">Transport Fee</option>
+                    <option value="other">Other Fees</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Due Date</label>
+                <select class="form-select" id="dueDateFilter">
+                    <option value="">All Dates</option>
+                    <option value="this_week">This Week</option>
+                    <option value="this_month">This Month</option>
+                    <option value="next_month">Next Month</option>
+                    <option value="overdue">Overdue</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Search Students</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search by student name, ID, or parent name...">
+                    <button class="btn btn-primary">Search</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button class="btn btn-outline-secondary" id="resetFilters">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fee Records Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="bi bi-receipt me-2"></i>Fee Records</h5>
+                <span class="badge bg-primary" id="recordCount">1,247 records</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="feesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll">
+                                    </div>
+                                </th>
+                                <th>Student Information</th>
+                                <th>Fee Details</th>
+                                <th>Amount</th>
+                                <th>Due Date</th>
+                                <th>Payment Date</th>
+                                <th>Status</th>
+                                <th>Balance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fee in fee_records %}
+                            <tr>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input fee-checkbox" type="checkbox" value="{{ fee.id }}">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ fee.student_avatar }}" class="rounded-circle me-3" width="40" height="40" alt="{{ fee.student_name }}">
+                                        <div>
+                                            <h6 class="mb-1">{{ fee.student_name }}</h6>
+                                            <small class="text-muted">ID: {{ fee.student_id }}</small><br>
+                                            <small class="text-muted">{{ fee.grade }}{{ fee.section }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ fee.fee_type|title }} Fee</strong>
+                                        <br>
+                                        <small class="text-muted">Quarter: {{ fee.quarter }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="text-primary">₹{{ fee.total_amount }}</strong>
+                                        <br>
+                                        <small class="text-muted">Paid: ₹{{ fee.paid_amount }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="{{ 'text-danger' if fee.is_overdue else 'text-muted' }}">
+                                        <strong>{{ fee.due_date }}</strong>
+                                        {% if fee.is_overdue %}
+                                        <br>
+                                        <small class="text-danger">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if fee.payment_date %}
+                                    <span class="text-success">{{ fee.payment_date }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if fee.status == 'paid' else 'warning' if fee.status == 'pending' else 'danger' if fee.status == 'overdue' else 'info' }}">
+                                        {{ fee.status|title }}
+                                    </span>
+                                    {% if fee.payment_method %}
+                                    <br>
+                                    <small class="text-muted">{{ fee.payment_method }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if fee.balance > 0 %}
+                                    <strong class="text-danger">₹{{ fee.balance }}</strong>
+                                    {% else %}
+                                    <strong class="text-success">₹0</strong>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if fee.status != 'paid' %}
+                                        <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#recordPaymentModal{{ fee.id }}">
+                                            <i class="bi bi-currency-rupee"></i>
+                                        </button>
+                                        {% endif %}
+                                        <a href="/authority/fees/{{ fee.id }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#sendReminderModal{{ fee.id }}">
+                                            <i class="bi bi-envelope"></i>
+                                        </button>
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#"><i class="bi bi-receipt me-2"></i>View Receipt</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Edit Record</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="bi bi-clock-history me-2"></i>Payment History</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-warning" href="#"><i class="bi bi-calendar-plus me-2"></i>Extend Due Date</a></li>
+                                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Delete Record</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bulk Actions -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="bulkActionsBtn" disabled>
+                                Bulk Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" id="bulkExport"><i class="bi bi-download me-2"></i>Export Selected</a></li>
+                                <li><a class="dropdown-item" href="#" id="bulkReminder"><i class="bi bi-envelope me-2"></i>Send Reminders</a></li>
+                                <li><a class="dropdown-item" href="#" id="bulkReceipt"><i class="bi bi-receipt me-2"></i>Generate Receipts</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-warning" href="#" id="bulkExtend"><i class="bi bi-calendar-plus me-2"></i>Extend Due Dates</a></li>
+                                <li><a class="dropdown-item text-danger" href="#" id="bulkDelete"><i class="bi bi-trash me-2"></i>Delete Selected</a></li>
+                            </ul>
+                        </div>
+                        <span class="ms-2 text-muted small" id="selectedCount">0 records selected</span>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Pagination -->
+                        <nav aria-label="Fee pagination" class="float-end">
+                            <ul class="pagination">
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Previous</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fee Analytics -->
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Fee Collection Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="feeTrendChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-pie-chart me-2"></i>Collection Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="collectionChart" height="200"></canvas>
+                <div class="row text-center mt-3">
+                    <div class="col-4">
+                        <small class="text-muted d-block">Paid</small>
+                        <strong class="text-success">1,198</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block">Pending</small>
+                        <strong class="text-warning">49</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block">Overdue</small>
+                        <strong class="text-danger">23</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Recent Transactions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Student</th>
+                                <th>Fee Type</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">{{ transaction.datetime }}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ transaction.avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ transaction.student }}">
+                                        <small>{{ transaction.student }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ transaction.fee_type }}</td>
+                                <td>
+                                    <strong class="text-success">₹{{ transaction.amount }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ transaction.method }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Completed</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Action Modal -->
+<div class="modal fade" id="bulkActionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Fee Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select Action</label>
+                    <select class="form-select" id="bulkActionSelect">
+                        <option value="">Choose an action...</option>
+                        <option value="send_reminders">Send Payment Reminders</option>
+                        <option value="generate_receipts">Generate Fee Receipts</option>
+                        <option value="extend_due_dates">Extend Due Dates</option>
+                        <option value="waive_fees">Waive Partial Fees</option>
+                    </select>
+                </div>
+                
+                <div id="bulkActionOptions" style="display: none;">
+                    <!-- Options will be shown based on selected action -->
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This action will be applied to all filtered records (1,247 students).
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="executeBulkAction">
+                    <i class="bi bi-play-circle me-1"></i>Execute Action
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Fee Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Export Format</label>
+                    <select class="form-select">
+                        <option value="csv">CSV Format</option>
+                        <option value="excel">Excel Format</option>
+                        <option value="pdf">PDF Report</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data Range</label>
+                    <select class="form-select">
+                        <option value="current">Current Quarter</option>
+                        <option value="this_year">This Academic Year</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Include</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Student Information</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Fee Details</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Payment History</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Balance Information</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-download me-1"></i>Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Bulk selection functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.fee-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectionCount();
+    });
+
+    document.querySelectorAll('.fee-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionCount);
+    });
+
+    function updateSelectionCount() {
+        const selectedCount = document.querySelectorAll('.fee-checkbox:checked').length;
+        document.getElementById('selectedCount').textContent = `${selectedCount} records selected`;
+        document.getElementById('bulkActionsBtn').disabled = selectedCount === 0;
+    }
+
+    // Filter functionality
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('gradeFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('typeFilter').value = '';
+        document.getElementById('dueDateFilter').value = '';
+    });
+
+    // Bulk actions
+    document.getElementById('bulkExport').addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.fee-checkbox:checked'))
+            .map(checkbox => checkbox.value);
+        alert(`Exporting ${selectedIds.length} fee records...`);
+    });
+
+    // Fee Trend Chart
+    const trendCtx = document.getElementById('feeTrendChart').getContext('2d');
+    const trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+                {
+                    label: 'Fee Collection',
+                    data: [225000, 245000, 265000, 284750, 275000, 290000, 285000, 300000, 295000, 310000, 305000, 320000],
+                    borderColor: 'rgb(78, 115, 223)',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Target Collection',
+                    data: [240000, 250000, 260000, 270000, 280000, 290000, 300000, 310000, 320000, 330000, 340000, 350000],
+                    borderColor: 'rgb(28, 200, 138)',
+                    borderDash: [5, 5],
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + (value / 1000) + 'K';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Collection Status Chart
+    const collectionCtx = document.getElementById('collectionChart').getContext('2d');
+    const collectionChart = new Chart(collectionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Paid', 'Pending', 'Overdue'],
+            datasets: [{
+                data: [1198, 49, 23],
+                backgroundColor: [
+                    '#1cc88a',
+                    '#f6c23e',
+                    '#e74a3b'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Bulk action modal functionality
+    document.getElementById('bulkActionSelect').addEventListener('change', function() {
+        const optionsDiv = document.getElementById('bulkActionOptions');
+        const action = this.value;
+        
+        if (action) {
+            optionsDiv.style.display = 'block';
+            let optionsHtml = '';
+            
+            switch(action) {
+                case 'send_reminders':
+                    optionsHtml = `
+                        <label class="form-label">Reminder Message</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter reminder message...">Dear Parent, This is a reminder for the pending fee payment. Please clear the dues at the earliest.</textarea>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" checked>
+                            <label class="form-check-label">Send via SMS</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" checked>
+                            <label class="form-check-label">Send via Email</label>
+                        </div>
+                    `;
+                    break;
+                case 'extend_due_dates':
+                    optionsHtml = `
+                        <label class="form-label">New Due Date</label>
+                        <input type="date" class="form-control">
+                        <label class="form-label mt-2">Extension Reason</label>
+                        <input type="text" class="form-control" placeholder="Enter reason for extension...">
+                    `;
+                    break;
+                case 'waive_fees':
+                    optionsHtml = `
+                        <label class="form-label">Waiver Amount (%)</label>
+                        <input type="number" class="form-control" min="1" max="100" value="10">
+                        <label class="form-label mt-2">Waiver Reason</label>
+                        <select class="form-select">
+                            <option value="">Select reason...</option>
+                            <option value="scholarship">Scholarship</option>
+                            <option value="financial_aid">Financial Aid</option>
+                            <option value="special_case">Special Case</option>
+                            <option value="other">Other</option>
+                        </select>
+                    `;
+                    break;
+            }
+            
+            optionsDiv.innerHTML = optionsHtml;
+        } else {
+            optionsDiv.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

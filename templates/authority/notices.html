@@ -1,0 +1,332 @@
+<!-- templates/authority/notices.html -->
+{% extends 'base.html' %}
+
+{% block title %}Manage Notices{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Notices & Announcements</h2>
+        <a href="{{ url_for('authority_add_notice') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Create Notice
+        </a>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Notices</h6>
+                            <h3>{{ stats.total_notices }}</h3>
+                        </div>
+                        <i class="fas fa-bullhorn fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active</h6>
+                            <h3>{{ stats.active_notices }}</h3>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Expired</h6>
+                            <h3>{{ stats.expired_notices }}</h3>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">This Month</h6>
+                            <h3>{{ stats.this_month }}</h3>
+                        </div>
+                        <i class="fas fa-calendar fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="expired">Expired</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Priority</label>
+                    <select class="form-select" id="priorityFilter">
+                        <option value="all">All Priorities</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Audience</label>
+                    <select class="form-select" id="audienceFilter">
+                        <option value="all">All Audience</option>
+                        <option value="students">Students</option>
+                        <option value="teachers">Teachers</option>
+                        <option value="parents">Parents</option>
+                        <option value="all_users">All Users</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchNotices" placeholder="Search notices...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notices Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">All Notices</h5>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" 
+                        data-bs-toggle="dropdown">
+                    <i class="fas fa-cog me-1"></i> Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2"></i> Export</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i> Print</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="noticesTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Priority</th>
+                            <th>Audience</th>
+                            <th>Published</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Views</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notice in notices %}
+                        <tr data-status="{{ notice.status }}" 
+                            data-priority="{{ notice.priority }}"
+                            data-audience="{{ notice.audience }}">
+                            <td>
+                                <div>
+                                    <strong>{{ notice.title }}</strong>
+                                    {% if notice.is_important %}
+                                    <span class="badge bg-danger ms-1">Important</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ notice.excerpt }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if notice.priority == 'high' else 'warning' if notice.priority == 'medium' else 'info' }}">
+                                    {{ notice.priority|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ notice.audience|title }}</span>
+                            </td>
+                            <td>
+                                <div>{{ notice.published_date }}</div>
+                                <small class="text-muted">{{ notice.published_time }}</small>
+                            </td>
+                            <td>
+                                <div>{{ notice.expiry_date or 'Never' }}</div>
+                                {% if notice.expiry_date %}
+                                <small class="text-{{ 'danger' if notice.is_expired else 'muted' }}">
+                                    {{ notice.days_remaining }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if notice.status == 'active' else 'secondary' if notice.status == 'expired' else 'warning' }}">
+                                    {{ notice.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    <i class="fas fa-eye me-1"></i>{{ notice.views }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary view-notice" 
+                                            data-id="{{ notice.id }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <a href="{{ url_for('authority_edit_notice', id=notice.id) }}" 
+                                       class="btn btn-outline-info">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-outline-danger delete-notice" 
+                                            data-id="{{ notice.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not notices %}
+            <div class="text-center py-5">
+                <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Notices Created</h5>
+                <p class="text-muted">Create your first notice to communicate with students, teachers, and parents.</p>
+                <a href="{{ url_for('authority_add_notice') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> Create Notice
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Pagination -->
+            <nav aria-label="Notices pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ current_page - 1 }}">Previous</a>
+                    </li>
+                    {% for page in range(1, total_pages + 1) %}
+                    <li class="page-item {% if page == current_page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if not has_next %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ current_page + 1 }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <a href="{{ url_for('authority_add_notice') }}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-plus me-2"></i> New Notice
+                    </a>
+                </div>
+                <div class="col-md-4 text-center">
+                    <button class="btn btn-outline-success w-100 mb-2" id="bulkPublish">
+                        <i class="fas fa-paper-plane me-2"></i> Bulk Publish
+                    </button>
+                </div>
+                <div class="col-md-4 text-center">
+                    <button class="btn btn-outline-warning w-100 mb-2" id="exportNotices">
+                        <i class="fas fa-download me-2"></i> Export All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const statusFilter = document.getElementById('statusFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    const audienceFilter = document.getElementById('audienceFilter');
+    const searchInput = document.getElementById('searchNotices');
+    const tableRows = document.querySelectorAll('#noticesTable tbody tr');
+
+    function filterNotices() {
+        const statusValue = statusFilter.value;
+        const priorityValue = priorityFilter.value;
+        const audienceValue = audienceFilter.value;
+        const searchValue = searchInput.value.toLowerCase();
+
+        tableRows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const priority = row.getAttribute('data-priority');
+            const audience = row.getAttribute('data-audience');
+            const title = row.querySelector('td:first-child strong').textContent.toLowerCase();
+            const excerpt = row.querySelector('td:first-child small').textContent.toLowerCase();
+
+            const statusMatch = statusValue === 'all' || status === statusValue;
+            const priorityMatch = priorityValue === 'all' || priority === priorityValue;
+            const audienceMatch = audienceValue === 'all' || audience === audienceValue;
+            const searchMatch = title.includes(searchValue) || excerpt.includes(searchValue);
+
+            if (statusMatch && priorityMatch && audienceMatch && searchMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    statusFilter.addEventListener('change', filterNotices);
+    priorityFilter.addEventListener('change', filterNotices);
+    audienceFilter.addEventListener('change', filterNotices);
+    searchInput.addEventListener('input', filterNotices);
+
+    // Delete notice
+    document.querySelectorAll('.delete-notice').forEach(button => {
+        button.addEventListener('click', function() {
+            const noticeId = this.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this notice?')) {
+                fetch(`/authority/notices/delete/${noticeId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    }
+                });
+            }
+        });
+    });
+
+    // View notice
+    document.querySelectorAll('.view-notice').forEach(button => {
+        button.addEventListener('click', function() {
+            const noticeId = this.getAttribute('data-id');
+            window.open(`/authority/notices/view/${noticeId}`, '_blank');
+        });
+    });
+});
+</script>
+{% endblock %}

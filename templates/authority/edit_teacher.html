@@ -1,0 +1,254 @@
+<!-- templates/authority/edit_teacher.html -->
+{% extends 'base.html' %}
+
+{% block title %}Edit Teacher - {{ teacher.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_teachers') }}">Teachers</a></li>
+                    <li class="breadcrumb-item active">Edit Teacher</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Teacher Information</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-4">
+                                <div class="mb-3">
+                                    <img src="{{ teacher.profile_pic or '/static/images/default-avatar.png' }}" 
+                                         class="rounded-circle" width="150" height="150" alt="Profile Picture" id="profilePreview">
+                                </div>
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" name="profile_pic" 
+                                           accept="image/*" id="profileInput">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Employee ID</label>
+                                    <input type="text" class="form-control" value="{{ teacher.employee_id }}" readonly>
+                                </div>
+                            </div>
+
+                            <div class="col-md-8">
+                                <h5 class="mb-3">Personal Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Full Name *</label>
+                                            <input type="text" class="form-control" name="name" 
+                                                   value="{{ teacher.name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email Address *</label>
+                                            <input type="email" class="form-control" name="email" 
+                                                   value="{{ teacher.email }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" name="phone" 
+                                                   value="{{ teacher.phone }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Date of Birth</label>
+                                            <input type="date" class="form-control" name="dob" 
+                                                   value="{{ teacher.dob }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-control" name="address" rows="3">{{ teacher.address }}</textarea>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h5 class="mb-3">Professional Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Designation *</label>
+                                            <select class="form-select" name="designation" required>
+                                                <option value="teacher" {% if teacher.designation == 'teacher' %}selected{% endif %}>Teacher</option>
+                                                <option value="senior_teacher" {% if teacher.designation == 'senior_teacher' %}selected{% endif %}>Senior Teacher</option>
+                                                <option value="head_teacher" {% if teacher.designation == 'head_teacher' %}selected{% endif %}>Head Teacher</option>
+                                                <option value="coordinator" {% if teacher.designation == 'coordinator' %}selected{% endif %}>Coordinator</option>
+                                                <option value="vice_principal" {% if teacher.designation == 'vice_principal' %}selected{% endif %}>Vice Principal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Department *</label>
+                                            <select class="form-select" name="department" required>
+                                                <option value="">Select Department</option>
+                                                {% for department in departments %}
+                                                <option value="{{ department }}" {% if teacher.department == department %}selected{% endif %}>
+                                                    {{ department }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Joining Date</label>
+                                            <input type="date" class="form-control" name="joining_date" 
+                                                   value="{{ teacher.joining_date }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Status</label>
+                                            <select class="form-select" name="status">
+                                                <option value="active" {% if teacher.status == 'active' %}selected{% endif %}>Active</option>
+                                                <option value="inactive" {% if teacher.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                                <option value="on_leave" {% if teacher.status == 'on_leave' %}selected{% endif %}>On Leave</option>
+                                                <option value="retired" {% if teacher.status == 'retired' %}selected{% endif %}>Retired</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Subjects</label>
+                                    <select class="form-select" name="subjects" multiple>
+                                        {% for subject in subjects %}
+                                        <option value="{{ subject }}" {% if subject in teacher.subjects %}selected{% endif %}>
+                                            {{ subject }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Hold Ctrl to select multiple subjects</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Qualifications</label>
+                                    <textarea class="form-control" name="qualifications" rows="3">{{ teacher.qualifications }}</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Experience (Years)</label>
+                                    <input type="number" class="form-control" name="experience" 
+                                           value="{{ teacher.experience }}" min="0" max="50">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Specialization</label>
+                                    <input type="text" class="form-control" name="specialization" 
+                                           value="{{ teacher.specialization }}">
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h5 class="mb-3">Account Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Role</label>
+                                    <select class="form-select" name="role">
+                                        <option value="teacher" {% if teacher.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                                        <option value="head_teacher" {% if teacher.role == 'head_teacher' %}selected{% endif %}>Head Teacher</option>
+                                        <option value="admin" {% if teacher.role == 'admin' %}selected{% endif %}>Administrator</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_active" 
+                                               id="is_active" {% if teacher.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">
+                                            Active Account
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('authority_teachers') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-danger me-2" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                            <i class="fas fa-trash me-2"></i> Delete Teacher
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i> Update Teacher
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete teacher <strong>{{ teacher.name }}</strong>?</p>
+                <p class="text-danger"><strong>Warning:</strong> This action cannot be undone. All teacher data including courses, assignments, and grades will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('authority_delete_teacher', id=teacher.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Teacher</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile picture preview
+    const profileInput = document.getElementById('profileInput');
+    const profilePreview = document.getElementById('profilePreview');
+
+    profileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

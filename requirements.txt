@@ -1,0 +1,42 @@
+# Core Framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database
+sqlalchemy
+psycopg2-binary
+alembic
+
+# Authentication & Security
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+bcrypt
+
+# Validation
+pydantic
+pydantic-settings
+email-validator
+
+# Templating
+jinja2
+
+# WebSocket
+websockets
+
+# Background Tasks
+apscheduler
+
+# File Handling
+aiofiles
+python-magic
+
+# Utilities
+python-dateutil
+
+# Development
+pytest
+pytest-asyncio
+httpx
+requests

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to EduManage - School Management System{% endblock %}
+
+{% block content %}
+<!-- In your index.html, update these links -->
+<a href="/register/student" class="btn btn-light mt-3">Join as Student</a>
+<a href="/register/teacher" class="btn btn-light mt-3">Join as Teacher</a>
+<a href="/register" class="btn btn-dark mt-3">Admin Access</a>  
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Transform Your School Management</h1>
+                <p class="lead mb-4">Streamline academic operations, enhance learning experiences, and empower educators with our comprehensive school management platform.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    {% if not current_user %}
+                    <a href="/register" class="btn btn-light btn-lg">Get Started Free</a>
+                    <a href="/login" class="btn btn-outline-light btn-lg">Sign In</a>
+                    {% else %}
+                    <a href="/{{ current_user.role }}/dashboard" class="btn btn-light btn-lg">Go to Dashboard</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+                     alt="Education" class="img-fluid rounded-3 shadow-lg" style="max-height: 400px;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="container mb-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold mb-3">Everything You Need in One Platform</h2>
+        <p class="text-muted lead">Comprehensive tools for students, teachers, and administrators</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <div class="feature-icon mx-auto">
+                    <i class="bi bi-person-video3"></i>
+                </div>
+                <h5>Student Management</h5>
+                <p class="text-muted">Track student progress, attendance, and performance with intuitive dashboards.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <div class="feature-icon mx-auto">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <h5>Course Management</h5>
+                <p class="text-muted">Organize courses, assignments, and learning materials in one centralized platform.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <div class="feature-icon mx-auto">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h5>Advanced Analytics</h5>
+                <p class="text-muted">Gain insights with comprehensive reports and data-driven decision making.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Role-based Sections -->
+<section class="container mb-5">
+    <div class="row g-4">
+        <!-- For Students -->
+        <div class="col-md-4">
+            <div class="card border-0 bg-primary text-white">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon bg-white bg-opacity-20">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">For Students</h5>
+                    </div>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Access course materials</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Submit assignments online</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Track grades and progress</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Take online tests</li>
+                        <li><i class="bi bi-check-circle me-2"></i> Communicate with teachers</li>
+                    </ul>
+                    {% if not current_user %}
+                    <a href="/register/student" class="btn btn-light mt-3">Join as Student</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- For Teachers -->
+        <div class="col-md-4">
+            <div class="card border-0 bg-success text-white">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon bg-white bg-opacity-20">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">For Teachers</h5>
+                    </div>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Create and manage courses</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Grade assignments efficiently</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Track student attendance</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Create online tests</li>
+                        <li><i class="bi bi-check-circle me-2"></i> Generate progress reports</li>
+                    </ul>
+                    {% if not current_user %}
+                    <a href="/register/teacher" class="btn btn-light mt-3">Join as Teacher</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- For Administrators -->
+        <div class="col-md-4">
+            <div class="card border-0 bg-warning text-dark">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon bg-dark bg-opacity-10">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">For Administrators</h5>
+                    </div>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Manage user accounts</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> System-wide analytics</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Financial management</li>
+                        <li class="mb-2"><i class="bi bi-check-circle me-2"></i> Generate institutional reports</li>
+                        <li><i class="bi bi-check-circle me-2"></i> Monitor system performance</li>
+                    </ul>
+                    {% if not current_user %}
+                    <a href="/register" class="btn btn-dark mt-3">Admin Access</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Accounts Section -->
+<section class="container mb-5">
+    <div class="card bg-light border-0">
+        <div class="card-body p-5 text-center">
+            <h3 class="fw-bold mb-3">Ready to Explore?</h3>
+            <p class="text-muted mb-4">Try our demo accounts to experience the platform</p>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="user-avatar mx-auto mb-3 bg-primary">A</div>
+                            <h6>Administrator</h6>
+                            <p class="text-muted small">admin@school.com</p>
+                            <code class="bg-light p-2 rounded">admin123</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="user-avatar mx-auto mb-3 bg-success">T</div>
+                            <h6>Teacher</h6>
+                            <p class="text-muted small">teacher1@school.com</p>
+                            <code class="bg-light p-2 rounded">teacher123</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="user-avatar mx-auto mb-3 bg-info">S</div>
+                            <h6>Student</h6>
+                            <p class="text-muted small">student1@school.com</p>
+                            <code class="bg-light p-2 rounded">student123</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="/login" class="btn btn-primary btn-lg">Try Demo Login</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

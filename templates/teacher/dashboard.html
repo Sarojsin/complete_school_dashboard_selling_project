@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/attendance">
+            <i class="bi bi-calendar-check me-2"></i>Attendance
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/tests">
+            <i class="bi bi-pencil-square me-2"></i>Tests
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/timetable">
+            <i class="bi bi-calendar3 me-2"></i>Timetable
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/chat">
+            <i class="bi bi-chat-dots me-2"></i>Chat
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Teacher Dashboard{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <button class="btn btn-sm btn-outline-primary">Today</button>
+    <button class="btn btn-sm btn-outline-primary">This Week</button>
+    <button class="btn btn-sm btn-outline-primary">This Month</button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Students</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ students|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Courses Teaching</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ courses|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-book fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Pending Grading</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ assignments|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-journal-check fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Classes Today</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">3</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-event fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-lightning-fill me-2 text-warning"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Student Management -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/students" class="text-decoration-none">
+                            <div class="card border-primary h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people-fill fs-1 text-primary d-block mb-2"></i>
+                                    <h6 class="mb-0">View Students</h6>
+                                    <small class="text-muted">Manage students</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Create Assignment -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/assignments/create" class="text-decoration-none">
+                            <div class="card border-success h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-journal-plus fs-1 text-success d-block mb-2"></i>
+                                    <h6 class="mb-0">New Assignment</h6>
+                                    <small class="text-muted">Create assignment</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Take Attendance -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/attendance/take" class="text-decoration-none">
+                            <div class="card border-info h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-calendar-check-fill fs-1 text-info d-block mb-2"></i>
+                                    <h6 class="mb-0">Take Attendance</h6>
+                                    <small class="text-muted">Mark attendance</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Add Grades -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/grades/add" class="text-decoration-none">
+                            <div class="card border-warning h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-pencil-square fs-1 text-warning d-block mb-2"></i>
+                                    <h6 class="mb-0">Add Grades</h6>
+                                    <small class="text-muted">Grade submissions</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Create Test -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/tests/create" class="text-decoration-none">
+                            <div class="card border-danger h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-clipboard-data fs-1 text-danger d-block mb-2"></i>
+                                    <h6 class="mb-0">Create Test</h6>
+                                    <small class="text-muted">New test</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Upload Notes -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/notes/upload" class="text-decoration-none">
+                            <div class="card border-secondary h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-text-fill fs-1 text-secondary d-block mb-2"></i>
+                                    <h6 class="mb-0">Upload Notes</h6>
+                                    <small class="text-muted">Study materials</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Upload Videos -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/videos/upload" class="text-decoration-none">
+                            <div class="card border-primary h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-camera-video-fill fs-1 text-primary d-block mb-2"></i>
+                                    <h6 class="mb-0">Upload Videos</h6>
+                                    <small class="text-muted">Video lectures</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Create Notice -->
+                    <div class="col-md-3 col-sm-6">
+                        <a href="/teacher/notices/create" class="text-decoration-none">
+                            <div class="card border-success h-100 hover-shadow">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-megaphone-fill fs-1 text-success d-block mb-2"></i>
+                                    <h6 class="mb-0">Create Notice</h6>
+                                    <small class="text-muted">Announcements</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Management Links -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-gear-fill me-2"></i>Management</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="/teacher/assignments" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-list-ul me-2"></i>View All Assignments
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/grades" class="btn btn-outline-info w-100 py-3">
+                            <i class="bi bi-bar-chart me-2"></i>View All Grades
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/attendance" class="btn btn-outline-success w-100 py-3">
+                            <i class="bi bi-calendar-week me-2"></i>Attendance Records
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/tests" class="btn btn-outline-warning w-100 py-3">
+                            <i class="bi bi-clipboard-check me-2"></i>View All Tests
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/courses" class="btn btn-outline-secondary w-100 py-3">
+                            <i class="bi bi-book-half me-2"></i>My Courses
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/timetable" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-calendar3 me-2"></i>Class Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-activity me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Activity</th>
+                                <th>Course</th>
+                                <th>Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>No recent activity</td>
+                                <td colspan="4" class="text-muted">Check back later</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Attendance Today</span>
+                        <strong>0%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Pending Grades</span>
+                        <strong>{{ assignments|length }}</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Active Students</span>
+                        <strong>{{ students|length }}</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hover-shadow:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+    }
+
+    .card {
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}

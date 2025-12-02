@@ -1,0 +1,299 @@
+<!-- templates/teacher/edit_assignment.html -->
+{% extends 'base.html' %}
+
+{% block title %}Edit Assignment{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_assignments') }}">Assignments</a></li>
+                    <li class="breadcrumb-item active">Edit Assignment</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Assignment</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">Assignment Title *</label>
+                                    <input type="text" class="form-control" name="title" value="{{ assignment.title }}"
+                                        required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-control" name="description"
+                                        rows="3">{{ assignment.description }}</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Instructions *</label>
+                                    <textarea class="form-control" id="instructions" name="instructions" rows="8"
+                                        required>{{ assignment.instructions }}</textarea>
+                                    <div class="form-text">Provide clear instructions for the assignment.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Attachments</label>
+                                    <input type="file" class="form-control" name="attachments" multiple>
+                                    <div class="form-text">You can upload multiple files (PDF, Word, Images). Max 10MB
+                                        per file.</div>
+
+                                    {% if assignment.attachments %}
+                                    <div class="mt-2">
+                                        <label class="form-label">Current Attachments:</label>
+                                        <div class="list-group">
+                                            {% for attachment in assignment.attachments %}
+                                            <div
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-file-{{ attachment.type }} me-2"></i>
+                                                    {{ attachment.name }}
+                                                </div>
+                                                <div>
+                                                    <a href="{{ attachment.url }}"
+                                                        class="btn btn-sm btn-outline-primary me-1" target="_blank">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-outline-danger delete-attachment"
+                                                        data-id="{{ attachment.id }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Assignment Details</h6>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Subject *</label>
+                                            <select class="form-select" name="subject" required>
+                                                <option value="">Select Subject</option>
+                                                {% for subject in subjects %}
+                                                <option value="{{ subject }}" {% if assignment.subject==subject
+                                                    %}selected{% endif %}>
+                                                    {{ subject }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Class/Grade *</label>
+                                            <select class="form-select" name="class" required>
+                                                <option value="">Select Class</option>
+                                                {% for class in classes %}
+                                                <option value="{{ class }}" {% if assignment.class==class %}selected{%
+                                                    endif %}>
+                                                    {{ class }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Due Date *</label>
+                                            <input type="datetime-local" class="form-control" name="due_date"
+                                                value="{{ assignment.due_date_iso }}" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Total Points</label>
+                                            <input type="number" class="form-control" name="points"
+                                                value="{{ assignment.points }}" min="1" max="100">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Submission Type</label>
+                                            <select class="form-select" name="submission_type">
+                                                <option value="text" {% if assignment.submission_type=='text'
+                                                    %}selected{% endif %}>Text Only</option>
+                                                <option value="file" {% if assignment.submission_type=='file'
+                                                    %}selected{% endif %}>File Upload</option>
+                                                <option value="both" {% if assignment.submission_type=='both'
+                                                    %}selected{% endif %}>Both Text and File</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Allowed File Types</label>
+                                            <select class="form-select" name="allowed_file_types" multiple>
+                                                <option value="pdf" {% if 'pdf' in assignment.allowed_file_types
+                                                    %}selected{% endif %}>PDF</option>
+                                                <option value="doc" {% if 'doc' in assignment.allowed_file_types
+                                                    %}selected{% endif %}>Word Document</option>
+                                                <option value="image" {% if 'image' in assignment.allowed_file_types
+                                                    %}selected{% endif %}>Images</option>
+                                                <option value="zip" {% if 'zip' in assignment.allowed_file_types
+                                                    %}selected{% endif %}>Zip Archive</option>
+                                            </select>
+                                            <div class="form-text">Hold Ctrl to select multiple types</div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="is_urgent"
+                                                    id="is_urgent" {% if assignment.is_urgent %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_urgent">
+                                                    Mark as Urgent
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    name="allow_late_submission" id="allow_late_submission" {% if
+                                                    assignment.allow_late_submission %}checked{% endif %}>
+                                                <label class="form-check-label" for="allow_late_submission">
+                                                    Allow Late Submission
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('teacher_assignments') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal">
+                                            <i class="fas fa-trash me-2"></i> Delete
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i> Update Assignment
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Submission Statistics -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Submission Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4 class="text-primary">{{ submission_stats.total_students }}</h4>
+                            <p class="text-muted mb-0">Total Students</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-success">{{ submission_stats.submitted }}</h4>
+                            <p class="text-muted mb-0">Submitted</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-warning">{{ submission_stats.pending }}</h4>
+                            <p class="text-muted mb-0">Pending</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-danger">{{ submission_stats.overdue }}</h4>
+                            <p class="text-muted mb-0">Overdue</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this assignment? This action cannot be undone.</p>
+                <p class="text-danger"><strong>Warning:</strong> All submissions and grades for this assignment will
+                    also be deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('teacher_delete_assignment', id=assignment.id) }}"
+                    style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Assignment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Delete attachment
+        document.querySelectorAll('.delete-attachment').forEach(button => {
+            button.addEventListener('click', function () {
+                const attachmentId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this attachment?')) {
+                    fetch(`/teacher/assignments/{{ assignment.id }}/attachment/${attachmentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        }
+                    });
+                }
+            });
+        });
+
+        // Rich text editor for instructions
+        const instructionsTextarea = document.getElementById('instructions');
+        if (instructionsTextarea) {
+            // Simple formatting buttons (in a real app, you might use a proper rich text editor)
+            const toolbar = document.createElement('div');
+            toolbar.className = 'mb-2';
+            toolbar.innerHTML = `
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-secondary" data-command="bold"><i class="fas fa-bold"></i></button>
+                <button type="button" class="btn btn-outline-secondary" data-command="italic"><i class="fas fa-italic"></i></button>
+                <button type="button" class="btn btn-outline-secondary" data-command="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                <button type="button" class="btn btn-outline-secondary" data-command="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+            </div>
+        `;
+            instructionsTextarea.parentNode.insertBefore(toolbar, instructionsTextarea);
+
+            toolbar.addEventListener('click', function (e) {
+                if (e.target.tagName === 'BUTTON' || e.target.parentElement.tagName === 'BUTTON') {
+                    const button = e.target.tagName === 'BUTTON' ? e.target : e.target.parentElement;
+                    const command = button.getAttribute('data-command');
+                    document.execCommand(command, false, null);
+                    instructionsTextarea.focus();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,313 @@
+<!-- templates/teacher/view_tests.html -->
+{% extends 'base.html' %}
+
+{% block title %}Manage Tests{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Tests</h2>
+        <a href="{{ url_for('teacher_create_test') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Create Test
+        </a>
+    </div>
+
+    <!-- Test Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Tests</h6>
+                            <h3>{{ stats.total_tests }}</h3>
+                        </div>
+                        <i class="fas fa-file-alt fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active</h6>
+                            <h3>{{ stats.active_tests }}</h3>
+                        </div>
+                        <i class="fas fa-play-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Completed</h6>
+                            <h3>{{ stats.completed_tests }}</h3>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Upcoming</h6>
+                            <h3>{{ stats.upcoming_tests }}</h3>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Subject</label>
+                    <select class="form-select" id="subjectFilter">
+                        <option value="all">All Subjects</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject }}">{{ subject }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Class</label>
+                    <select class="form-select" id="classFilter">
+                        <option value="all">All Classes</option>
+                        {% for class in classes %}
+                        <option value="{{ class }}">{{ class }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="draft">Draft</option>
+                        <option value="active">Active</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchTests" placeholder="Search tests...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tests Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">All Tests</h5>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i> Excel</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i> PDF</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="testsTable">
+                    <thead>
+                        <tr>
+                            <th>Test Title</th>
+                            <th>Subject</th>
+                            <th>Class</th>
+                            <th>Schedule</th>
+                            <th>Duration</th>
+                            <th>Participants</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for test in tests %}
+                        <tr data-subject="{{ test.subject }}" data-class="{{ test.class }}"
+                            data-status="{{ test.status }}">
+                            <td>
+                                <div>
+                                    <strong>{{ test.title }}</strong>
+                                    {% if test.is_important %}
+                                    <span class="badge bg-danger ms-1">Important</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Marks: {{ test.total_marks }}</small>
+                            </td>
+                            <td>{{ test.subject }}</td>
+                            <td>{{ test.class }}</td>
+                            <td>
+                                <div>{{ test.start_time }}</div>
+                                <small class="text-{{ 'danger' if test.is_overdue else 'muted' }}">
+                                    {{ test.time_remaining }}
+                                </small>
+                            </td>
+                            <td>{{ test.duration }} mins</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                        <div class="progress-bar bg-success"
+                                            style="width: {{ test.participation_rate }}%"></div>
+                                    </div>
+                                    <small>{{ test.attempted }}/{{ test.total_students }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ test.status_color }}">
+                                    {{ test.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('teacher_test_results', id=test.id) }}"
+                                        class="btn btn-outline-primary">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </a>
+                                    <a href="{{ url_for('teacher_edit_test', id=test.id) }}"
+                                        class="btn btn-outline-info">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-outline-danger delete-test" data-id="{{ test.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not tests %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Tests Created</h5>
+                <p class="text-muted">Create your first test to assess student learning.</p>
+                <a href="{{ url_for('teacher_create_test') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> Create Test
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upcoming Tests -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Upcoming Tests</h5>
+        </div>
+        <div class="card-body">
+            {% if upcoming_tests %}
+            <div class="row">
+                {% for test in upcoming_tests %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ test.title }}</h6>
+                            <p class="card-text text-muted small mb-2">
+                                {{ test.subject }} • {{ test.class }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-warning">
+                                    <i class="fas fa-clock me-1"></i>{{ test.starts_in }}
+                                </small>
+                                <span class="badge bg-light text-dark">
+                                    {{ test.duration }} mins
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ test.total_students }} students</small>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('teacher_edit_test', id=test.id) }}"
+                                        class="btn btn-outline-warning btn-sm">Edit</a>
+                                    <a href="#" class="btn btn-outline-info btn-sm">Notify</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted text-center mb-0">No upcoming tests</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Filter functionality
+        const subjectFilter = document.getElementById('subjectFilter');
+        const classFilter = document.getElementById('classFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const searchInput = document.getElementById('searchTests');
+        const tableRows = document.querySelectorAll('#testsTable tbody tr');
+
+        function filterTests() {
+            const subjectValue = subjectFilter.value;
+            const classValue = classFilter.value;
+            const statusValue = statusFilter.value;
+            const searchValue = searchInput.value.toLowerCase();
+
+            tableRows.forEach(row => {
+                const subject = row.getAttribute('data-subject');
+                const classVal = row.getAttribute('data-class');
+                const status = row.getAttribute('data-status');
+                const title = row.querySelector('td:first-child strong').textContent.toLowerCase();
+
+                const subjectMatch = subjectValue === 'all' || subject === subjectValue;
+                const classMatch = classValue === 'all' || classVal === classValue;
+                const statusMatch = statusValue === 'all' || status === statusValue;
+                const searchMatch = title.includes(searchValue);
+
+                if (subjectMatch && classMatch && statusMatch && searchMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        subjectFilter.addEventListener('change', filterTests);
+        classFilter.addEventListener('change', filterTests);
+        statusFilter.addEventListener('change', filterTests);
+        searchInput.addEventListener('input', filterTests);
+
+        // Delete test
+        document.querySelectorAll('.delete-test').forEach(button => {
+            button.addEventListener('click', function () {
+                const testId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this test?')) {
+                    fetch(`/teacher/tests/delete/${testId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

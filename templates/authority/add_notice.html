@@ -1,0 +1,277 @@
+<!-- templates/authority/add_notice.html -->
+{% extends 'base.html' %}
+
+{% block title %}Create Notice - Authority{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_notices') }}">Notices</a></li>
+                    <li class="breadcrumb-item active">Create Notice</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create School Notice</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">Notice Title *</label>
+                                    <input type="text" class="form-control" name="title" 
+                                           placeholder="Enter notice title" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Priority</label>
+                                    <select class="form-select" name="priority">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notice Content *</label>
+                            <textarea class="form-control" id="noticeContent" name="content" 
+                                      rows="12" placeholder="Write your notice content here..." required></textarea>
+                            <div class="form-text">You can use rich text formatting for better presentation.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Target Audience *</label>
+                                    <select class="form-select" name="audience" required>
+                                        <option value="all">All Users</option>
+                                        <option value="students">Students Only</option>
+                                        <option value="teachers">Teachers Only</option>
+                                        <option value="parents">Parents Only</option>
+                                        <option value="specific_grade">Specific Grade</option>
+                                        <option value="specific_class">Specific Class</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3" id="gradeSelection" style="display: none;">
+                                    <label class="form-label">Select Grade</label>
+                                    <select class="form-select" name="specific_grade">
+                                        <option value="">Select Grade</option>
+                                        {% for grade in grades %}
+                                        <option value="{{ grade }}">{{ grade }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="classSelection" style="display: none;">
+                                    <label class="form-label">Select Class</label>
+                                    <select class="form-select" name="specific_class">
+                                        <option value="">Select Class</option>
+                                        {% for class in classes %}
+                                        <option value="{{ class.id }}">{{ class.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Publish Date *</label>
+                                    <input type="datetime-local" class="form-control" name="publish_date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Expiry Date</label>
+                                    <input type="datetime-local" class="form-control" name="expiry_date">
+                                    <div class="form-text">Leave empty if notice should not expire</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Attachments</label>
+                            <input type="file" class="form-control" name="attachments" multiple>
+                            <div class="form-text">You can attach multiple files (PDF, Word, Images). Max 10MB per file.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notice Category</label>
+                            <select class="form-select" name="category">
+                                <option value="general">General</option>
+                                <option value="academic">Academic</option>
+                                <option value="event">Event</option>
+                                <option value="holiday">Holiday</option>
+                                <option value="emergency">Emergency</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_important" id="is_important">
+                                <label class="form-check-label" for="is_important">
+                                    Mark as Important Notice
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="send_email" id="send_email" checked>
+                                <label class="form-check-label" for="send_email">
+                                    Send email notifications
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="send_sms" id="send_sms">
+                                <label class="form-check-label" for="send_sms">
+                                    Send SMS notifications (if available)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="pin_to_top" id="pin_to_top">
+                                <label class="form-check-label" for="pin_to_top">
+                                    Pin to top of notice board
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('authority_notices') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <div>
+                                        <button type="submit" name="action" value="draft" class="btn btn-outline-primary me-2">
+                                            <i class="fas fa-save me-2"></i> Save as Draft
+                                        </button>
+                                        <button type="submit" name="action" value="publish" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane me-2"></i> Publish Notice
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Notice Preview</h5>
+                </div>
+                <div class="card-body">
+                    <div id="noticePreview" class="border rounded p-4 bg-white">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-newspaper fa-3x mb-3"></i>
+                            <p>Notice preview will appear here as you type...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Audience selection
+    const audienceSelect = document.querySelector('select[name="audience"]');
+    const gradeSelection = document.getElementById('gradeSelection');
+    const classSelection = document.getElementById('classSelection');
+
+    audienceSelect.addEventListener('change', function() {
+        gradeSelection.style.display = 'none';
+        classSelection.style.display = 'none';
+
+        if (this.value === 'specific_grade') {
+            gradeSelection.style.display = 'block';
+        } else if (this.value === 'specific_class') {
+            classSelection.style.display = 'block';
+        }
+    });
+
+    // Notice preview
+    const contentTextarea = document.getElementById('noticeContent');
+    const previewDiv = document.getElementById('noticePreview');
+
+    contentTextarea.addEventListener('input', function() {
+        if (this.value.trim()) {
+            previewDiv.innerHTML = `
+                <div class="notice-preview">
+                    <h4 class="text-primary mb-3">${document.querySelector('input[name="title"]').value || 'Notice Title'}</h4>
+                    <div class="notice-content">
+                        ${this.value.replace(/\n/g, '<br>')}
+                    </div>
+                    <div class="notice-meta mt-4 pt-3 border-top">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            Published: ${document.querySelector('input[name="publish_date"]').value || 'Not set'}
+                        </small>
+                    </div>
+                </div>
+            `;
+        } else {
+            previewDiv.innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-newspaper fa-3x mb-3"></i>
+                    <p>Notice preview will appear here as you type...</p>
+                </div>
+            `;
+        }
+    });
+
+    // Set default publish date to current datetime
+    const now = new Date();
+    const publishDateInput = document.querySelector('input[name="publish_date"]');
+    publishDateInput.value = now.toISOString().slice(0, 16);
+
+    // Set default expiry date to 30 days from now
+    const expiryDate = new Date(now);
+    expiryDate.setDate(expiryDate.getDate() + 30);
+    const expiryDateInput = document.querySelector('input[name="expiry_date"]');
+    expiryDateInput.value = expiryDate.toISOString().slice(0, 16);
+
+    // Update preview when title changes
+    document.querySelector('input[name="title"]').addEventListener('input', function() {
+        contentTextarea.dispatchEvent(new Event('input'));
+    });
+
+    // Update preview when publish date changes
+    publishDateInput.addEventListener('change', function() {
+        contentTextarea.dispatchEvent(new Event('input'));
+    });
+});
+</script>
+
+<style>
+.notice-preview {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+.notice-content {
+    font-size: 1.1em;
+}
+</style>
+{% endblock %}

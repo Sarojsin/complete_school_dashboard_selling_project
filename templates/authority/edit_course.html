@@ -1,0 +1,307 @@
+<!-- templates/authority/edit_course.html -->
+{% extends 'base.html' %}
+
+{% block title %}Edit Course - {{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_courses') }}">Courses</a></li>
+                    <li class="breadcrumb-item active">Edit Course</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Course: {{ course.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Course Code *</label>
+                                    <input type="text" class="form-control" name="code" 
+                                           value="{{ course.code }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Course Name *</label>
+                                    <input type="text" class="form-control" name="name" 
+                                           value="{{ course.name }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3">{{ course.description }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Department *</label>
+                                    <select class="form-select" name="department" required>
+                                        <option value="">Select Department</option>
+                                        {% for department in departments %}
+                                        <option value="{{ department }}" {% if course.department == department %}selected{% endif %}>
+                                            {{ department }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Grade Level *</label>
+                                    <select class="form-select" name="grade_level" required>
+                                        <option value="">Select Grade</option>
+                                        {% for grade in grades %}
+                                        <option value="{{ grade }}" {% if course.grade_level == grade %}selected{% endif %}>
+                                            {{ grade }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Credit Hours</label>
+                                    <input type="number" class="form-control" name="credits" 
+                                           value="{{ course.credits }}" min="1" max="10">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Assigned Teacher *</label>
+                                    <select class="form-select" name="teacher_id" required>
+                                        <option value="">Select Teacher</option>
+                                        {% for teacher in teachers %}
+                                        <option value="{{ teacher.id }}" {% if course.teacher_id == teacher.id %}selected{% endif %}>
+                                            {{ teacher.name }} - {{ teacher.department }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Course Type</label>
+                                    <select class="form-select" name="course_type">
+                                        <option value="core" {% if course.course_type == 'core' %}selected{% endif %}>Core</option>
+                                        <option value="elective" {% if course.course_type == 'elective' %}selected{% endif %}>Elective</option>
+                                        <option value="optional" {% if course.course_type == 'optional' %}selected{% endif %}>Optional</option>
+                                        <option value="extra_curricular" {% if course.course_type == 'extra_curricular' %}selected{% endif %}>Extra Curricular</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Start Date *</label>
+                                    <input type="date" class="form-control" name="start_date" 
+                                           value="{{ course.start_date }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">End Date *</label>
+                                    <input type="date" class="form-control" name="end_date" 
+                                           value="{{ course.end_date }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Schedule</label>
+                            <div class="row" id="scheduleContainer">
+                                {% for schedule in course.schedule %}
+                                <div class="row schedule-row mb-2">
+                                    <div class="col-md-4">
+                                        <select class="form-select" name="schedule_day">
+                                            <option value="monday" {% if schedule.day == 'monday' %}selected{% endif %}>Monday</option>
+                                            <option value="tuesday" {% if schedule.day == 'tuesday' %}selected{% endif %}>Tuesday</option>
+                                            <option value="wednesday" {% if schedule.day == 'wednesday' %}selected{% endif %}>Wednesday</option>
+                                            <option value="thursday" {% if schedule.day == 'thursday' %}selected{% endif %}>Thursday</option>
+                                            <option value="friday" {% if schedule.day == 'friday' %}selected{% endif %}>Friday</option>
+                                            <option value="saturday" {% if schedule.day == 'saturday' %}selected{% endif %}>Saturday</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="time" class="form-control" name="schedule_time" 
+                                               value="{{ schedule.time }}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" class="form-control" name="schedule_room" 
+                                               value="{{ schedule.room }}" placeholder="Room">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-schedule">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="addSchedule">
+                                <i class="fas fa-plus me-1"></i> Add Schedule
+                            </button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Prerequisites</label>
+                            <select class="form-select" name="prerequisites" multiple>
+                                {% for prereq in all_courses %}
+                                <option value="{{ prereq.id }}" {% if prereq.id in course.prerequisites %}selected{% endif %}>
+                                    {{ prereq.code }} - {{ prereq.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Maximum Students</label>
+                            <input type="number" class="form-control" name="max_students" 
+                                   value="{{ course.max_students }}" min="1" max="100">
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" 
+                                       id="is_active" {% if course.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Active Course
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Course Statistics -->
+                        <div class="card bg-light mt-4">
+                            <div class="card-body">
+                                <h6>Course Statistics</h6>
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <h5 class="text-primary">{{ course.stats.enrolled_students }}</h5>
+                                        <small class="text-muted">Enrolled</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-success">{{ course.stats.completion_rate }}%</h5>
+                                        <small class="text-muted">Completion</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-info">{{ course.stats.avg_grade }}%</h5>
+                                        <small class="text-muted">Avg Grade</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-warning">{{ course.stats.assignments }}</h5>
+                                        <small class="text-muted">Assignments</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('authority_courses') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-danger me-2" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                            <i class="fas fa-trash me-2"></i> Delete Course
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i> Update Course
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete course <strong>{{ course.name }}</strong>?</p>
+                <p class="text-danger"><strong>Warning:</strong> This action cannot be undone. All course data including student enrollments, assignments, and grades will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('authority_delete_course', id=course.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Course</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add schedule functionality
+    const scheduleContainer = document.getElementById('scheduleContainer');
+    const addScheduleBtn = document.getElementById('addSchedule');
+
+    addScheduleBtn.addEventListener('click', function() {
+        const scheduleRow = document.createElement('div');
+        scheduleRow.className = 'row schedule-row mb-2';
+        scheduleRow.innerHTML = `
+            <div class="col-md-4">
+                <select class="form-select" name="schedule_day">
+                    <option value="">Select Day</option>
+                    <option value="monday">Monday</option>
+                    <option value="tuesday">Tuesday</option>
+                    <option value="wednesday">Wednesday</option>
+                    <option value="thursday">Thursday</option>
+                    <option value="friday">Friday</option>
+                    <option value="saturday">Saturday</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="time" class="form-control" name="schedule_time">
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="schedule_room" placeholder="Room">
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-schedule">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        scheduleContainer.appendChild(scheduleRow);
+    });
+
+    // Remove schedule
+    scheduleContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-schedule') || 
+            e.target.parentElement.classList.contains('remove-schedule')) {
+            const button = e.target.classList.contains('remove-schedule') ? e.target : e.target.parentElement;
+            button.closest('.schedule-row').remove();
+        }
+    });
+});
+</script>
+{% endblock %}

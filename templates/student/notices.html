@@ -1,0 +1,180 @@
+<!-- templates/student/notices.html -->
+{% extends 'base.html' %}
+
+{% block title %}Notices & Announcements{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Sidebar -->
+            {% include 'student/sidebar.html' %}
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Notices & Announcements</h2>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown">
+                        <i class="fas fa-filter me-2"></i>Filter
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?filter=all">All Notices</a></li>
+                        <li><a class="dropdown-item" href="?filter=important">Important</a></li>
+                        <li><a class="dropdown-item" href="?filter=academic">Academic</a></li>
+                        <li><a class="dropdown-item" href="?filter=event">Events</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Important Notices -->
+            {% if important_notices %}
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Notices</h5>
+                <div class="list-group">
+                    {% for notice in important_notices %}
+                    <a href="#" class="list-group-item list-group-item-action" 
+                       data-bs-toggle="modal" data-bs-target="#noticeModal{{ notice.id }}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ notice.title }}</h6>
+                            <small>{{ notice.date }}</small>
+                        </div>
+                        <p class="mb-1">{{ notice.excerpt }}</p>
+                        <small>From: {{ notice.from_ }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Regular Notices -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">All Notices</h5>
+                </div>
+                <div class="card-body">
+                    {% if notices %}
+                    <div class="list-group list-group-flush">
+                        {% for notice in notices %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div class="flex-grow-1 me-3">
+                                    <h6 class="mb-1">
+                                        {% if notice.priority == 'high' %}
+                                        <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                        {% elif notice.priority == 'medium' %}
+                                        <i class="fas fa-info-circle text-warning me-2"></i>
+                                        {% else %}
+                                        <i class="fas fa-info-circle text-primary me-2"></i>
+                                        {% endif %}
+                                        {{ notice.title }}
+                                    </h6>
+                                    <p class="mb-1 text-muted">{{ notice.content|truncate(150) }}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-user me-1"></i>{{ notice.author }} • 
+                                        <i class="fas fa-calendar me-1"></i>{{ notice.date }}
+                                        {% if notice.attachment %}
+                                        • <i class="fas fa-paperclip me-1"></i>Attachment
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#noticeModal{{ notice.id }}">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Notices pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {% if not has_prev %}disabled{% endif %}">
+                                <a class="page-link" href="?page={{ current_page - 1 }}">Previous</a>
+                            </li>
+                            {% for page in range(1, total_pages + 1) %}
+                            <li class="page-item {% if page == current_page %}active{% endif %}">
+                                <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                            </li>
+                            {% endfor %}
+                            <li class="page-item {% if not has_next %}disabled{% endif %}">
+                                <a class="page-link" href="?page={{ current_page + 1 }}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No notices available</h5>
+                        <p class="text-muted">Check back later for new announcements.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notice Detail Modals -->
+{% for notice in (important_notices + notices) %}
+<div class="modal fade" id="noticeModal{{ notice.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {% if notice.priority == 'high' %}
+                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                    {% elif notice.priority == 'medium' %}
+                    <i class="fas fa-info-circle text-warning me-2"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    {% endif %}
+                    {{ notice.title }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <small class="text-muted">
+                        <i class="fas fa-user me-1"></i>Published by: {{ notice.author }} • 
+                        <i class="fas fa-calendar me-1"></i>Date: {{ notice.date }} • 
+                        <i class="fas fa-clock me-1"></i>Time: {{ notice.time }}
+                    </small>
+                </div>
+                
+                <div class="border rounded p-3 bg-light mb-3">
+                    {{ notice.content|safe }}
+                </div>
+                
+                {% if notice.attachment %}
+                <div class="mb-3">
+                    <strong>Attachment:</strong>
+                    <a href="{{ notice.attachment.url }}" class="btn btn-sm btn-outline-primary ms-2" target="_blank">
+                        <i class="fas fa-download me-1"></i>Download {{ notice.attachment.name }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if notice.audience %}
+                <div class="alert alert-info">
+                    <strong>Audience:</strong> {{ notice.audience }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                {% if notice.attachment %}
+                <a href="{{ notice.attachment.url }}" class="btn btn-primary" download>
+                    <i class="fas fa-download me-1"></i>Download Attachment
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

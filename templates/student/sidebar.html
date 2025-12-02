@@ -1,0 +1,69 @@
+<!-- Student Sidebar Navigation -->
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/dashboard' %}active{% endif %}" href="/student/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/profile' %}active{% endif %}" href="/student/profile">
+            <i class="bi bi-person me-2"></i>Profile
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/courses' %}active{% endif %}" href="/student/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/assignments' %}active{% endif %}"
+            href="/student/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/tests' %}active{% endif %}" href="/student/tests">
+            <i class="bi bi-pencil-square me-2"></i>Tests
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/grades' %}active{% endif %}" href="/student/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/attendance' %}active{% endif %}" href="/student/attendance">
+            <i class="bi bi-calendar-check me-2"></i>Attendance
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/timetable' %}active{% endif %}" href="/student/timetable">
+            <i class="bi bi-calendar-week me-2"></i>Timetable
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/notes' %}active{% endif %}" href="/student/notes">
+            <i class="bi bi-journal me-2"></i>Notes
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/videos' %}active{% endif %}" href="/student/videos">
+            <i class="bi bi-play-circle me-2"></i>Videos
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/notices' %}active{% endif %}" href="/student/notices">
+            <i class="bi bi-megaphone me-2"></i>Notices
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/fees' %}active{% endif %}" href="/student/fees">
+            <i class="bi bi-cash-coin me-2"></i>Fees
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/forum' %}active{% endif %}" href="/student/forum">
+            <i class="bi bi-chat-dots me-2"></i>Discussion Forum
+        </a>
+    </li>
+</ul>

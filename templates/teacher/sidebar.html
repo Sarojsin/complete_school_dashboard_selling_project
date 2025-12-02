@@ -1,0 +1,58 @@
+<div class="sidebar">
+    <div class="p-3">
+        <h5 class="mb-3">Navigation</h5>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/teacher/dashboard' %}active{% endif %}"
+                    href="/teacher/dashboard">
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/students' in request.path %}active{% endif %}"
+                    href="/teacher/students">
+                    <i class="bi bi-people me-2"></i>Students
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/courses' in request.path %}active{% endif %}"
+                    href="/teacher/courses">
+                    <i class="bi bi-book me-2"></i>Courses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/assignments' in request.path %}active{% endif %}"
+                    href="/teacher/assignments">
+                    <i class="bi bi-journal-text me-2"></i>Assignments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/grades' in request.path %}active{% endif %}" href="/teacher/grades">
+                    <i class="bi bi-graph-up me-2"></i>Grades
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/attendance' in request.path %}active{% endif %}"
+                    href="/teacher/attendance">
+                    <i class="bi bi-calendar-check me-2"></i>Attendance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/tests' in request.path %}active{% endif %}" href="/teacher/tests">
+                    <i class="bi bi-pencil-square me-2"></i>Tests
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/timetable' in request.path %}active{% endif %}"
+                    href="/teacher/timetable">
+                    <i class="bi bi-calendar3 me-2"></i>Timetable
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/chat' in request.path %}active{% endif %}" href="/teacher/chat">
+                    <i class="bi bi-chat-dots me-2"></i>Chat
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>

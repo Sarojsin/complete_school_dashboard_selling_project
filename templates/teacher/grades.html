@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Management{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Grade Management{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <a href="/teacher/add-grade" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Add Grade
+    </a>
+    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <i class="bi bi-download me-1"></i>Export
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Grade Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Students Graded</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">142/156</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">91% completed</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Average Grade</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">84%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>3%
+                            </span>
+                            <span class="text-muted small">from last term</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-percent fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending Grading</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">23</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">assignments</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Grade Distribution</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">A: 35%</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">B: 45%, C: 15%, D: 5%</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-pie-chart fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Controls -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Course</label>
+                <select class="form-select" id="courseFilter">
+                    <option value="">All Courses</option>
+                    <option value="math101">Mathematics 101</option>
+                    <option value="sci201">Science 201</option>
+                    <option value="eng101">English 101</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Assignment Type</label>
+                <select class="form-select" id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="homework">Homework</option>
+                    <option value="quiz">Quiz</option>
+                    <option value="project">Project</option>
+                    <option value="exam">Exam</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Grade Range</label>
+                <select class="form-select" id="gradeFilter">
+                    <option value="">All Grades</option>
+                    <option value="90-100">A (90-100%)</option>
+                    <option value="80-89">B (80-89%)</option>
+                    <option value="70-79">C (70-79%)</option>
+                    <option value="60-69">D (60-69%)</option>
+                    <option value="0-59">F (0-59%)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="graded">Graded</option>
+                    <option value="pending">Pending</option>
+                    <option value="submitted">Submitted</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Grade Distribution Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i>Grade Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="gradeDistributionChart" height="250"></canvas>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/teacher/add-grade" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-plus-circle me-2"></i>Add New Grade
+                    </a>
+                    <button class="btn btn-outline-success text-start" data-bs-toggle="modal" data-bs-target="#bulkGradeModal">
+                        <i class="bi bi-upload me-2"></i>Bulk Grade Upload
+                    </button>
+                    <button class="btn btn-outline-info text-start" data-bs-toggle="modal" data-bs-target="#gradeScaleModal">
+                        <i class="bi bi-sliders me-2"></i>Grade Scale Settings
+                    </button>
+                    <a href="#" class="btn btn-outline-warning text-start">
+                        <i class="bi bi-clock me-2"></i>View Pending Grades
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grades Table -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="bi bi-list-check me-2"></i>Student Grades</h5>
+                <span class="badge bg-primary">156 Students</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Assignment</th>
+                                <th>Score</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in grades %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ grade.student_avatar }}" class="rounded-circle me-2" width="32" height="32" alt="{{ grade.student_name }}">
+                                        <div>
+                                            <h6 class="mb-0">{{ grade.student_name }}</h6>
+                                            <small class="text-muted">ID: {{ grade.student_id }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ grade.course }}</span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ grade.assignment }}</strong>
+                                        <br>
+                                        <small class="text-muted">Type: {{ grade.type }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ grade.score }}/{{ grade.max_score }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ grade.percentage }}%</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if grade.letter_grade in ['A','A+','A-'] else 'warning' if grade.letter_grade in ['B','B+','B-'] else 'danger' }} fs-6">
+                                        {{ grade.letter_grade }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if grade.status == 'graded' else 'warning' if grade.status == 'submitted' else 'secondary' }}">
+                                        {{ grade.status|title }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ grade.submitted_date }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editGradeModal{{ grade.id }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info" data-bs-toggle="tooltip" title="Add Feedback">
+                                            <i class="bi bi-chat-left-text"></i>
+                                        </button>
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Download Submission</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Delete Grade</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Grade pagination">
+                    <ul class="pagination justify-content-center mt-4">
+                        <li class="page-item">
+                            <a class="page-link" href="#">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Performance Summary -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Course Performance Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for course in course_summary %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ course.name }}</h6>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Average Grade</small>
+                                        <small><strong>{{ course.average_grade }}%</strong></small>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-{{ 'success' if course.average_grade >= 80 else 'warning' if course.average_grade >= 70 else 'danger' }}" 
+                                             style="width: {{ course.average_grade }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">A</small>
+                                        <strong class="text-success">{{ course.grade_a }}</strong>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">B</small>
+                                        <strong class="text-warning">{{ course.grade_b }}</strong>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">C</small>
+                                        <strong class="text-danger">{{ course.grade_c }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Grade Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Export Format</label>
+                    <select class="form-select">
+                        <option value="csv">CSV Format</option>
+                        <option value="excel">Excel Format</option>
+                        <option value="pdf">PDF Report</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data Range</label>
+                    <select class="form-select">
+                        <option value="current">Current Semester</option>
+                        <option value="all">All Semesters</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Include</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Student Information</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Assignment Details</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Teacher Comments</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-download me-1"></i>Export Grades
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Grade Modal -->
+<div class="modal fade" id="bulkGradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Grade Upload</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select Assignment</label>
+                    <select class="form-select">
+                        <option value="">Choose Assignment</option>
+                        <option value="assignment1">Mathematics Homework 1</option>
+                        <option value="assignment2">Science Project</option>
+                        <option value="assignment3">English Essay</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Upload Grade File</label>
+                    <input type="file" class="form-control" accept=".csv,.xlsx">
+                    <div class="form-text">Download the <a href="#">template file</a> for correct format</div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    The file should contain Student ID and Score columns.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-upload me-1"></i>Upload Grades
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Grade Distribution Chart
+    const distCtx = document.getElementById('gradeDistributionChart').getContext('2d');
+    const distChart = new Chart(distCtx, {
+        type: 'bar',
+        data: {
+            labels: ['A (90-100)', 'B (80-89)', 'C (70-79)', 'D (60-69)', 'F (<60)'],
+            datasets: [{
+                label: 'Number of Students',
+                data: [25, 35, 20, 15, 5],
+                backgroundColor: [
+                    '#1cc88a',
+                    '#36b9cc',
+                    '#4e73df',
+                    '#f6c23e',
+                    '#e74a3b'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Filter functionality
+    document.getElementById('courseFilter').addEventListener('change', applyFilters);
+    document.getElementById('typeFilter').addEventListener('change', applyFilters);
+    document.getElementById('gradeFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+    function applyFilters() {
+        // Implementation for filtering grades table
+        console.log('Applying filters...');
+    }
+</script>
+{% endblock %}

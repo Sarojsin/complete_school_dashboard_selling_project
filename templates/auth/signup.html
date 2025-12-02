@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - School Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold text-primary">Join Our Community</h2>
+                <p class="text-muted">Choose your role to get started</p>
+            </div>
+
+            <div class="row g-4 justify-content-center">
+                <!-- Student Card -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm hover-card text-center p-4">
+                        <div class="card-body">
+                            <div class="feature-icon mx-auto mb-3 bg-primary bg-opacity-10 text-primary rounded-circle"
+                                style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-mortarboard fs-1"></i>
+                            </div>
+                            <h4 class="card-title fw-bold mb-3">Student</h4>
+                            <p class="card-text text-muted mb-4">Access courses, assignments, and track your academic
+                                progress.</p>
+                            <a href="/signup/student" class="btn btn-outline-primary w-100">Sign Up as Student</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Card -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm hover-card text-center p-4">
+                        <div class="card-body">
+                            <div class="feature-icon mx-auto mb-3 bg-success bg-opacity-10 text-success rounded-circle"
+                                style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-person-video3 fs-1"></i>
+                            </div>
+                            <h4 class="card-title fw-bold mb-3">Teacher</h4>
+                            <p class="card-text text-muted mb-4">Manage classes, grade assignments, and connect with
+                                students.</p>
+                            <a href="/signup/teacher" class="btn btn-outline-success w-100">Sign Up as Teacher</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Authority Card -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm hover-card text-center p-4">
+                        <div class="card-body">
+                            <div class="feature-icon mx-auto mb-3 bg-warning bg-opacity-10 text-warning rounded-circle"
+                                style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-building fs-1"></i>
+                            </div>
+                            <h4 class="card-title fw-bold mb-3">Authority</h4>
+                            <p class="card-text text-muted mb-4">Manage school operations, users, and system settings.
+                            </p>
+                            <a href="/signup/authority" class="btn btn-outline-warning w-100">Sign Up as Authority</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <p class="text-muted">Already have an account? <a href="/login" class="text-decoration-none">Sign in
+                        here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

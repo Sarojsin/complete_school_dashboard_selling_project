@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Management - Admin{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/authority/teachers">
+            <i class="bi bi-person-badge me-2"></i>Teachers
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Teacher Management{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <a href="/authority/add-teacher" class="btn btn-sm btn-primary">
+        <i class="bi bi-person-plus me-1"></i>Add Teacher
+    </a>
+    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="bi bi-upload me-1"></i>Import
+    </button>
+    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <i class="bi bi-download me-1"></i>Export
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Teacher Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Teachers</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">86</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-success text-uppercase mb-1">Active</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">78</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-info text-uppercase mb-1">Departments</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">12</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-warning text-uppercase mb-1">New This Year</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">8</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card secondary h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-secondary text-uppercase mb-1">On Leave</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">5</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-danger text-uppercase mb-1">Vacancies</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">3</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Department</label>
+                <select class="form-select" id="departmentFilter">
+                    <option value="">All Departments</option>
+                    <option value="mathematics">Mathematics</option>
+                    <option value="science">Science</option>
+                    <option value="english">English</option>
+                    <option value="history">History</option>
+                    <option value="arts">Arts</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="on_leave">On Leave</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Employment Type</label>
+                <select class="form-select" id="employmentFilter">
+                    <option value="">All Types</option>
+                    <option value="full_time">Full Time</option>
+                    <option value="part_time">Part Time</option>
+                    <option value="contract">Contract</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Years of Service</label>
+                <select class="form-select" id="experienceFilter">
+                    <option value="">All Experience</option>
+                    <option value="0-5">0-5 Years</option>
+                    <option value="5-10">5-10 Years</option>
+                    <option value="10-20">10-20 Years</option>
+                    <option value="20+">20+ Years</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Search Teachers</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search by name, ID, department, or email...">
+                    <button class="btn btn-primary">Search</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button class="btn btn-outline-secondary" id="resetFilters">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teachers Table -->
+<div class="card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="bi bi-person-badge me-2"></i>Teaching Staff</h5>
+        <span class="badge bg-primary" id="teacherCount">86 teachers</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="teachersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                            </div>
+                        </th>
+                        <th>Teacher Information</th>
+                        <th>Contact & Department</th>
+                        <th>Employment Details</th>
+                        <th>Classes & Courses</th>
+                        <th>Performance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in teachers %}
+                    <tr>
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input teacher-checkbox" type="checkbox" value="{{ teacher.id }}">
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{{ teacher.avatar }}" class="rounded-circle me-3" width="45" height="45" alt="{{ teacher.name }}">
+                                <div>
+                                    <h6 class="mb-1">{{ teacher.name }}</h6>
+                                    <small class="text-muted">ID: {{ teacher.id }}</small><br>
+                                    <small class="text-muted">DOB: {{ teacher.dob }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <small class="text-muted d-block">{{ teacher.email }}</small>
+                                <small class="text-muted">{{ teacher.phone }}</small><br>
+                                <span class="badge bg-info">{{ teacher.department }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-briefcase me-1"></i>{{ teacher.employment_type|title }}
+                                </small>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>Since {{ teacher.join_date }}
+                                </small><br>
+                                <small class="text-muted">{{ teacher.experience }} years experience</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <small class="text-muted d-block">{{ teacher.classes_taught }} classes</small>
+                                <small class="text-muted">{{ teacher.courses_taught }} courses</small><br>
+                                <small class="text-muted">{{ teacher.students_count }} students</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 6px; width: 60px;">
+                                    <div class="progress-bar bg-{{ 'success' if teacher.performance >= 90 else 'warning' if teacher.performance >= 80 else 'danger' }}" 
+                                         style="width: {{ teacher.performance }}%"></div>
+                                </div>
+                                <small>{{ teacher.performance }}%</small>
+                            </div>
+                            <small class="text-muted d-block">Rating: {{ teacher.rating }}/5</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if teacher.status == 'active' else 'warning' if teacher.status == 'on_leave' else 'secondary' }}">
+                                {{ teacher.status|title }}
+                            </span>
+                            {% if teacher.is_class_teacher %}
+                            <br><span class="badge bg-primary mt-1">Class Teacher</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="/authority/teachers/{{ teacher.id }}" class="btn btn-outline-primary" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="/authority/edit-teacher/{{ teacher.id }}" class="btn btn-outline-success" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-outline-info" title="Schedule" data-bs-toggle="modal" data-bs-target="#scheduleModal{{ teacher.id }}">
+                                    <i class="bi bi-calendar"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-card-text me-2"></i>Generate Report</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-graph-up me-2"></i>Performance</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Send Message</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-warning" href="#"><i class="bi bi-person-dash me-2"></i>Mark Leave</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Deactivate</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="bulkActionsBtn" disabled>
+                        Bulk Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" id="bulkExport"><i class="bi bi-download me-2"></i>Export Selected</a></li>
+                        <li><a class="dropdown-item" href="#" id="bulkEmail"><i class="bi bi-envelope me-2"></i>Send Email</a></li>
+                        <li><a class="dropdown-item" href="#" id="bulkSchedule"><i class="bi bi-calendar me-2"></i>Assign Schedule</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-warning" href="#" id="bulkLeave"><i class="bi bi-person-dash me-2"></i>Mark on Leave</a></li>
+                        <li><a class="dropdown-item text-danger" href="#" id="bulkDeactivate"><i class="bi bi-person-x me-2"></i>Deactivate Selected</a></li>
+                    </ul>
+                </div>
+                <span class="ms-2 text-muted small" id="selectedCount">0 teachers selected</span>
+            </div>
+            <div class="col-md-6">
+                <!-- Pagination -->
+                <nav aria-label="Teacher pagination" class="float-end">
+                    <ul class="pagination">
+                        <li class="page-item">
+                            <a class="page-link" href="#">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Overview -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-diagram-3 me-2"></i>Department Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for department in departments %}
+                    <div class="col-md-3 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-primary">{{ department.name }}</h6>
+                                <div class="display-6 fw-bold text-dark mb-2">{{ department.teacher_count }}</div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Active</small>
+                                        <strong class="text-success">{{ department.active_count }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Classes</small>
+                                        <strong class="text-info">{{ department.class_count }}</strong>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <span class="badge bg-secondary">HOD: {{ department.hod }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Teacher Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select File</label>
+                    <input type="file" class="form-control" accept=".csv,.xlsx,.xls">
+                    <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls). <a href="#">Download template</a></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Import Options</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Update existing records</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Send welcome email to new teachers</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-upload me-1"></i>Import Teachers
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Teacher Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Export Format</label>
+                    <select class="form-select">
+                        <option value="csv">CSV Format</option>
+                        <option value="excel">Excel Format</option>
+                        <option value="pdf">PDF Report</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data to Include</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Basic Information</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Employment Details</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Performance Metrics</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Course Assignments</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-download me-1"></i>Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Bulk selection functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.teacher-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectionCount();
+    });
+
+    document.querySelectorAll('.teacher-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionCount);
+    });
+
+    function updateSelectionCount() {
+        const selectedCount = document.querySelectorAll('.teacher-checkbox:checked').length;
+        document.getElementById('selectedCount').textContent = `${selectedCount} teachers selected`;
+        document.getElementById('bulkActionsBtn').disabled = selectedCount === 0;
+    }
+
+    // Filter functionality
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('departmentFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('employmentFilter').value = '';
+        document.getElementById('experienceFilter').value = '';
+    });
+
+    // Bulk actions
+    document.getElementById('bulkExport').addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.teacher-checkbox:checked'))
+            .map(checkbox => checkbox.value);
+        alert(`Exporting ${selectedIds.length} teachers...`);
+    });
+
+    document.getElementById('bulkEmail').addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.teacher-checkbox:checked'))
+            .map(checkbox => checkbox.value);
+        alert(`Sending email to ${selectedIds.length} teachers...`);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}Add Grade{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/add-grade">
+            <i class="bi bi-plus-circle me-2"></i>Add Grade
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Add New Grade{% endblock %}
+
+{% block page_actions %}
+<a href="/teacher/grades" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back to Grades
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-plus-circle me-2"></i>Grade Entry Form</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/teacher/grades/add" id="gradeForm">
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Basic Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="student" class="form-label">Student <span class="text-danger">*</span></label>
+                            <select class="form-select" id="student" name="student_id" required>
+                                <option value="">Select Student</option>
+                                {% for student in students %}
+                                <option value="{{ student.id }}">{{ student.name }} (ID: {{ student.id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
+                            <select class="form-select" id="course" name="course_id" required>
+                                <option value="">Select Course</option>
+                                <option value="math101">Mathematics 101</option>
+                                <option value="sci201">Science 201</option>
+                                <option value="eng101">English 101</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="assignment" class="form-label">Assignment <span class="text-danger">*</span></label>
+                            <select class="form-select" id="assignment" name="assignment_id" required>
+                                <option value="">Select Assignment</option>
+                                <option value="hw1">Homework 1: Algebra Basics</option>
+                                <option value="hw2">Homework 2: Geometry</option>
+                                <option value="quiz1">Quiz 1: Chapter 1-3</option>
+                                <option value="project1">Project: Final Presentation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="grade_type" class="form-label">Grade Type</label>
+                            <select class="form-select" id="grade_type" name="grade_type">
+                                <option value="homework">Homework</option>
+                                <option value="quiz">Quiz</option>
+                                <option value="project">Project</option>
+                                <option value="exam">Exam</option>
+                                <option value="participation">Participation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Grade Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-percent me-2"></i>Grade Details
+                            </h6>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="score" class="form-label">Score <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="score" name="score" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="max_score" class="form-label">Maximum Score <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="max_score" name="max_score" step="0.01" min="1" value="100" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="percentage" class="form-label">Percentage</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="percentage" name="percentage" readonly>
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-text">Auto-calculated from score</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="letter_grade" class="form-label">Letter Grade</label>
+                            <select class="form-select" id="letter_grade" name="letter_grade">
+                                <option value="">Auto-calculate</option>
+                                <option value="A+">A+ (97-100%)</option>
+                                <option value="A">A (93-96%)</option>
+                                <option value="A-">A- (90-92%)</option>
+                                <option value="B+">B+ (87-89%)</option>
+                                <option value="B">B (83-86%)</option>
+                                <option value="B-">B- (80-82%)</option>
+                                <option value="C+">C+ (77-79%)</option>
+                                <option value="C">C (73-76%)</option>
+                                <option value="C-">C- (70-72%)</option>
+                                <option value="D+">D+ (67-69%)</option>
+                                <option value="D">D (63-66%)</option>
+                                <option value="D-">D- (60-62%)</option>
+                                <option value="F">F (0-59%)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="weight" class="form-label">Weight in Final Grade</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="weight" name="weight" min="0" max="100" value="10">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grading Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-calendar me-2"></i>Grading Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="submission_date" class="form-label">Submission Date</label>
+                            <input type="date" class="form-control" id="submission_date" name="submission_date">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="grading_date" class="form-label">Grading Date</label>
+                            <input type="date" class="form-control" id="grading_date" name="grading_date" value="{{ today }}">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="due_date" class="form-label">Original Due Date</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date">
+                        </div>
+                    </div>
+
+                    <!-- Feedback and Comments -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-chat-left-text me-2"></i>Feedback & Comments
+                            </h6>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="teacher_comments" class="form-label">Teacher Comments</label>
+                            <textarea class="form-control" id="teacher_comments" name="teacher_comments" rows="4" placeholder="Provide constructive feedback for the student..."></textarea>
+                            <div class="form-text">This feedback will be visible to the student and parents.</div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="private_notes" class="form-label">Private Notes (Not visible to student)</label>
+                            <textarea class="form-control" id="private_notes" name="private_notes" rows="3" placeholder="Internal notes for teacher reference..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Rubric Scoring (Optional) -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-list-check me-2"></i>Rubric Scoring (Optional)
+                            </h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Criteria</th>
+                                            <th>Max Points</th>
+                                            <th>Awarded Points</th>
+                                            <th>Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Content Accuracy</td>
+                                            <td>40</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" name="criteria1_score" min="0" max="40">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" name="criteria1_comments" placeholder="Comments...">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Organization</td>
+                                            <td>30</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" name="criteria2_score" min="0" max="30">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" name="criteria2_comments" placeholder="Comments...">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Creativity</td>
+                                            <td>20</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" name="criteria3_score" min="0" max="20">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" name="criteria3_comments" placeholder="Comments...">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Timeliness</td>
+                                            <td>10</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" name="criteria4_score" min="0" max="10">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" name="criteria4_comments" placeholder="Comments...">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th>Total</th>
+                                            <th>100</th>
+                                            <th id="rubricTotal">0</th>
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div class="form-text">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="autoFillRubric">
+                                    <i class="bi bi-magic me-1"></i>Auto-fill from rubric
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Options -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-gear me-2"></i>Additional Options
+                            </h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="notify_student" name="notify_student" checked>
+                                <label class="form-check-label" for="notify_student">
+                                    Notify student via email about this grade
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="notify_parents" name="notify_parents">
+                                <label class="form-check-label" for="notify_parents">
+                                    Also notify parents/guardians
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="allow_resubmission" name="allow_resubmission">
+                                <label class="form-check-label" for="allow_resubmission">
+                                    Allow student to resubmit for better grade
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="count_towards_final" name="count_towards_final" checked>
+                                <label class="form-check-label" for="count_towards_final">
+                                    Count this grade towards final grade calculation
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <button type="reset" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Reset Form
+                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" name="action" value="save" class="btn btn-primary">
+                                        <i class="bi bi-save me-1"></i>Save Grade
+                                    </button>
+                                    <button type="submit" name="action" value="save_and_new" class="btn btn-success">
+                                        <i class="bi bi-plus-circle me-1"></i>Save & Add Another
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Grade Preview Card -->
+        <div class="card mt-4">
+            <div class="card-header bg-light py-3">
+                <h6 class="card-title mb-0"><i class="bi bi-eye me-2"></i>Grade Preview</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border rounded p-3">
+                            <small class="text-muted d-block">Score</small>
+                            <strong id="previewScore">-/-</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3">
+                            <small class="text-muted d-block">Percentage</small>
+                            <strong id="previewPercentage">-</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3">
+                            <small class="text-muted d-block">Letter Grade</small>
+                            <strong id="previewLetter">-</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3">
+                            <small class="text-muted d-block">Status</small>
+                            <span class="badge bg-success" id="previewStatus">Graded</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate percentage automatically
+    document.getElementById('score').addEventListener('input', calculatePercentage);
+    document.getElementById('max_score').addEventListener('input', calculatePercentage);
+
+    function calculatePercentage() {
+        const score = parseFloat(document.getElementById('score').value) || 0;
+        const maxScore = parseFloat(document.getElementById('max_score').value) || 1;
+        const percentage = (score / maxScore) * 100;
+        
+        if (!isNaN(percentage)) {
+            document.getElementById('percentage').value = percentage.toFixed(2);
+            updatePreview();
+            autoCalculateLetterGrade(percentage);
+        }
+    }
+
+    // Auto-calculate letter grade based on percentage
+    function autoCalculateLetterGrade(percentage) {
+        const letterGradeSelect = document.getElementById('letter_grade');
+        
+        if (percentage >= 97) letterGradeSelect.value = 'A+';
+        else if (percentage >= 93) letterGradeSelect.value = 'A';
+        else if (percentage >= 90) letterGradeSelect.value = 'A-';
+        else if (percentage >= 87) letterGradeSelect.value = 'B+';
+        else if (percentage >= 83) letterGradeSelect.value = 'B';
+        else if (percentage >= 80) letterGradeSelect.value = 'B-';
+        else if (percentage >= 77) letterGradeSelect.value = 'C+';
+        else if (percentage >= 73) letterGradeSelect.value = 'C';
+        else if (percentage >= 70) letterGradeSelect.value = 'C-';
+        else if (percentage >= 67) letterGradeSelect.value = 'D+';
+        else if (percentage >= 63) letterGradeSelect.value = 'D';
+        else if (percentage >= 60) letterGradeSelect.value = 'D-';
+        else letterGradeSelect.value = 'F';
+        
+        updatePreview();
+    }
+
+    // Update grade preview
+    function updatePreview() {
+        const score = document.getElementById('score').value || '0';
+        const maxScore = document.getElementById('max_score').value || '0';
+        const percentage = document.getElementById('percentage').value || '0';
+        const letterGrade = document.getElementById('letter_grade').value || '-';
+        
+        document.getElementById('previewScore').textContent = `${score}/${maxScore}`;
+        document.getElementById('previewPercentage').textContent = percentage ? `${percentage}%` : '-';
+        document.getElementById('previewLetter').textContent = letterGrade;
+        
+        // Update badge color based on grade
+        const badge = document.getElementById('previewStatus');
+        if (['A+', 'A', 'A-'].includes(letterGrade)) {
+            badge.className = 'badge bg-success';
+        } else if (['B+', 'B', 'B-'].includes(letterGrade)) {
+            badge.className = 'badge bg-warning';
+        } else if (['C+', 'C', 'C-', 'D+', 'D', 'D-'].includes(letterGrade)) {
+            badge.className = 'badge bg-danger';
+        } else if (letterGrade === 'F') {
+            badge.className = 'badge bg-dark';
+        }
+    }
+
+    // Rubric total calculation
+    document.querySelectorAll('input[name^="criteria"]').forEach(input => {
+        if (input.name.includes('_score')) {
+            input.addEventListener('input', calculateRubricTotal);
+        }
+    });
+
+    function calculateRubricTotal() {
+        let total = 0;
+        document.querySelectorAll('input[name^="criteria"][name$="_score"]').forEach(input => {
+            total += parseFloat(input.value) || 0;
+        });
+        document.getElementById('rubricTotal').textContent = total;
+        
+        // Auto-fill main score if rubric is used
+        if (total > 0) {
+            document.getElementById('score').value = total;
+            document.getElementById('max_score').value = 100;
+            calculatePercentage();
+        }
+    }
+
+    // Auto-fill rubric button
+    document.getElementById('autoFillRubric').addEventListener('click', function() {
+        const percentage = parseFloat(document.getElementById('percentage').value) || 0;
+        const maxPoints = 100;
+        const awardedPoints = (percentage / 100) * maxPoints;
+        
+        document.querySelector('input[name="criteria1_score"]').value = Math.round((awardedPoints * 0.4));
+        document.querySelector('input[name="criteria2_score"]').value = Math.round((awardedPoints * 0.3));
+        document.querySelector('input[name="criteria3_score"]').value = Math.round((awardedPoints * 0.2));
+        document.querySelector('input[name="criteria4_score"]').value = Math.round((awardedPoints * 0.1));
+        
+        calculateRubricTotal();
+    });
+
+    // Initialize preview
+    updatePreview();
+</script>
+{% endblock %}

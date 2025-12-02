@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block title %}Course Management - Admin{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/teachers">
+            <i class="bi bi-person-badge me-2"></i>Teachers
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/authority/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Course Management{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <a href="/authority/add-course" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Add Course
+    </a>
+    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="bi bi-upload me-1"></i>Import
+    </button>
+    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <i class="bi bi-download me-1"></i>Export
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Course Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Courses</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">54</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-success text-uppercase mb-1">Active Courses</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">48</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-info text-uppercase mb-1">Departments</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">12</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body text-center">
+                <div class="text-xs fw-bold text-warning text-uppercase mb-1">New This Semester</div>
+                <div class="h4 mb-0 fw-bold text-gray-800">6</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Department</label>
+                <select class="form-select" id="departmentFilter">
+                    <option value="">All Departments</option>
+                    <option value="mathematics">Mathematics</option>
+                    <option value="science">Science</option>
+                    <option value="english">English</option>
+                    <option value="history">History</option>
+                    <option value="arts">Arts</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Grade Level</label>
+                <select class="form-select" id="gradeFilter">
+                    <option value="">All Grades</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                    <option value="12">Grade 12</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="upcoming">Upcoming</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Semester</label>
+                <select class="form-select" id="semesterFilter">
+                    <option value="">All Semesters</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Search Courses</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search by course name, code, or instructor...">
+                    <button class="btn btn-primary">Search</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button class="btn btn-outline-secondary" id="resetFilters">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Courses Grid View -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="bi bi-book me-2"></i>All Courses</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary active" data-view="grid">
+                        <i class="bi bi-grid"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" data-view="list">
+                        <i class="bi bi-list"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Grid View -->
+                <div class="row" id="coursesGridView">
+                    {% for course in courses %}
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                        <div class="card course-card h-100">
+                            <div class="card-header position-relative">
+                                <div class="course-badge bg-{{ course.department_color }}"></div>
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title mb-1">{{ course.name }}</h6>
+                                        <p class="text-muted mb-0 small">{{ course.code }}</p>
+                                    </div>
+                                    <span class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' if course.status == 'upcoming' else 'danger' }}">
+                                        {{ course.status|title }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Department</small>
+                                        <strong>{{ course.department }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Credits</small>
+                                        <strong>{{ course.credits }}</strong>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Grade Level</small>
+                                        <span class="badge bg-secondary">{{ course.grade_level }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Semester</small>
+                                        <strong>Sem {{ course.semester }}</strong>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">Instructor</small>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ course.instructor }}">
+                                        <strong>{{ course.instructor }}</strong>
+                                    </div>
+                                </div>
+                                <div class="course-stats">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Students</small>
+                                            <strong class="text-primary">{{ course.student_count }}</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Classes</small>
+                                            <strong class="text-info">{{ course.class_count }}</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Avg Grade</small>
+                                            <strong class="text-success">{{ course.avg_grade }}%</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100">
+                                    <a href="/authority/courses/{{ course.id }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="/authority/edit-course/{{ course.id }}" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal{{ course.id }}">
+                                        <i class="bi bi-person-plus"></i>
+                                    </button>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-people me-2"></i>View Students</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-graph-up me-2"></i>Performance</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-calendar me-2"></i>Schedule</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-warning" href="#"><i class="bi bi-pause-circle me-2"></i>Suspend</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- List View (Hidden by default) -->
+                <div class="table-responsive d-none" id="coursesListView">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Course</th>
+                                <th>Department</th>
+                                <th>Instructor</th>
+                                <th>Grade Level</th>
+                                <th>Students</th>
+                                <th>Status</th>
+                                <th>Avg Grade</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">{{ course.name }}</h6>
+                                        <small class="text-muted">{{ course.code }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ course.department_color }}">{{ course.department }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="32" height="32" alt="{{ course.instructor }}">
+                                        {{ course.instructor }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ course.grade_level }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px; width: 60px;">
+                                            <div class="progress-bar bg-primary" style="width: {{ (course.student_count / 40) * 100 }}%"></div>
+                                        </div>
+                                        <small>{{ course.student_count }}/40</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' if course.status == 'upcoming' else 'danger' }}">
+                                        {{ course.status|title }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if course.avg_grade >= 80 else 'warning' if course.avg_grade >= 70 else 'danger' }}">
+                                        {{ course.avg_grade }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/authority/courses/{{ course.id }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/authority/edit-course/{{ course.id }}" class="btn btn-outline-success">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Course pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                            <a class="page-link" href="#">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department-wise Summary -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-diagram-3 me-2"></i>Department Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for department in departments %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h6 class="card-title text-{{ department.color }}">{{ department.name }}</h6>
+                                    <span class="badge bg-{{ department.color }}">{{ department.course_count }} courses</span>
+                                </div>
+                                <div class="row text-center mb-3">
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">Students</small>
+                                        <strong class="text-primary">{{ department.student_count }}</strong>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">Teachers</small>
+                                        <strong class="text-info">{{ department.teacher_count }}</strong>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">Avg Grade</small>
+                                        <strong class="text-success">{{ department.avg_grade }}%</strong>
+                                    </div>
+                                </div>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-{{ department.color }}" style="width: {{ department.utilization }}%"></div>
+                                </div>
+                                <small class="text-muted">Capacity Utilization: {{ department.utilization }}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Course Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select File</label>
+                    <input type="file" class="form-control" accept=".csv,.xlsx,.xls">
+                    <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls). <a href="#">Download template</a></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Import Options</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Update existing courses</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Create new instructors if needed</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-upload me-1"></i>Import Courses
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Course Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Export Format</label>
+                    <select class="form-select">
+                        <option value="csv">CSV Format</option>
+                        <option value="excel">Excel Format</option>
+                        <option value="pdf">PDF Report</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data to Include</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Course Information</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Instructor Details</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Student Enrollment</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Performance Data</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-download me-1"></i>Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .course-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .course-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .course-badge {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        border-radius: 4px 0 0 4px;
+    }
+    
+    .course-card .card-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        background: white;
+    }
+    
+    .course-stats {
+        border-top: 1px solid #e9ecef;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // View toggle functionality
+    document.querySelectorAll('[data-view]').forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.getAttribute('data-view');
+            
+            // Update active button
+            document.querySelectorAll('[data-view]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Show/hide views
+            if (view === 'grid') {
+                document.getElementById('coursesGridView').classList.remove('d-none');
+                document.getElementById('coursesListView').classList.add('d-none');
+            } else {
+                document.getElementById('coursesGridView').classList.add('d-none');
+                document.getElementById('coursesListView').classList.remove('d-none');
+            }
+        });
+    });
+
+    // Filter functionality
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('departmentFilter').value = '';
+        document.getElementById('gradeFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('semesterFilter').value = '';
+    });
+
+    // Quick status update
+    document.querySelectorAll('.course-card .badge').forEach(badge => {
+        badge.addEventListener('click', function() {
+            const courseId = this.closest('.course-card').querySelector('a[href*="/courses/"]').href.split('/').pop();
+            const currentStatus = this.textContent.trim().toLowerCase();
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            
+            // Confirm status change
+            if (confirm(`Change course status to ${newStatus}?`)) {
+                // Update via AJAX
+                console.log(`Updating course ${courseId} to ${newStatus}`);
+                
+                // Update badge appearance
+                this.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                this.className = `badge bg-${newStatus === 'active' ? 'success' : 'danger'}`;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,467 @@
+<!-- templates/teacher/create_test.html -->
+{% extends 'base.html' %}
+
+{% block title %}Create Test{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_tests') }}">Tests</a></li>
+                    <li class="breadcrumb-item active">Create Test</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create New Test</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="testForm">
+                        <!-- Test Basic Information -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">Test Title *</label>
+                                    <input type="text" class="form-control" name="title" placeholder="Enter test title"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Subject *</label>
+                                    <select class="form-select" name="subject" required>
+                                        <option value="">Select Subject</option>
+                                        {% for subject in subjects %}
+                                        <option value="{{ subject }}">{{ subject }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Class/Grade *</label>
+                                    <select class="form-select" name="class" required>
+                                        <option value="">Select Class</option>
+                                        {% for class in classes %}
+                                        <option value="{{ class }}">{{ class }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Total Marks *</label>
+                                    <input type="number" class="form-control" name="total_marks" min="1" max="1000"
+                                        value="100" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Instructions</label>
+                            <textarea class="form-control" name="instructions" rows="3"
+                                placeholder="Test instructions for students..."></textarea>
+                        </div>
+
+                        <!-- Test Settings -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Test Settings</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Start Date & Time *</label>
+                                            <input type="datetime-local" class="form-control" name="start_time"
+                                                required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">End Date & Time *</label>
+                                            <input type="datetime-local" class="form-control" name="end_time" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Duration (minutes) *</label>
+                                            <input type="number" class="form-control" name="duration" min="1" max="480"
+                                                value="60" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Passing Percentage</label>
+                                            <input type="number" class="form-control" name="passing_percentage" min="0"
+                                                max="100" value="40">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Max Attempts</label>
+                                            <input type="number" class="form-control" name="max_attempts" min="1"
+                                                max="10" value="1">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Order</label>
+                                            <select class="form-select" name="question_order">
+                                                <option value="sequential">Sequential</option>
+                                                <option value="random">Random</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Answer Visibility</label>
+                                            <select class="form-select" name="answer_visibility">
+                                                <option value="after_submission">After Submission</option>
+                                                <option value="after_test_end">After Test Ends</option>
+                                                <option value="never">Never</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="shuffle_questions"
+                                            id="shuffle_questions">
+                                        <label class="form-check-label" for="shuffle_questions">
+                                            Shuffle Questions
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="shuffle_options"
+                                            id="shuffle_options">
+                                        <label class="form-check-label" for="shuffle_options">
+                                            Shuffle Options
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="allow_backtracking"
+                                            id="allow_backtracking" checked>
+                                        <label class="form-check-label" for="allow_backtracking">
+                                            Allow Backtracking
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="show_progress"
+                                            id="show_progress" checked>
+                                        <label class="form-check-label" for="show_progress">
+                                            Show Progress Bar
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Questions Section -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Test Questions</h6>
+                                <button type="button" class="btn btn-sm btn-primary" id="addQuestion">
+                                    <i class="fas fa-plus me-1"></i> Add Question
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="questionsContainer">
+                                    <!-- Questions will be added here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Summary -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Test Summary</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <h5 id="totalQuestions">0</h5>
+                                        <small class="text-muted">Total Questions</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 id="totalMarks">0</h5>
+                                        <small class="text-muted">Total Marks</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 id="averageTime">0</h5>
+                                        <small class="text-muted">Avg Time (min)</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 id="questionTypes">0</h5>
+                                        <small class="text-muted">Question Types</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('teacher_tests') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <div>
+                                        <button type="submit" name="action" value="draft"
+                                            class="btn btn-outline-primary me-2">
+                                            <i class="fas fa-save me-2"></i> Save as Draft
+                                        </button>
+                                        <button type="submit" name="action" value="publish" class="btn btn-primary">
+                                            <i class="fas fa-check me-2"></i> Create Test
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Template -->
+<template id="questionTemplate">
+    <div class="question-card card mb-3">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 question-title">Question <span class="question-number">1</span></h6>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-question">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Question Type</label>
+                        <select class="form-select question-type" name="questions[0][type]" required>
+                            <option value="multiple_choice">Multiple Choice</option>
+                            <option value="true_false">True/False</option>
+                            <option value="short_answer">Short Answer</option>
+                            <option value="essay">Essay</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Marks</label>
+                        <input type="number" class="form-control question-marks" name="questions[0][marks]" min="1"
+                            max="100" value="1" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Question Text *</label>
+                <textarea class="form-control question-text" name="questions[0][text]" rows="3"
+                    placeholder="Enter your question..." required></textarea>
+            </div>
+
+            <!-- Multiple Choice Options -->
+            <div class="multiple-choice-options">
+                <label class="form-label">Options</label>
+                <div class="options-container">
+                    <div class="option-item mb-2">
+                        <div class="input-group">
+                            <div class="input-group-text">
+                                <input class="form-check-input mt-0 correct-answer" type="radio"
+                                    name="questions[0][correct_answer]" value="0" required>
+                            </div>
+                            <input type="text" class="form-control option-text" name="questions[0][options][0]"
+                                placeholder="Option 1" required>
+                            <button type="button" class="btn btn-outline-danger remove-option">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="option-item mb-2">
+                        <div class="input-group">
+                            <div class="input-group-text">
+                                <input class="form-check-input mt-0 correct-answer" type="radio"
+                                    name="questions[0][correct_answer]" value="1" required>
+                            </div>
+                            <input type="text" class="form-control option-text" name="questions[0][options][1]"
+                                placeholder="Option 2" required>
+                            <button type="button" class="btn btn-outline-danger remove-option">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary add-option">
+                    <i class="fas fa-plus me-1"></i> Add Option
+                </button>
+            </div>
+
+            <!-- Explanation -->
+            <div class="mb-3">
+                <label class="form-label">Explanation (Optional)</label>
+                <textarea class="form-control explanation" name="questions[0][explanation]" rows="2"
+                    placeholder="Explanation for the correct answer..."></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const questionsContainer = document.getElementById('questionsContainer');
+        const addQuestionBtn = document.getElementById('addQuestion');
+        const questionTemplate = document.getElementById('questionTemplate');
+        let questionCount = 0;
+
+        // Set default datetime for test
+        const now = new Date();
+        const startTimeInput = document.querySelector('input[name="start_time"]');
+        const endTimeInput = document.querySelector('input[name="end_time"]');
+
+        // Set start time to current time + 1 hour
+        const startTime = new Date(now);
+        startTime.setHours(startTime.getHours() + 1);
+        startTimeInput.value = startTime.toISOString().slice(0, 16);
+
+        // Set end time to start time + 2 hours
+        const endTime = new Date(startTime);
+        endTime.setHours(endTime.getHours() + 2);
+        endTimeInput.value = endTime.toISOString().slice(0, 16);
+
+        function addQuestion() {
+            questionCount++;
+            const questionHTML = questionTemplate.innerHTML.replace(/questions\[0\]/g, `questions[${questionCount}]`);
+            const questionElement = document.createElement('div');
+            questionElement.innerHTML = questionHTML;
+
+            // Update question number
+            const questionNumber = questionElement.querySelector('.question-number');
+            questionNumber.textContent = questionCount;
+
+            questionsContainer.appendChild(questionElement);
+            updateTestSummary();
+
+            // Initialize question type handling
+            const typeSelect = questionElement.querySelector('.question-type');
+            handleQuestionTypeChange(typeSelect);
+
+            typeSelect.addEventListener('change', function () {
+                handleQuestionTypeChange(this);
+            });
+        }
+
+        function handleQuestionTypeChange(selectElement) {
+            const questionCard = selectElement.closest('.question-card');
+            const optionsContainer = questionCard.querySelector('.multiple-choice-options');
+
+            if (selectElement.value === 'multiple_choice' || selectElement.value === 'true_false') {
+                optionsContainer.style.display = 'block';
+            } else {
+                optionsContainer.style.display = 'none';
+            }
+        }
+
+        function updateTestSummary() {
+            const totalQuestions = questionCount;
+            const totalMarks = Array.from(document.querySelectorAll('.question-marks'))
+                .reduce((sum, input) => sum + parseInt(input.value || 0), 0);
+            const questionTypes = new Set(Array.from(document.querySelectorAll('.question-type'))
+                .map(select => select.value)).size;
+
+            document.getElementById('totalQuestions').textContent = totalQuestions;
+            document.getElementById('totalMarks').textContent = totalMarks;
+            document.getElementById('questionTypes').textContent = questionTypes;
+
+            // Calculate average time per question
+            const duration = parseInt(document.querySelector('input[name="duration"]').value) || 60;
+            const avgTime = totalQuestions > 0 ? (duration / totalQuestions).toFixed(1) : 0;
+            document.getElementById('averageTime').textContent = avgTime;
+        }
+
+        // Add question event listeners
+        addQuestionBtn.addEventListener('click', addQuestion);
+
+        // Remove question
+        questionsContainer.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-question') ||
+                e.target.parentElement.classList.contains('remove-question')) {
+                const button = e.target.classList.contains('remove-question') ? e.target : e.target.parentElement;
+                button.closest('.question-card').remove();
+                questionCount--;
+                updateTestSummary();
+            }
+        });
+
+        // Add option
+        questionsContainer.addEventListener('click', function (e) {
+            if (e.target.classList.contains('add-option') ||
+                e.target.parentElement.classList.contains('add-option')) {
+                const button = e.target.classList.contains('add-option') ? e.target : e.target.parentElement;
+                const optionsContainer = button.previousElementSibling;
+                const optionCount = optionsContainer.querySelectorAll('.option-item').length;
+
+                const optionHTML = `
+                <div class="option-item mb-2">
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0 correct-answer" type="radio" 
+                                   name="${button.closest('.question-card').querySelector('.correct-answer').name}" 
+                                   value="${optionCount}" required>
+                        </div>
+                        <input type="text" class="form-control option-text" 
+                               name="${button.closest('.question-card').querySelector('.option-text').name.replace(/\[\d+\]$/, `[${optionCount}]`)}" 
+                               placeholder="Option ${optionCount + 1}" required>
+                        <button type="button" class="btn btn-outline-danger remove-option">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+                const optionElement = document.createElement('div');
+                optionElement.innerHTML = optionHTML;
+                optionsContainer.appendChild(optionElement);
+            }
+        });
+
+        // Remove option
+        questionsContainer.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-option') ||
+                e.target.parentElement.classList.contains('remove-option')) {
+                const button = e.target.classList.contains('remove-option') ? e.target : e.target.parentElement;
+                const optionItem = button.closest('.option-item');
+                if (optionItem && optionItem.parentElement.querySelectorAll('.option-item').length > 2) {
+                    optionItem.remove();
+                }
+            }
+        });
+
+        // Update marks and recalculate total
+        questionsContainer.addEventListener('input', function (e) {
+            if (e.target.classList.contains('question-marks')) {
+                updateTestSummary();
+            }
+        });
+
+        // Add first question automatically
+        addQuestion();
+    });
+</script>
+{% endblock %}

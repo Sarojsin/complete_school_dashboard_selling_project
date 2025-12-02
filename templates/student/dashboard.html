@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block sidebar_content %}
+{% include 'student/sidebar.html' %}
+{% endblock %}
+
+{% block page_title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Current GPA</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">3.75</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-up fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Attendance</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">94%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-check fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Pending Assignments</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">3</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-journal-text fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Upcoming Tests</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">2</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-pencil-square fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Upcoming Assignments -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-journal-text me-2"></i>Upcoming Assignments</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for assignment in assignments %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <h6 class="mb-1">{{ assignment.title }}</h6>
+                            <small class="text-muted">{{ assignment.course }} • Due: {{ assignment.due_date }}</small>
+                        </div>
+                        <span class="badge bg-{{ 'warning' if assignment.status == 'Pending' else 'success' }}">
+                            {{ assignment.status }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Grades -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Recent Grades</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Assignment</th>
+                                <th>Grade</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in recent_grades %}
+                            <tr>
+                                <td>{{ grade.course }}</td>
+                                <td>{{ grade.assignment }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'success' if grade.score >= 90 else 'warning' if grade.score >= 70 else 'danger' }}">
+                                        {{ grade.score }}%
+                                    </span>
+                                </td>
+                                <td>{{ grade.date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Attendance Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-calendar-check me-2"></i>Attendance Overview</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-link-45deg me-2"></i>Quick Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/student/profile" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-person me-2"></i>My Profile
+                    </a>
+                    <a href="/student/timetable" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-calendar-week me-2"></i>View Timetable
+                    </a>
+                    <a href="/student/courses" class="btn btn-outline-success text-start">
+                        <i class="bi bi-book me-2"></i>My Courses
+                    </a>
+                    <a href="/student/notes" class="btn btn-outline-info text-start">
+                        <i class="bi bi-journal me-2"></i>Study Notes
+                    </a>
+                    <a href="/student/videos" class="btn btn-outline-info text-start">
+                        <i class="bi bi-play-circle me-2"></i>Video Lectures
+                    </a>
+                    <a href="/student/tests" class="btn btn-outline-warning text-start">
+                        <i class="bi bi-pencil-square me-2"></i>Upcoming Tests
+                    </a>
+                    <a href="/student/notices" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-megaphone me-2"></i>Notices
+                    </a>
+                    <a href="/student/fees" class="btn btn-outline-dark text-start">
+                        <i class="bi bi-cash-coin me-2"></i>Fee Records
+                    </a>
+                    <a href="/student/forum" class="btn btn-outline-danger text-start">
+                        <i class="bi bi-chat-dots me-2"></i>Discussion Forum
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Attendance Chart
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    const attendanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Attendance %',
+                data: [92, 88, 95, 90, 96, 94],
+                backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

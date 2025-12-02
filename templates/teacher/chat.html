@@ -1,0 +1,495 @@
+<!-- templates/teacher/chat.html -->
+{% extends 'base.html' %}
+
+{% block title %}Teacher Chat{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Sidebar -->
+            {% include 'teacher/sidebar.html' %}
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Communications</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                    <i class="fas fa-plus me-2"></i> New Message
+                </button>
+            </div>
+
+            <div class="row">
+                <!-- Contacts Sidebar -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search contacts..." id="contactSearch">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush" id="contactsList">
+                                <!-- Students -->
+                                <div class="list-group-item bg-light">
+                                    <small class="text-muted fw-bold">STUDENTS</small>
+                                </div>
+                                {% for student in students %}
+                                <a href="#" class="list-group-item list-group-item-action contact-item" 
+                                   data-id="{{ student.id }}" data-type="student" data-name="{{ student.name }}">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ student.profile_pic or '/static/images/default-avatar.png' }}" 
+                                             class="rounded-circle me-3" width="40" height="40" alt="{{ student.name }}">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">{{ student.name }}</h6>
+                                            <small class="text-muted">{{ student.grade }} • {{ student.section }}</small>
+                                        </div>
+                                        {% if student.unread_count > 0 %}
+                                        <span class="badge bg-primary rounded-pill">{{ student.unread_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                                {% endfor %}
+
+                                <!-- Parents -->
+                                <div class="list-group-item bg-light mt-2">
+                                    <small class="text-muted fw-bold">PARENTS</small>
+                                </div>
+                                {% for parent in parents %}
+                                <a href="#" class="list-group-item list-group-item-action contact-item" 
+                                   data-id="{{ parent.id }}" data-type="parent" data-name="{{ parent.name }}">
+                                    <div class="d-flex align-items-center">
+                                        <img src="/static/images/parent-avatar.png" 
+                                             class="rounded-circle me-3" width="40" height="40" alt="{{ parent.name }}">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">{{ parent.name }}</h6>
+                                            <small class="text-muted">Parent of {{ parent.student_name }}</small>
+                                        </div>
+                                        {% if parent.unread_count > 0 %}
+                                        <span class="badge bg-primary rounded-pill">{{ parent.unread_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                                {% endfor %}
+
+                                <!-- Colleagues -->
+                                <div class="list-group-item bg-light mt-2">
+                                    <small class="text-muted fw-bold">COLLEAGUES</small>
+                                </div>
+                                {% for teacher in teachers %}
+                                <a href="#" class="list-group-item list-group-item-action contact-item" 
+                                   data-id="{{ teacher.id }}" data-type="teacher" data-name="{{ teacher.name }}">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ teacher.profile_pic or '/static/images/default-avatar.png' }}" 
+                                             class="rounded-circle me-3" width="40" height="40" alt="{{ teacher.name }}">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">{{ teacher.name }}</h6>
+                                            <small class="text-muted">{{ teacher.department }}</small>
+                                        </div>
+                                        {% if teacher.unread_count > 0 %}
+                                        <span class="badge bg-primary rounded-pill">{{ teacher.unread_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="col-md-8">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <div id="currentChatInfo">
+                                <h5 class="mb-0">Select a contact to start chatting</h5>
+                            </div>
+                            <div class="dropdown" id="chatActions" style="display: none;">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>View Profile</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-ban me-2"></i>Block User</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Clear Chat</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <!-- Chat Messages -->
+                            <div class="chat-messages p-3" id="chatMessages" 
+                                 style="height: 400px; overflow-y: auto;">
+                                <div class="text-center text-muted py-5">
+                                    <i class="fas fa-comments fa-3x mb-3"></i>
+                                    <p>Select a contact to view messages</p>
+                                </div>
+                            </div>
+
+                            <!-- Message Input -->
+                            <div class="card-footer bg-light" id="messageInput" style="display: none;">
+                                <form id="messageForm">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Type your message..." 
+                                               id="messageText" required>
+                                        <button type="button" class="btn btn-outline-secondary" id="attachButton">
+                                            <i class="fas fa-paperclip"></i>
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mt-2" id="filePreview" style="display: none;">
+                                        <small class="text-muted">File attached: <span id="fileName"></span></small>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeFile">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Announcements Section -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Recent Announcements</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for announcement in announcements %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ announcement.title }}</h6>
+                                    <p class="card-text text-muted small">{{ announcement.content|truncate(100) }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">{{ announcement.date }}</small>
+                                        <span class="badge bg-{{ announcement.priority_color }}">
+                                            {{ announcement.priority|title }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="newMessageForm">
+                    <div class="mb-3">
+                        <label class="form-label">Recipient Type</label>
+                        <select class="form-select" id="recipientType" required>
+                            <option value="">Select Type</option>
+                            <option value="student">Student</option>
+                            <option value="parent">Parent</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="class">Entire Class</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="recipientSelection" style="display: none;">
+                        <label class="form-label">Select Recipient</label>
+                        <select class="form-select" id="recipientSelect" required>
+                            <option value="">Select Recipient</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Message *</label>
+                        <textarea class="form-control" id="newMessageText" rows="4" 
+                                  placeholder="Type your message here..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <select class="form-select" id="messagePriority">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentChat = null;
+    const contactsList = document.getElementById('contactsList');
+    const currentChatInfo = document.getElementById('currentChatInfo');
+    const chatActions = document.getElementById('chatActions');
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const messageForm = document.getElementById('messageForm');
+    const messageText = document.getElementById('messageText');
+
+    // Contact search
+    const contactSearch = document.getElementById('contactSearch');
+    contactSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const contactItems = contactsList.querySelectorAll('.contact-item');
+        
+        contactItems.forEach(item => {
+            const name = item.getAttribute('data-name').toLowerCase();
+            if (name.includes(searchTerm)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    // Contact selection
+    contactsList.addEventListener('click', function(e) {
+        const contactItem = e.target.closest('.contact-item');
+        if (contactItem) {
+            e.preventDefault();
+            
+            // Remove active class from all contacts
+            contactsList.querySelectorAll('.contact-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to selected contact
+            contactItem.classList.add('active');
+            
+            // Set current chat
+            currentChat = {
+                id: contactItem.getAttribute('data-id'),
+                type: contactItem.getAttribute('data-type'),
+                name: contactItem.getAttribute('data-name')
+            };
+            
+            // Update chat header
+            currentChatInfo.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <img src="${contactItem.querySelector('img').src}" 
+                         class="rounded-circle me-3" width="40" height="40" alt="${currentChat.name}">
+                    <div>
+                        <h5 class="mb-0">${currentChat.name}</h5>
+                        <small class="text-light">${contactItem.querySelector('small').textContent}</small>
+                    </div>
+                </div>
+            `;
+            
+            // Show chat actions and message input
+            chatActions.style.display = 'block';
+            messageInput.style.display = 'block';
+            
+            // Load chat messages
+            loadChatMessages(currentChat.id, currentChat.type);
+        }
+    });
+
+    // Load chat messages
+    function loadChatMessages(contactId, contactType) {
+        // Simulate loading messages (in real app, this would be an API call)
+        chatMessages.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading messages...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading messages...</p>
+            </div>
+        `;
+        
+        // Simulate API delay
+        setTimeout(() => {
+            const messages = [
+                {
+                    id: 1,
+                    sender: 'them',
+                    text: 'Hello! I have a question about the assignment.',
+                    time: '2:30 PM',
+                    read: true
+                },
+                {
+                    id: 2,
+                    sender: 'me',
+                    text: 'Sure, what would you like to know?',
+                    time: '2:31 PM',
+                    read: true
+                },
+                {
+                    id: 3,
+                    sender: 'them',
+                    text: 'When is the submission deadline?',
+                    time: '2:32 PM',
+                    read: true
+                },
+                {
+                    id: 4,
+                    sender: 'me',
+                    text: 'The deadline is this Friday at 5:00 PM.',
+                    time: '2:33 PM',
+                    read: true
+                }
+            ];
+            
+            displayMessages(messages);
+        }, 1000);
+    }
+
+    // Display messages
+    function displayMessages(messages) {
+        chatMessages.innerHTML = '';
+        
+        messages.forEach(message => {
+            const messageElement = document.createElement('div');
+            messageElement.className = `d-flex mb-3 ${message.sender === 'me' ? 'justify-content-end' : 'justify-content-start'}`;
+            
+            messageElement.innerHTML = `
+                <div class="message-bubble ${message.sender === 'me' ? 'bg-primary text-white' : 'bg-light'} rounded p-3" 
+                     style="max-width: 70%;">
+                    <div class="message-text">${message.text}</div>
+                    <div class="message-time small ${message.sender === 'me' ? 'text-light' : 'text-muted'} mt-1">
+                        ${message.time} ${message.sender === 'me' && message.read ? '✓✓' : ''}
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageElement);
+        });
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Send message
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentChat || !messageText.value.trim()) return;
+        
+        const message = {
+            id: Date.now(),
+            sender: 'me',
+            text: messageText.value.trim(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            read: false
+        };
+        
+        // Add message to chat
+        const messageElement = document.createElement('div');
+        messageElement.className = 'd-flex mb-3 justify-content-end';
+        messageElement.innerHTML = `
+            <div class="message-bubble bg-primary text-white rounded p-3" style="max-width: 70%;">
+                <div class="message-text">${message.text}</div>
+                <div class="message-time small text-light mt-1">
+                    ${message.time} ${message.read ? '✓' : '◯'}
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageElement);
+        messageText.value = '';
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Simulate reply (in real app, this would be handled by WebSocket)
+        setTimeout(() => {
+            const reply = {
+                id: Date.now() + 1,
+                sender: 'them',
+                text: 'Thank you for the information!',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                read: true
+            };
+            
+            const replyElement = document.createElement('div');
+            replyElement.className = 'd-flex mb-3 justify-content-start';
+            replyElement.innerHTML = `
+                <div class="message-bubble bg-light rounded p-3" style="max-width: 70%;">
+                    <div class="message-text">${reply.text}</div>
+                    <div class="message-time small text-muted mt-1">${reply.time}</div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(replyElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 2000);
+    });
+
+    // New message modal functionality
+    const recipientType = document.getElementById('recipientType');
+    const recipientSelection = document.getElementById('recipientSelection');
+    const recipientSelect = document.getElementById('recipientSelect');
+
+    recipientType.addEventListener('change', function() {
+        if (this.value) {
+            recipientSelection.style.display = 'block';
+            // Populate recipient select based on type (in real app, this would be an API call)
+            recipientSelect.innerHTML = '<option value="">Loading...</option>';
+            
+            setTimeout(() => {
+                let options = '';
+                if (this.value === 'student') {
+                    {% for student in students %}
+                    options += `<option value="student_{{ student.id }}">{{ student.name }} - {{ student.grade }}</option>`;
+                    {% endfor %}
+                } else if (this.value === 'parent') {
+                    {% for parent in parents %}
+                    options += `<option value="parent_{{ parent.id }}">{{ parent.name }} ({{ parent.student_name }})</option>`;
+                    {% endfor %}
+                } else if (this.value === 'teacher') {
+                    {% for teacher in teachers %}
+                    options += `<option value="teacher_{{ teacher.id }}">{{ teacher.name }} - {{ teacher.department }}</option>`;
+                    {% endfor %}
+                } else if (this.value === 'class') {
+                    {% for class in classes %}
+                    options += `<option value="class_{{ class.id }}">{{ class.name }}</option>`;
+                    {% endfor %}
+                }
+                
+                recipientSelect.innerHTML = '<option value="">Select Recipient</option>' + options;
+            }, 500);
+        } else {
+            recipientSelection.style.display = 'none';
+        }
+    });
+});
+</script>
+
+<style>
+.chat-messages {
+    background-color: #f8f9fa;
+}
+.message-bubble {
+    word-wrap: break-word;
+}
+.contact-item.active {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+}
+.contact-item:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

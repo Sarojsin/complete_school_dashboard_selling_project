@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+
+{% block title %}My Courses{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/student/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/timetable">
+            <i class="bi bi-calendar-week me-2"></i>Timetable
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/student/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/notes">
+            <i class="bi bi-journal me-2"></i>Study Materials
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}My Courses{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-filter me-1"></i>Filter
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="?semester=all">All Semesters</a></li>
+        <li><a class="dropdown-item" href="?semester=1">Semester 1</a></li>
+        <li><a class="dropdown-item" href="?semester=2">Semester 2</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="?status=active">Active Courses</a></li>
+        <li><a class="dropdown-item" href="?status=completed">Completed</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Course Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Current Courses</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">6</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">This semester</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-book fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Total Credits</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">18</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">Required: 20</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-award fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Average Grade</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">87%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>2%
+                            </span>
+                            <span class="text-muted small">improvement</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-up fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending Assignments</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">3</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">Across all courses</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Courses -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-book me-2"></i>Current Courses - Semester 2</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for course in current_courses %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card course-card h-100">
+                            <div class="card-header position-relative">
+                                <div class="course-badge bg-{{ course.department_color }}"></div>
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title mb-1">{{ course.name }}</h6>
+                                        <p class="text-muted mb-0 small">{{ course.code }} • {{ course.credits }} Credits</p>
+                                    </div>
+                                    <span class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' }}">
+                                        {{ course.status|title }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Instructor</small>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ course.instructor }}">
+                                            <strong>{{ course.instructor }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Schedule</small>
+                                        <strong>{{ course.schedule }}</strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="course-progress mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Course Progress</small>
+                                        <small><strong>{{ course.progress }}%</strong></small>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-{{ 'success' if course.progress >= 80 else 'warning' if course.progress >= 60 else 'info' }}" 
+                                             style="width: {{ course.progress }}%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="course-stats">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Current Grade</small>
+                                            <strong class="text-{{ 'success' if course.current_grade >= 80 else 'warning' if course.current_grade >= 70 else 'danger' }}">
+                                                {{ course.current_grade }}%
+                                            </strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Assignments</small>
+                                            <strong class="text-primary">{{ course.assignments_completed }}/{{ course.assignments_total }}</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Attendance</small>
+                                            <strong class="text-{{ 'success' if course.attendance >= 85 else 'warning' if course.attendance >= 75 else 'danger' }}">
+                                                {{ course.attendance }}%
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Upcoming Items -->
+                                {% if course.upcoming_assignments or course.upcoming_tests %}
+                                <div class="upcoming-items mt-3">
+                                    <small class="text-muted d-block mb-2">Upcoming:</small>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for assignment in course.upcoming_assignments %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-journal-text me-1"></i>{{ assignment }}
+                                        </span>
+                                        {% endfor %}
+                                        {% for test in course.upcoming_tests %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-pencil-square me-1"></i>{{ test }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100">
+                                    <a href="/student/courses/{{ course.id }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    <a href="/student/notes?course={{ course.id }}" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-journal"></i> Materials
+                                    </a>
+                                    <a href="/student/assignments?course={{ course.id }}" class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-list-task"></i> Assignments
+                                    </a>
+                                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#contactModal{{ course.id }}">
+                                        <i class="bi bi-envelope"></i> Contact
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Progress Overview -->
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Course Progress Overview</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="progressChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-award me-2"></i>Academic Standing</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="display-6 fw-bold text-primary">3.75</div>
+                    <div class="text-muted">Current GPA</div>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: 94%"></div>
+                    </div>
+                    <small class="text-muted">94% of maximum GPA</small>
+                </div>
+                
+                <div class="academic-info">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Class Rank:</span>
+                        <strong>15/156</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Credits Earned:</span>
+                        <strong>54/120</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Courses Completed:</span>
+                        <strong>18</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Honors Status:</span>
+                        <strong class="text-success">Dean's List</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completed Courses -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-check-circle me-2"></i>Completed Courses</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Course</th>
+                                <th>Semester</th>
+                                <th>Instructor</th>
+                                <th>Final Grade</th>
+                                <th>Credits</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in completed_courses %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">{{ course.name }}</h6>
+                                        <small class="text-muted">{{ course.code }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">Sem {{ course.semester }}</span>
+                                </td>
+                                <td>{{ course.instructor }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if course.final_grade >= 80 else 'warning' if course.final_grade >= 70 else 'danger' }} fs-6">
+                                        {{ course.final_grade }}%
+                                    </span>
+                                </td>
+                                <td>{{ course.credits }}</td>
+                                <td>
+                                    <span class="badge bg-success">Completed</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/student/courses/{{ course.id }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/student/grades?course={{ course.id }}" class="btn btn-outline-info">
+                                            <i class="bi bi-graph-up"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Resources -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-folder me-2"></i>Course Resources</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card resource-card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-journal-text display-4 text-primary mb-3"></i>
+                                <h5>Study Materials</h5>
+                                <p class="text-muted">Access notes, presentations, and reading materials</p>
+                                <a href="/student/notes" class="btn btn-outline-primary">View Materials</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card resource-card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-camera-video display-4 text-success mb-3"></i>
+                                <h5>Video Lectures</h5>
+                                <p class="text-muted">Watch recorded lectures and tutorials</p>
+                                <a href="/student/videos" class="btn btn-outline-success">Watch Videos</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card resource-card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-chat-left-text display-4 text-info mb-3"></i>
+                                <h5>Discussion Forum</h5>
+                                <p class="text-muted">Discuss with classmates and teachers</p>
+                                <a href="#" class="btn btn-outline-info">Join Discussion</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .course-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .course-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .course-badge {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        border-radius: 4px 0 0 4px;
+    }
+    
+    .resource-card {
+        transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .resource-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .upcoming-items .badge {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Course Progress Chart
+    const progressCtx = document.getElementById('progressChart').getContext('2d');
+    const progressChart = new Chart(progressCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for course in current_courses %}
+                '{{ course.name }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Course Progress %',
+                data: [
+                    {% for course in current_courses %}
+                    {{ course.progress }},
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+                ],
+                borderColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Course card click handlers
+    document.querySelectorAll('.course-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if clicking on buttons or links
+            if (!e.target.closest('a') && !e.target.closest('button')) {
+                const viewLink = this.querySelector('a[href*="/courses/"]');
+                if (viewLink) {
+                    window.location.href = viewLink.href;
+                }
+            }
+        });
+    });
+
+    // Quick contact modal
+    document.querySelectorAll('[data-bs-target^="#contactModal"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const courseId = this.getAttribute('data-bs-target').replace('#contactModal', '');
+            // You can pre-fill modal content based on courseId
+        });
+    });
+</script>
+{% endblock %}

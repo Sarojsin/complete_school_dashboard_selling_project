@@ -1,0 +1,229 @@
+<!-- templates/authority/add_teacher.html -->
+{% extends 'base.html' %}
+
+{% block title %}Add New Teacher{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_teachers') }}">Teachers</a></li>
+                    <li class="breadcrumb-item active">Add Teacher</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Add New Teacher</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-4">
+                                <div class="mb-3">
+                                    <img src="/static/images/default-avatar.png" 
+                                         class="rounded-circle" width="150" height="150" alt="Profile Preview" id="profilePreview">
+                                </div>
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" name="profile_pic" 
+                                           accept="image/*" id="profileInput">
+                                </div>
+                            </div>
+
+                            <div class="col-md-8">
+                                <h5 class="mb-3">Personal Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Full Name *</label>
+                                            <input type="text" class="form-control" name="name" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email Address *</label>
+                                            <input type="email" class="form-control" name="email" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Phone Number *</label>
+                                            <input type="tel" class="form-control" name="phone" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Date of Birth</label>
+                                            <input type="date" class="form-control" name="dob">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-control" name="address" rows="3"></textarea>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h5 class="mb-3">Professional Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Employee ID *</label>
+                                            <input type="text" class="form-control" name="employee_id" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Designation *</label>
+                                            <select class="form-select" name="designation" required>
+                                                <option value="">Select Designation</option>
+                                                <option value="teacher">Teacher</option>
+                                                <option value="senior_teacher">Senior Teacher</option>
+                                                <option value="head_teacher">Head Teacher</option>
+                                                <option value="coordinator">Coordinator</option>
+                                                <option value="vice_principal">Vice Principal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Department *</label>
+                                            <select class="form-select" name="department" required>
+                                                <option value="">Select Department</option>
+                                                {% for department in departments %}
+                                                <option value="{{ department }}">{{ department }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Joining Date *</label>
+                                            <input type="date" class="form-control" name="joining_date" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Subjects *</label>
+                                    <select class="form-select" name="subjects" multiple required>
+                                        {% for subject in subjects %}
+                                        <option value="{{ subject }}">{{ subject }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Hold Ctrl to select multiple subjects</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Qualifications</label>
+                                    <textarea class="form-control" name="qualifications" rows="3" 
+                                              placeholder="List educational qualifications..."></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Experience (Years)</label>
+                                    <input type="number" class="form-control" name="experience" min="0" max="50">
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h5 class="mb-3">Account Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Username *</label>
+                                            <input type="text" class="form-control" name="username" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Password *</label>
+                                            <input type="password" class="form-control" name="password" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Role</label>
+                                    <select class="form-select" name="role">
+                                        <option value="teacher">Teacher</option>
+                                        <option value="head_teacher">Head Teacher</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_active" id="is_active" checked>
+                                        <label class="form-check-label" for="is_active">
+                                            Active Account
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('authority_teachers') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-user-plus me-2"></i> Add Teacher
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile picture preview
+    const profileInput = document.getElementById('profileInput');
+    const profilePreview = document.getElementById('profilePreview');
+
+    profileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Auto-generate username from email
+    const emailInput = document.querySelector('input[name="email"]');
+    const usernameInput = document.querySelector('input[name="username"]');
+
+    emailInput.addEventListener('blur', function() {
+        if (!usernameInput.value) {
+            const email = this.value;
+            const username = email.split('@')[0];
+            usernameInput.value = username;
+        }
+    });
+});
+</script>
+{% endblock %}

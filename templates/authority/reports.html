@@ -1,0 +1,476 @@
+<!-- templates/authority/reports.html -->
+{% extends 'base.html' %}
+
+{% block title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Reports & Analytics</h2>
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-2"></i> Export Reports
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i> Excel Report</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i> PDF Report</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i> Analytics Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" id="reportFilters">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" name="report_type" id="reportType">
+                            <option value="overview">Overview Dashboard</option>
+                            <option value="academic">Academic Performance</option>
+                            <option value="attendance">Attendance Analysis</option>
+                            <option value="financial">Financial Reports</option>
+                            <option value="staff">Staff Performance</option>
+                            <option value="student">Student Analytics</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Time Period</label>
+                        <select class="form-select" name="time_period">
+                            <option value="today">Today</option>
+                            <option value="week" selected>This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="year">This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" name="start_date" value="{{ default_start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" name="end_date" value="{{ default_end_date }}">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Grade/Class</label>
+                        <select class="form-select" name="grade">
+                            <option value="all">All Grades</option>
+                            {% for grade in grades %}
+                            <option value="{{ grade }}">{{ grade }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Subject</label>
+                        <select class="form-select" name="subject">
+                            <option value="all">All Subjects</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject }}">{{ subject }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Department</label>
+                        <select class="form-select" name="department">
+                            <option value="all">All Departments</option>
+                            {% for department in departments %}
+                            <option value="{{ department }}">{{ department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Students</h6>
+                            <h3>{{ metrics.total_students }}</h3>
+                            <small>{{ metrics.student_growth }}% from last period</small>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Average Attendance</h6>
+                            <h3>{{ metrics.avg_attendance }}%</h3>
+                            <small>{{ metrics.attendance_trend }}% trend</small>
+                        </div>
+                        <i class="fas fa-user-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Avg. Grade</h6>
+                            <h3>{{ metrics.avg_grade }}%</h3>
+                            <small>Top: {{ metrics.top_performer }}%</small>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Revenue</h6>
+                            <h3>${{ metrics.revenue }}</h3>
+                            <small>{{ metrics.revenue_growth }}% growth</small>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Graphs -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Student Performance by Subject</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="subjectPerformanceChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Attendance Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="attendanceTrendChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Monthly Enrollment & Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyTrendChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Grade Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="gradeDistributionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Reports -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Detailed Report Data</h5>
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" id="exportTable">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="printTable">
+                    <i class="fas fa-print me-1"></i> Print
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="reportTable">
+                    <thead>
+                        <tr>
+                            <th>Grade</th>
+                            <th>Total Students</th>
+                            <th>Avg. Attendance</th>
+                            <th>Avg. Grade</th>
+                            <th>Top Subject</th>
+                            <th>Weak Subject</th>
+                            <th>Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grade in detailed_report %}
+                        <tr>
+                            <td><strong>{{ grade.name }}</strong></td>
+                            <td>{{ grade.total_students }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if grade.attendance >= 90 else 'warning' if grade.attendance >= 80 else 'danger' }}">
+                                    {{ grade.attendance }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if grade.avg_grade >= 80 else 'warning' if grade.avg_grade >= 60 else 'danger' }}">
+                                    {{ grade.avg_grade }}%
+                                </span>
+                            </td>
+                            <td>{{ grade.top_subject }} ({{ grade.top_score }}%)</td>
+                            <td>{{ grade.weak_subject }} ({{ grade.weak_score }}%)</td>
+                            <td>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-{{ 'success' if grade.progress > 0 else 'danger' }}" 
+                                         style="width: {{ grade.progress|abs }}%"></div>
+                                </div>
+                                <small class="text-{{ 'success' if grade.progress > 0 else 'danger' }}">
+                                    {{ grade.progress }}%
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Reports -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Quick Reports</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-graduate me-2 text-primary"></i>
+                            Student Performance Report
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chalkboard-teacher me-2 text-success"></i>
+                            Teacher Performance Report
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="fas fa-money-bill-wave me-2 text-warning"></i>
+                            Financial Summary Report
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="fas fa-clipboard-list me-2 text-info"></i>
+                            Attendance Summary Report
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chart-pie me-2 text-danger"></i>
+                            Overall Analytics Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Recent Activities & Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ activity.title }}</h6>
+                                    <p class="mb-1 text-muted">{{ activity.description }}</p>
+                                    <small class="text-muted">{{ activity.time }}</small>
+                                </div>
+                                <span class="badge bg-{{ activity.priority_color }}">{{ activity.priority }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Subject Performance Chart
+    const subjectCtx = document.getElementById('subjectPerformanceChart').getContext('2d');
+    const subjectChart = new Chart(subjectCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Mathematics', 'Science', 'English', 'History', 'Geography', 'Art'],
+            datasets: [{
+                label: 'Average Grade %',
+                data: [85, 78, 92, 75, 80, 88],
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Average Grade %'
+                    }
+                }
+            }
+        }
+    });
+
+    // Attendance Trend Chart
+    const attendanceCtx = document.getElementById('attendanceTrendChart').getContext('2d');
+    const attendanceChart = new Chart(attendanceCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Attendance Rate %',
+                data: [92, 94, 91, 89, 95, 93],
+                borderColor: '#1cc88a',
+                backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Attendance Rate %'
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Trend Chart
+    const monthlyCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+    const monthlyChart = new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'New Enrollments',
+                data: [45, 52, 38, 65, 72, 58],
+                backgroundColor: '#4e73df'
+            }, {
+                label: 'Avg. Performance %',
+                data: [78, 82, 75, 85, 88, 82],
+                type: 'line',
+                borderColor: '#e74a3b',
+                backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                fill: true,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'New Enrollments'
+                    }
+                },
+                y1: {
+                    position: 'right',
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Avg. Performance %'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Grade Distribution Chart
+    const gradeCtx = document.getElementById('gradeDistributionChart').getContext('2d');
+    const gradeChart = new Chart(gradeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['A (90-100%)', 'B (80-89%)', 'C (70-79%)', 'D (60-69%)', 'F (Below 60%)'],
+            datasets: [{
+                data: [25, 35, 20, 15, 5],
+                backgroundColor: [
+                    '#1cc88a', '#4e73df', '#f6c23e', '#e74a3b', '#858796'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Export table functionality
+    document.getElementById('exportTable').addEventListener('click', function() {
+        // In real application, this would trigger a file download
+        alert('Export functionality would be implemented here');
+    });
+
+    document.getElementById('printTable').addEventListener('click', function() {
+        window.print();
+    });
+
+    // Report type change
+    document.getElementById('reportType').addEventListener('change', function() {
+        // In real application, this would update the report view
+        const reportType = this.value;
+        alert(`Loading ${reportType} report...`);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+<!-- templates/authority/add_fee.html -->
+{% extends 'base.html' %}
+
+{% block title %}Add Fee Payment{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_fees') }}">Fee Management</a></li>
+                    <li class="breadcrumb-item active">Add Fee Payment</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Record Fee Payment</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Student *</label>
+                                    <select class="form-select" name="student_id" id="studentSelect" required>
+                                        <option value="">Select Student</option>
+                                        {% for student in students %}
+                                        <option value="{{ student.id }}" data-grade="{{ student.grade }}">
+                                            {{ student.name }} - {{ student.grade }} (ID: {{ student.id }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Fee Structure</label>
+                                    <select class="form-select" name="fee_structure_id" id="feeStructureSelect" required>
+                                        <option value="">Select Fee Structure</option>
+                                        {% for structure in fee_structures %}
+                                        <option value="{{ structure.id }}" data-amount="{{ structure.total_amount }}">
+                                            {{ structure.grade_level }} - ${{ structure.total_amount }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Date *</label>
+                                    <input type="date" class="form-control" name="payment_date" 
+                                           value="{{ today }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Due Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="dueAmount" 
+                                               value="0" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Amount Paid *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" name="amount_paid" 
+                                               id="amountPaid" min="0" step="0.01" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Method *</label>
+                                    <select class="form-select" name="payment_method" required>
+                                        <option value="cash">Cash</option>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="credit_card">Credit Card</option>
+                                        <option value="debit_card">Debit Card</option>
+                                        <option value="check">Check</option>
+                                        <option value="online">Online Payment</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Transaction ID</label>
+                                    <input type="text" class="form-control" name="transaction_id" 
+                                           placeholder="For electronic payments">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Status</label>
+                                    <select class="form-select" name="status">
+                                        <option value="completed">Completed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="failed">Failed</option>
+                                        <option value="refunded">Refunded</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="3" 
+                                      placeholder="Any additional notes about this payment..."></textarea>
+                        </div>
+
+                        <!-- Payment Summary -->
+                        <div class="card bg-light mt-4">
+                            <div class="card-body">
+                                <h6>Payment Summary</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Total Due:</span>
+                                            <span id="summaryTotalDue">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Amount Paid:</span>
+                                            <span id="summaryAmountPaid">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Remaining Balance:</span>
+                                            <span id="summaryRemaining">$0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Payment Date:</span>
+                                            <span id="summaryDate">{{ today }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Payment Method:</span>
+                                            <span id="summaryMethod">-</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Status:</span>
+                                            <span class="badge bg-success">Completed</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('authority_fees') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-check me-2"></i> Record Payment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const studentSelect = document.getElementById('studentSelect');
+    const feeStructureSelect = document.getElementById('feeStructureSelect');
+    const dueAmountInput = document.getElementById('dueAmount');
+    const amountPaidInput = document.getElementById('amountPaid');
+    
+    // Summary elements
+    const summaryTotalDue = document.getElementById('summaryTotalDue');
+    const summaryAmountPaid = document.getElementById('summaryAmountPaid');
+    const summaryRemaining = document.getElementById('summaryRemaining');
+    const summaryDate = document.getElementById('summaryDate');
+    const summaryMethod = document.getElementById('summaryMethod');
+
+    function updateFeeStructure() {
+        const selectedStudent = studentSelect.options[studentSelect.selectedIndex];
+        const studentGrade = selectedStudent ? selectedStudent.getAttribute('data-grade') : '';
+        
+        // Enable all options first
+        Array.from(feeStructureSelect.options).forEach(option => {
+            option.disabled = false;
+        });
+        
+        // Disable options that don't match student's grade
+        if (studentGrade) {
+            Array.from(feeStructureSelect.options).forEach(option => {
+                if (option.value && !option.text.includes(studentGrade)) {
+                    option.disabled = true;
+                }
+            });
+        }
+        
+        updatePaymentSummary();
+    }
+
+    function updatePaymentSummary() {
+        const selectedStructure = feeStructureSelect.options[feeStructureSelect.selectedIndex];
+        const totalDue = selectedStructure ? parseFloat(selectedStructure.getAttribute('data-amount')) || 0 : 0;
+        const amountPaid = parseFloat(amountPaidInput.value) || 0;
+        const remaining = totalDue - amountPaid;
+
+        // Update inputs
+        dueAmountInput.value = totalDue.toFixed(2);
+        
+        // Update summary
+        summaryTotalDue.textContent = `$${totalDue.toFixed(2)}`;
+        summaryAmountPaid.textContent = `$${amountPaid.toFixed(2)}`;
+        summaryRemaining.textContent = `$${remaining.toFixed(2)}`;
+        
+        // Update remaining balance color
+        if (remaining <= 0) {
+            summaryRemaining.className = 'text-success';
+        } else if (remaining > 0) {
+            summaryRemaining.className = 'text-danger';
+        } else {
+            summaryRemaining.className = '';
+        }
+    }
+
+    studentSelect.addEventListener('change', updateFeeStructure);
+    feeStructureSelect.addEventListener('change', updatePaymentSummary);
+    amountPaidInput.addEventListener('input', updatePaymentSummary);
+
+    // Update payment method in summary
+    document.querySelector('select[name="payment_method"]').addEventListener('change', function() {
+        summaryMethod.textContent = this.options[this.selectedIndex].text;
+    });
+
+    // Update date in summary
+    document.querySelector('input[name="payment_date"]').addEventListener('change', function() {
+        summaryDate.textContent = this.value;
+    });
+
+    // Initialize
+    updateFeeStructure();
+});
+</script>
+{% endblock %}

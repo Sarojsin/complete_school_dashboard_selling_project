@@ -1,0 +1,298 @@
+<!-- templates/teacher/courses.html -->
+{% extends 'base.html' %}
+
+{% block title %}My Courses{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Courses</h2>
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-cog me-2"></i> Manage
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#"><i class="fas fa-plus me-2"></i> Add Course Material</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-sync me-2"></i> Sync with Schedule</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Course Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Courses</h6>
+                            <h3>{{ stats.total_courses }}</h3>
+                        </div>
+                        <i class="fas fa-book fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Classes</h6>
+                            <h3>{{ stats.active_classes }}</h3>
+                        </div>
+                        <i class="fas fa-chalkboard-teacher fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Students</h6>
+                            <h3>{{ stats.total_students }}</h3>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Upcoming Classes</h6>
+                            <h3>{{ stats.upcoming_classes }}</h3>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="row" id="coursesGrid">
+        {% for course in courses %}
+        <div class="col-xl-4 col-lg-6 mb-4">
+            <div class="card course-card h-100 shadow-sm">
+                <div
+                    class="card-header bg-{{ course.color }} text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ course.subject }}</h5>
+                    <span class="badge bg-light text-dark">{{ course.grade }}</span>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-3">
+                        <h6 class="text-muted">{{ course.code }}</h6>
+                        <p class="card-text">{{ course.description|truncate(100) }}</p>
+                    </div>
+
+                    <div class="mt-auto">
+                        <!-- Class Info -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-users me-1"></i>{{ course.student_count }} students
+                            </small>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>{{ course.schedule }}
+                            </small>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Course Progress</small>
+                                <small>{{ course.progress }}%</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-{{ course.color }}" style="width: {{ course.progress }}%">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resources -->
+                        <div class="d-flex justify-content-between text-muted small mb-3">
+                            <span>
+                                <i class="fas fa-file-alt me-1"></i>{{ course.assignment_count }}
+                            </span>
+                            <span>
+                                <i class="fas fa-video me-1"></i>{{ course.video_count }}
+                            </span>
+                            <span>
+                                <i class="fas fa-sticky-note me-1"></i>{{ course.note_count }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{{ url_for('teacher_course_detail', id=course.id) }}"
+                            class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i> View
+                        </a>
+                        <a href="{{ url_for('teacher_course_students', id=course.id) }}"
+                            class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-users me-1"></i> Students
+                        </a>
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit Course</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-chart-line me-2"></i> Analytics</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>
+                                    Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Upcoming Classes -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Today's Classes</h5>
+        </div>
+        <div class="card-body">
+            {% if todays_classes %}
+            <div class="list-group list-group-flush">
+                {% for class in todays_classes %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ class.subject }} - {{ class.grade }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>{{ class.time }} •
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ class.room }}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span
+                                class="badge bg-{{ 'success' if class.status == 'completed' else 'primary' if class.status == 'ongoing' else 'secondary' }} me-2">
+                                {{ class.status|title }}
+                            </span>
+                            <a href="{{ url_for('teacher_take_attendance') }}?class={{ class.id }}"
+                                class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-clipboard-list me-1"></i> Attendance
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted text-center mb-0">No classes scheduled for today</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Course Analytics -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Student Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Assignment Completion</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="assignmentChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Performance Chart
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        const performanceChart = new Chart(performanceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'],
+                datasets: [{
+                    label: 'Number of Students',
+                    data: [12, 18, 25, 20, 15, 8, 5, 2],
+                    backgroundColor: [
+                        '#28a745', '#20c997', '#17a2b8', '#007bff',
+                        '#6f42c1', '#fd7e14', '#ffc107', '#dc3545'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Students'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Assignment Completion Chart
+        const assignmentCtx = document.getElementById('assignmentChart').getContext('2d');
+        const assignmentChart = new Chart(assignmentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Submitted Late', 'Pending', 'Not Submitted'],
+                datasets: [{
+                    data: [65, 15, 12, 8],
+                    backgroundColor: [
+                        '#28a745',
+                        '#ffc107',
+                        '#fd7e14',
+                        '#dc3545'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+<style>
+    .course-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .course-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
+{% endblock %}

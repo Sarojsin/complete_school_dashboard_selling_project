@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Take Test - {{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .test-timer {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 1000;
+        background: #fff;
+        border: 2px solid #e74a3b;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        min-width: 200px;
+    }
+    
+    .timer-warning {
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { background-color: #fff; }
+        50% { background-color: #ffe6e6; }
+        100% { background-color: #fff; }
+    }
+    
+    .question-card {
+        border-left: 4px solid #4e73df;
+        margin-bottom: 1.5rem;
+    }
+    
+    .option-label {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .option-label:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .option-input:checked + .option-content {
+        background-color: #e7f1ff;
+        border-color: #4e73df;
+    }
+</style>
+{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/student/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/tests">
+            <i class="bi bi-pencil-square me-2"></i>Tests
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}{{ test.title }}{% endblock %}
+
+{% block content %}
+<!-- Test Timer -->
+<div class="test-timer" id="testTimer">
+    <div class="text-center">
+        <h5 class="mb-2">Time Remaining</h5>
+        <div class="display-6 fw-bold text-danger" id="timerDisplay">00:00</div>
+        <small class="text-muted">Auto-submits when time expires</small>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Test Instructions -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Test Instructions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-clock text-primary me-2"></i><strong>Duration:</strong> {{ test.duration }} minutes</li>
+                            <li><i class="bi bi-question-circle text-primary me-2"></i><strong>Total Questions:</strong> {{ test.questions|length }}</li>
+                            <li><i class="bi bi-check-circle text-primary me-2"></i><strong>Passing Score:</strong> {{ test.passing_score }}%</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-exclamation-triangle text-warning me-2"></i>Do not refresh the page</li>
+                            <li><i class="bi bi-x-circle text-danger me-2"></i>No going back to previous questions</li>
+                            <li><i class="bi bi-shield-check text-success me-2"></i>Answers auto-save every 30 seconds</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Form -->
+        <form id="testForm" method="POST" action="/student/tests/{{ test.id }}/submit">
+            <!-- Questions -->
+            {% for question in test.questions %}
+            <div class="card question-card mb-4" id="question-{{ loop.index }}">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        Question {{ loop.index }} of {{ test.questions|length }}
+                        {% if question.points %}
+                        <span class="badge bg-primary float-end">{{ question.points }} points</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Question Text -->
+                    <div class="mb-4">
+                        <p class="fw-semibold">{{ question.text }}</p>
+                        {% if question.image %}
+                        <div class="mb-3">
+                            <img src="{{ question.image }}" alt="Question image" class="img-fluid rounded" style="max-height: 200px;">
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Options -->
+                    <div class="options-container">
+                        {% if question.type == 'multiple_choice' %}
+                        <div class="list-group">
+                            {% for option in question.options %}
+                            <label class="list-group-item option-label p-3 mb-2 border rounded">
+                                <input class="form-check-input me-3 option-input" type="radio" 
+                                       name="question_{{ question.id }}" value="{{ option.id }}"
+                                       {% if user_answers[question.id|string] == option.id %}checked{% endif %}>
+                                <span class="option-content w-100">
+                                    {{ option.text }}
+                                    {% if option.image %}
+                                    <div class="mt-2">
+                                        <img src="{{ option.image }}" alt="Option image" class="img-fluid rounded" style="max-height: 100px;">
+                                    </div>
+                                    {% endif %}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif question.type == 'true_false' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="list-group-item option-label p-3 mb-2 border rounded">
+                                    <input class="form-check-input me-3 option-input" type="radio" 
+                                           name="question_{{ question.id }}" value="true"
+                                           {% if user_answers[question.id|string] == 'true' %}checked{% endif %}>
+                                    <span class="option-content w-100">True</span>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="list-group-item option-label p-3 mb-2 border rounded">
+                                    <input class="form-check-input me-3 option-input" type="radio" 
+                                           name="question_{{ question.id }}" value="false"
+                                           {% if user_answers[question.id|string] == 'false' %}checked{% endif %}>
+                                    <span class="option-content w-100">False</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        {% elif question.type == 'short_answer' %}
+                        <div class="form-group">
+                            <textarea class="form-control" name="question_{{ question.id }}" 
+                                      rows="3" placeholder="Type your answer here..."
+                                      >{{ user_answers[question.id|string] or '' }}</textarea>
+                        </div>
+                        
+                        {% elif question.type == 'essay' %}
+                        <div class="form-group">
+                            <textarea class="form-control" name="question_{{ question.id }}" 
+                                      rows="6" placeholder="Write your essay answer here..."
+                                      >{{ user_answers[question.id|string] or '' }}</textarea>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Question Navigation -->
+                    <div class="d-flex justify-content-between mt-4">
+                        {% if not loop.first %}
+                        <button type="button" class="btn btn-outline-primary btn-prev" data-question="{{ loop.index0 }}">
+                            <i class="bi bi-arrow-left me-1"></i>Previous
+                        </button>
+                        {% else %}
+                        <div></div>
+                        {% endif %}
+                        
+                        {% if not loop.last %}
+                        <button type="button" class="btn btn-primary btn-next" data-question="{{ loop.index + 1 }}">
+                            Next <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                        {% else %}
+                        <button type="submit" class="btn btn-success" id="submitTest">
+                            <i class="bi bi-check-circle me-1"></i>Submit Test
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </form>
+
+        <!-- Progress Indicator -->
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Test Progress</h6>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                </div>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>Answered: <strong id="answeredCount">0</strong>/{{ test.questions|length }}</span>
+                    <span>Remaining: <strong id="remainingCount">{{ test.questions|length }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Confirmation Modal -->
+<div class="modal fade" id="submitModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Submit Test</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit your test?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> You cannot change your answers after submission.
+                </div>
+                <p><strong>Questions Answered:</strong> <span id="modalAnsweredCount">0</span>/{{ test.questions|length }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Test</button>
+                <button type="button" class="btn btn-primary" id="confirmSubmit">Yes, Submit Test</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Test Timer
+    let totalTime = {{ test.duration }} * 60; // Convert to seconds
+    let timeRemaining = totalTime;
+    const timerElement = document.getElementById('timerDisplay');
+    const timerContainer = document.getElementById('testTimer');
+
+    function updateTimer() {
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Warning styles when time is running low
+        if (timeRemaining <= 300) { // 5 minutes
+            timerContainer.classList.add('timer-warning');
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            autoSubmitTest();
+        }
+        
+        timeRemaining--;
+    }
+
+    const timerInterval = setInterval(updateTimer, 1000);
+
+    // Auto-save answers
+    function autoSave() {
+        const formData = new FormData(document.getElementById('testForm'));
+        // Send auto-save request to server
+        console.log('Auto-saving answers...');
+    }
+
+    setInterval(autoSave, 30000); // Auto-save every 30 seconds
+
+    // Question Navigation
+    document.querySelectorAll('.btn-next').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const nextQuestion = this.getAttribute('data-question');
+            document.getElementById(`question-${nextQuestion}`).scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    document.querySelectorAll('.btn-prev').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prevQuestion = this.getAttribute('data-question');
+            document.getElementById(`question-${prevQuestion}`).scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    // Progress Tracking
+    function updateProgress() {
+        const totalQuestions = {{ test.questions|length }};
+        const answered = document.querySelectorAll('input:checked, textarea').length;
+        const progress = (answered / totalQuestions) * 100;
+        
+        document.getElementById('progressBar').style.width = `${progress}%`;
+        document.getElementById('answeredCount').textContent = answered;
+        document.getElementById('remainingCount').textContent = totalQuestions - answered;
+        document.getElementById('modalAnsweredCount').textContent = answered;
+    }
+
+    // Update progress when answers change
+    document.querySelectorAll('input, textarea').forEach(element => {
+        element.addEventListener('change', updateProgress);
+    });
+
+    // Initial progress update
+    updateProgress();
+
+    // Submit Confirmation
+    document.getElementById('submitTest').addEventListener('click', function(e) {
+        e.preventDefault();
+        updateProgress();
+        new bootstrap.Modal(document.getElementById('submitModal')).show();
+    });
+
+    document.getElementById('confirmSubmit').addEventListener('click', function() {
+        document.getElementById('testForm').submit();
+    });
+
+    // Auto-submit when time expires
+    function autoSubmitTest() {
+        document.getElementById('testForm').submit();
+    }
+
+    // Prevent accidental navigation
+    window.addEventListener('beforeunload', function(e) {
+        if (timeRemaining > 0) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved test answers. Are you sure you want to leave?';
+            return e.returnValue;
+        }
+    });
+</script>
+{% endblock %}

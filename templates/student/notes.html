@@ -1,0 +1,296 @@
+<!-- templates/student/notes.html -->
+{% extends 'base.html' %}
+
+{% block title %}Study Notes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Sidebar -->
+            {% include 'student/sidebar.html' %}
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Study Notes</h2>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown">
+                        <i class="fas fa-filter me-2"></i>Filter by Subject
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?subject=all">All Subjects</a></li>
+                        {% for subject in subjects %}
+                        <li><a class="dropdown-item" href="?subject={{ subject }}">{{ subject }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search notes..." 
+                               id="notesSearch">
+                        <button class="btn btn-primary" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="sortSelect">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="subject">By Subject</option>
+                        <option value="teacher">By Teacher</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Notes Grid -->
+            <div class="row" id="notesGrid">
+                {% for note in notes %}
+                <div class="col-lg-6 col-xl-4 mb-4 note-item" 
+                     data-subject="{{ note.subject }}"
+                     data-teacher="{{ note.teacher }}"
+                     data-date="{{ note.upload_date }}">
+                    <div class="card h-100 shadow-sm note-card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">{{ note.subject }}</span>
+                            <small class="text-muted">{{ note.upload_date }}</small>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">{{ note.title }}</h6>
+                            <p class="card-text text-muted small flex-grow-1">
+                                {{ note.description|truncate(120) }}
+                            </p>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user me-1"></i>{{ note.teacher }}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-file me-1"></i>{{ note.file_type }}
+                                    </small>
+                                </div>
+                                {% if note.tags %}
+                                <div class="mt-2">
+                                    {% for tag in note.tags %}
+                                    <span class="badge bg-light text-dark small me-1">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100" role="group">
+                                <a href="{{ note.file_url }}" class="btn btn-outline-primary btn-sm" 
+                                   target="_blank" download>
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                                <button type="button" class="btn btn-outline-info btn-sm preview-btn"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#previewModal{{ note.id }}">
+                                    <i class="fas fa-eye me-1"></i>Preview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- No Notes Message -->
+            {% if not notes %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Study Notes Available</h4>
+                <p class="text-muted">Check back later for new study materials.</p>
+            </div>
+            {% endif %}
+
+            <!-- Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white text-center">
+                        <div class="card-body">
+                            <h4>{{ stats.total_notes }}</h4>
+                            <p class="mb-0">Total Notes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white text-center">
+                        <div class="card-body">
+                            <h4>{{ stats.total_subjects }}</h4>
+                            <p class="mb-0">Subjects</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white text-center">
+                        <div class="card-body">
+                            <h4>{{ stats.total_downloads }}</h4>
+                            <p class="mb-0">Downloads</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark text-center">
+                        <div class="card-body">
+                            <h4>{{ stats.recent_uploads }}</h4>
+                            <p class="mb-0">This Month</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Downloads -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Recently Downloaded</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_downloads %}
+                    <div class="list-group list-group-flush">
+                        {% for download in recent_downloads %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ download.title }}</h6>
+                                    <small class="text-muted">{{ download.subject }} • {{ download.teacher }}</small>
+                                </div>
+                                <small class="text-muted">{{ download.download_date }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center mb-0">No recent downloads</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modals -->
+{% for note in notes %}
+<div class="modal fade" id="previewModal{{ note.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ note.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Subject:</strong> {{ note.subject }}</p>
+                        <p class="mb-1"><strong>Teacher:</strong> {{ note.teacher }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Upload Date:</strong> {{ note.upload_date }}</p>
+                        <p class="mb-1"><strong>File Type:</strong> {{ note.file_type }}</p>
+                    </div>
+                </div>
+
+                <div class="border rounded p-3 bg-light mb-3">
+                    <h6>Description</h6>
+                    <p class="mb-0">{{ note.description }}</p>
+                </div>
+
+                <!-- Preview Content -->
+                <div class="preview-container border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                    {% if note.file_type == 'pdf' %}
+                    <iframe src="{{ note.file_url }}#view=FitH" width="100%" height="350" 
+                            style="border: none;"></iframe>
+                    {% elif note.file_type in ['doc', 'docx'] %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-word fa-3x text-primary mb-3"></i>
+                        <p>Document preview not available. Please download to view.</p>
+                    </div>
+                    {% elif note.file_type in ['jpg', 'jpeg', 'png', 'gif'] %}
+                    <img src="{{ note.file_url }}" alt="Note image" class="img-fluid">
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file fa-3x text-secondary mb-3"></i>
+                        <p>Preview not available for this file type.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if note.tags %}
+                <div class="mt-3">
+                    <strong>Tags:</strong>
+                    {% for tag in note.tags %}
+                    <span class="badge bg-light text-dark me-1">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ note.file_url }}" class="btn btn-primary" download>
+                    <i class="fas fa-download me-1"></i>Download
+                </a>
+                {% if note.file_type == 'pdf' %}
+                <a href="{{ note.file_url }}" class="btn btn-outline-primary" target="_blank">
+                    <i class="fas fa-external-link-alt me-1"></i>Open in New Tab
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Notes search functionality
+    const notesSearch = document.getElementById('notesSearch');
+    const noteItems = document.querySelectorAll('.note-item');
+    const sortSelect = document.getElementById('sortSelect');
+
+    function filterAndSortNotes() {
+        const searchTerm = notesSearch.value.toLowerCase();
+        const sortBy = sortSelect.value;
+
+        // Filter
+        const filteredNotes = Array.from(noteItems).filter(item => {
+            const title = item.querySelector('.card-title').textContent.toLowerCase();
+            const subject = item.getAttribute('data-subject').toLowerCase();
+            const teacher = item.getAttribute('data-teacher').toLowerCase();
+            
+            return title.includes(searchTerm) || subject.includes(searchTerm) || teacher.includes(searchTerm);
+        });
+
+        // Sort
+        filteredNotes.sort((a, b) => {
+            switch(sortBy) {
+                case 'newest':
+                    return new Date(b.getAttribute('data-date')) - new Date(a.getAttribute('data-date'));
+                case 'oldest':
+                    return new Date(a.getAttribute('data-date')) - new Date(b.getAttribute('data-date'));
+                case 'subject':
+                    return a.getAttribute('data-subject').localeCompare(b.getAttribute('data-subject'));
+                case 'teacher':
+                    return a.getAttribute('data-teacher').localeCompare(b.getAttribute('data-teacher'));
+                default:
+                    return 0;
+            }
+        });
+
+        // Hide all notes first
+        noteItems.forEach(item => item.style.display = 'none');
+        
+        // Show filtered and sorted notes
+        filteredNotes.forEach(item => item.style.display = 'block');
+    }
+
+    notesSearch.addEventListener('input', filterAndSortNotes);
+    sortSelect.addEventListener('change', filterAndSortNotes);
+});
+</script>
+{% endblock %}

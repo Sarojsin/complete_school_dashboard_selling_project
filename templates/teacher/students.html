@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Student Management{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Student Management{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <div class="dropdown">
+        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="bi bi-filter me-1"></i>Filter by Class
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="?class=all">All Classes</a></li>
+            <li><a class="dropdown-item" href="?class=9A">Grade 9A</a></li>
+            <li><a class="dropdown-item" href="?class=9B">Grade 9B</a></li>
+            <li><a class="dropdown-item" href="?class=10A">Grade 10A</a></li>
+            <li><a class="dropdown-item" href="?class=10B">Grade 10B</a></li>
+        </ul>
+    </div>
+    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <i class="bi bi-download me-1"></i>Export
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card primary h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Students</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">156</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-people fs-1 text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card success h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-success text-uppercase mb-1">Average Attendance</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">92%</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-calendar-check fs-1 text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card info h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-info text-uppercase mb-1">Average Grade</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">84%</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-graph-up fs-1 text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card warning h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending Assignments</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">23</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-clock fs-1 text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Search students by name or ID...">
+                            <button class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select">
+                            <option value="">All Grades</option>
+                            <option value="9">Grade 9</option>
+                            <option value="10">Grade 10</option>
+                            <option value="11">Grade 11</option>
+                            <option value="12">Grade 12</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select">
+                            <option value="">All Sections</option>
+                            <option value="A">Section A</option>
+                            <option value="B">Section B</option>
+                            <option value="C">Section C</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Student List</h5>
+                <span class="badge bg-primary">156 Students</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Student ID</th>
+                                <th>Grade & Section</th>
+                                <th>Attendance</th>
+                                <th>Average Grade</th>
+                                <th>Pending Work</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ student.avatar }}" class="rounded-circle me-3" width="40" height="40" alt="{{ student.name }}">
+                                        <div>
+                                            <h6 class="mb-1">{{ student.name }}</h6>
+                                            <small class="text-muted">{{ student.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <code>{{ student.id }}</code>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ student.grade }}{{ student.section }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                            <div class="progress-bar bg-{{ 'success' if student.attendance >= 90 else 'warning' if student.attendance >= 75 else 'danger' }}" style="width: {{ student.attendance }}%"></div>
+                                        </div>
+                                        <small>{{ student.attendance }}%</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if student.average_grade >= 90 else 'warning' if student.average_grade >= 70 else 'danger' }}">
+                                        {{ student.average_grade }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'warning' if student.pending_assignments > 0 else 'success' }}">
+                                        {{ student.pending_assignments }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/teacher/students/{{ student.id }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/teacher/students/{{ student.id }}/grades" class="btn btn-outline-success">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#contactModal{{ student.id }}">
+                                            <i class="bi bi-envelope"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Student pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                            <a class="page-link" href="#">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Student Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Export Format</label>
+                    <select class="form-select">
+                        <option value="csv">CSV Format</option>
+                        <option value="excel">Excel Format</option>
+                        <option value="pdf">PDF Report</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data to Include</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Basic Information</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked>
+                        <label class="form-check-label">Grades</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Attendance</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-download me-1"></i>Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

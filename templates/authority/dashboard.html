@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link active" href="/authority/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/teachers">
+            <i class="bi bi-person-badge me-2"></i>Teachers
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/fees">
+            <i class="bi bi-cash-coin me-2"></i>Fee Management
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/notices">
+            <i class="bi bi-megaphone me-2"></i>Notices
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/analytics">
+            <i class="bi bi-graph-up me-2"></i>Analytics
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Students</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">1,247</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Teaching Staff</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">86</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-badge fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Courses Offered</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">54</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-book fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Fee Collection</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">94%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cash-coin fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Administration Modules -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-gear-fill me-2"></i>Administration</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Student Management -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-primary h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-people-fill fs-1 text-primary me-3"></i>
+                                    <h5 class="mb-0">Students</h5>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="/authority/students" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-list-ul me-1"></i> View All Students
+                                    </a>
+                                    <a href="/authority/students/add" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-plus-circle me-1"></i> Add New Student
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Teacher Management -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-success h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-person-badge-fill fs-1 text-success me-3"></i>
+                                    <h5 class="mb-0">Teachers</h5>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="/authority/teachers" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-list-ul me-1"></i> View All Teachers
+                                    </a>
+                                    <a href="/authority/teachers/add" class="btn btn-sm btn-success">
+                                        <i class="bi bi-plus-circle me-1"></i> Add New Teacher
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Management -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-info h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-book-fill fs-1 text-info me-3"></i>
+                                    <h5 class="mb-0">Courses</h5>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="/authority/courses" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-list-ul me-1"></i> View All Courses
+                                    </a>
+                                    <a href="/authority/courses/add" class="btn btn-sm btn-info">
+                                        <i class="bi bi-plus-circle me-1"></i> Create New Course
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fee Management -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-warning h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-cash-coin fs-1 text-warning me-3"></i>
+                                    <h5 class="mb-0">Fees</h5>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="/authority/fees" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-list-ul me-1"></i> View All Fees
+                                    </a>
+                                    <a href="/authority/fees/structure" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-diagram-3 me-1"></i> Fee Structure
+                                    </a>
+                                    <a href="/authority/fees/add" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-plus-circle me-1"></i> Add Fee Record
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notice Board -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-danger h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-megaphone-fill fs-1 text-danger me-3"></i>
+                                    <h5 class="mb-0">Notices</h5>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="/authority/notices" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-list-ul me-1"></i> View All Notices
+                                    </a>
+                                    <a href="/authority/notices/add" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-plus-circle me-1"></i> Post New Notice
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-secondary h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-graph-up-arrow fs-1 text-secondary me-3"></i>
+                                    <h5 class="mb-0">Analytics</h5>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="/authority/analytics" class="btn btn-sm btn-secondary">
+                                        <i class="bi bi-bar-chart-line me-1"></i> View Analytics
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

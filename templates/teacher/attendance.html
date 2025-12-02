@@ -1,0 +1,340 @@
+<!-- templates/teacher/attendance.html -->
+{% extends 'base.html' %}
+
+{% block title %}Attendance Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Attendance Management</h2>
+        <a href="{{ url_for('teacher_take_attendance') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Take Attendance
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Students</h6>
+                            <h3>{{ stats.total_students }}</h3>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Present Today</h6>
+                            <h3>{{ stats.present_today }}</h3>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Absent Today</h6>
+                            <h3>{{ stats.absent_today }}</h3>
+                        </div>
+                        <i class="fas fa-times-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Overall %</h6>
+                            <h3>{{ stats.overall_percentage }}%</h3>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Class</label>
+                    <select class="form-select" id="classFilter">
+                        <option value="all">All Classes</option>
+                        {% for class in classes %}
+                        <option value="{{ class }}">{{ class }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Subject</label>
+                    <select class="form-select" id="subjectFilter">
+                        <option value="all">All Subjects</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject }}">{{ subject }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date Range</label>
+                    <input type="date" class="form-control" id="dateFilter">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="present">Present</option>
+                        <option value="absent">Absent</option>
+                        <option value="late">Late</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Attendance Records</h5>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i> Excel</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i> PDF</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i> CSV</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Class</th>
+                            <th>Subject</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Late</th>
+                            <th>Percentage</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                        <tr data-class="{{ record.class }}" data-subject="{{ record.subject }}"
+                            data-date="{{ record.date }}">
+                            <td>
+                                <strong>{{ record.date }}</strong>
+                                <br>
+                                <small class="text-muted">{{ record.day }}</small>
+                            </td>
+                            <td>{{ record.class }}</td>
+                            <td>{{ record.subject }}</td>
+                            <td>
+                                <span class="text-success fw-bold">{{ record.present }}</span>
+                            </td>
+                            <td>
+                                <span class="text-danger fw-bold">{{ record.absent }}</span>
+                            </td>
+                            <td>
+                                <span class="text-warning fw-bold">{{ record.late }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                        <div class="progress-bar bg-{{ 'success' if record.percentage >= 80 else 'warning' if record.percentage >= 60 else 'danger' }}"
+                                            style="width: {{ record.percentage }}%"></div>
+                                    </div>
+                                    <small>{{ record.percentage }}%</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('teacher_view_attendance', id=record.id) }}"
+                                        class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('teacher_edit_attendance', id=record.id) }}"
+                                        class="btn btn-outline-info">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-outline-danger delete-attendance" data-id="{{ record.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not attendance_records %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Attendance Records</h5>
+                <p class="text-muted">Start taking attendance to see records here.</p>
+                <a href="{{ url_for('teacher_take_attendance') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> Take Attendance
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Monthly Overview -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Monthly Overview - {{ current_month }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Class</th>
+                                    <th>Working Days</th>
+                                    <th>Avg. Attendance</th>
+                                    <th>Best Day</th>
+                                    <th>Lowest Day</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for overview in monthly_overview %}
+                                <tr>
+                                    <td><strong>{{ overview.class }}</strong></td>
+                                    <td>{{ overview.working_days }}</td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{{ 'success' if overview.average_attendance >= 80 else 'warning' if overview.average_attendance >= 60 else 'danger' }}">
+                                            {{ overview.average_attendance }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ overview.best_day.date }} ({{ overview.best_day.percentage }}%)
+                                    </td>
+                                    <td>
+                                        {{ overview.lowest_day.date }} ({{ overview.lowest_day.percentage }}%)
+                                    </td>
+                                    <td>
+                                        <i
+                                            class="fas fa-arrow-{{ 'up text-success' if overview.trend == 'up' else 'down text-danger' }} me-1"></i>
+                                        {{ overview.trend_percentage }}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6>Attendance Distribution</h6>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Present</span>
+                        <span>{{ monthly_stats.present_percentage }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" style="width: {{ monthly_stats.present_percentage }}%">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Absent</span>
+                        <span>{{ monthly_stats.absent_percentage }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-danger" style="width: {{ monthly_stats.absent_percentage }}%"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Late</span>
+                        <span>{{ monthly_stats.late_percentage }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-warning" style="width: {{ monthly_stats.late_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Filter functionality
+        const classFilter = document.getElementById('classFilter');
+        const subjectFilter = document.getElementById('subjectFilter');
+        const dateFilter = document.getElementById('dateFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const tableRows = document.querySelectorAll('#attendanceTable tbody tr');
+
+        function filterAttendance() {
+            const classValue = classFilter.value;
+            const subjectValue = subjectFilter.value;
+            const dateValue = dateFilter.value;
+            const statusValue = statusFilter.value;
+
+            tableRows.forEach(row => {
+                const classVal = row.getAttribute('data-class');
+                const subject = row.getAttribute('data-subject');
+                const date = row.getAttribute('data-date');
+
+                const classMatch = classValue === 'all' || classVal === classValue;
+                const subjectMatch = subjectValue === 'all' || subject === subjectValue;
+                const dateMatch = !dateValue || date === dateValue;
+
+                if (classMatch && subjectMatch && dateMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        classFilter.addEventListener('change', filterAttendance);
+        subjectFilter.addEventListener('change', filterAttendance);
+        dateFilter.addEventListener('change', filterAttendance);
+        statusFilter.addEventListener('change', filterAttendance);
+
+        // Delete attendance record
+        document.querySelectorAll('.delete-attendance').forEach(button => {
+            button.addEventListener('click', function () {
+                const recordId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this attendance record?')) {
+                    fetch(`/teacher/attendance/delete/${recordId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

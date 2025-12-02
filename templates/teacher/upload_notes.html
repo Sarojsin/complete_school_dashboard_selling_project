@@ -1,0 +1,586 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Study Materials{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/upload-notes">
+            <i class="bi bi-upload me-2"></i>Upload Materials
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/upload-videos">
+            <i class="bi bi-camera-video me-2"></i>Upload Videos
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Upload Study Materials{% endblock %}
+
+{% block page_actions %}
+<a href="/teacher/courses" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back to Courses
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Upload Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Materials</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">47</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">Across all courses</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-journal-text fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">This Month</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">8</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>2
+                            </span>
+                            <span class="text-muted small">from last month</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cloud-arrow-up fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Total Downloads</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">1,247</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">By students</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-download fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Storage Used</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">2.3 GB</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">of 10 GB available</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-hdd fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Upload Form -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Upload New Material</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/teacher/upload-notes" enctype="multipart/form-data" id="uploadForm">
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Basic Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
+                            <select class="form-select" id="course" name="course_id" required>
+                                <option value="">Select Course</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="material_type" class="form-label">Material Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="material_type" name="material_type" required>
+                                <option value="">Select Type</option>
+                                <option value="lecture_notes">Lecture Notes</option>
+                                <option value="presentation">Presentation Slides</option>
+                                <option value="assignment">Assignment</option>
+                                <option value="solution">Solution</option>
+                                <option value="reading">Reading Material</option>
+                                <option value="formula_sheet">Formula Sheet</option>
+                                <option value="practice_test">Practice Test</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required placeholder="Enter material title...">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Provide a brief description of this material..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-file-earmark me-2"></i>File Upload
+                            </h6>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="file" class="form-label">Select File <span class="text-danger">*</span></label>
+                            <div class="file-upload-area border rounded p-4 text-center">
+                                <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
+                                <h5>Drag and drop files here</h5>
+                                <p class="text-muted mb-3">or click to browse</p>
+                                <input type="file" class="form-control d-none" id="file" name="file" required>
+                                <button type="button" class="btn btn-outline-primary" id="browseButton">
+                                    <i class="bi bi-folder2-open me-1"></i>Browse Files
+                                </button>
+                                <div class="mt-3" id="fileInfo">
+                                    <small class="text-muted">Supported formats: PDF, DOC, DOCX, PPT, PPTX, TXT</small>
+                                    <br>
+                                    <small class="text-muted">Maximum file size: 50MB</small>
+                                </div>
+                            </div>
+                            <div class="mt-3" id="selectedFile">
+                                <!-- Selected file info will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Options -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-gear me-2"></i>Additional Options
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="chapter" class="form-label">Chapter/Topic</label>
+                            <input type="text" class="form-control" id="chapter" name="chapter" placeholder="e.g., Chapter 3: Algebra">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="due_date" class="form-label">Due Date (if applicable)</label>
+                            <input type="datetime-local" class="form-control" id="due_date" name="due_date">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="tags" class="form-label">Tags</label>
+                            <input type="text" class="form-control" id="tags" name="tags" placeholder="Enter tags separated by commas...">
+                            <div class="form-text">Help students find materials easily (e.g., midterm, important, formula)</div>
+                        </div>
+                    </div>
+
+                    <!-- Visibility and Access -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-eye me-2"></i>Visibility & Access
+                            </h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_public" value="public" checked>
+                                <label class="form-check-label" for="visibility_public">
+                                    <strong>Public</strong> - Visible to all students in the course
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_specific" value="specific">
+                                <label class="form-check-label" for="visibility_specific">
+                                    <strong>Specific Classes</strong> - Choose which classes can see this material
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_private" value="private">
+                                <label class="form-check-label" for="visibility_private">
+                                    <strong>Private</strong> - Only visible to you (for draft materials)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Class Selection (shown when specific is selected) -->
+                        <div class="col-12 mt-3" id="classSelection" style="display: none;">
+                            <label class="form-label">Select Classes</label>
+                            <div class="row">
+                                {% for class in classes %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="classes[]" value="{{ class.id }}" id="class{{ class.id }}">
+                                        <label class="form-check-label" for="class{{ class.id }}">
+                                            {{ class.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Options -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-bell me-2"></i>Notification Options
+                            </h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="notify_students" name="notify_students" checked>
+                                <label class="form-check-label" for="notify_students">
+                                    Notify students about this new material
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="email_notification" name="email_notification">
+                                <label class="form-check-label" for="email_notification">
+                                    Also send email notification to students
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="pin_material" name="pin_material">
+                                <label class="form-check-label" for="pin_material">
+                                    Pin this material to the top of the materials list
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <button type="reset" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Reset Form
+                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" name="action" value="save_draft" class="btn btn-outline-primary">
+                                        <i class="bi bi-file-earmark me-1"></i>Save as Draft
+                                    </button>
+                                    <button type="submit" name="action" value="publish" class="btn btn-primary">
+                                        <i class="bi bi-cloud-arrow-up me-1"></i>Upload & Publish
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Uploads & Tips -->
+    <div class="col-lg-4 mb-4">
+        <!-- Recent Uploads -->
+        <div class="card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Recent Uploads</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for upload in recent_uploads %}
+                    <div class="list-group-item d-flex justify-content-between align-items-start px-0">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ upload.title }}</h6>
+                            <small class="text-muted">{{ upload.course }} • {{ upload.upload_time }}</small>
+                        </div>
+                        <span class="badge bg-{{ 'success' if upload.status == 'published' else 'secondary' }}">
+                            {{ upload.status }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All Uploads</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Tips -->
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-lightbulb me-2"></i>Upload Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="tips-list">
+                    <div class="tip-item mb-3">
+                        <div class="d-flex">
+                            <div class="tip-icon me-3">
+                                <span class="badge bg-primary p-2 rounded-circle">
+                                    <i class="bi bi-check-lg"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Use Descriptive Titles</h6>
+                                <p class="text-muted mb-0">Include chapter numbers and topics for easy searching</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip-item mb-3">
+                        <div class="d-flex">
+                            <div class="tip-icon me-3">
+                                <span class="badge bg-success p-2 rounded-circle">
+                                    <i class="bi bi-check-lg"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Optimize File Sizes</h6>
+                                <p class="text-muted mb-0">Compress images and PDFs for faster downloads</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip-item mb-3">
+                        <div class="d-flex">
+                            <div class="tip-icon me-3">
+                                <span class="badge bg-info p-2 rounded-circle">
+                                    <i class="bi bi-check-lg"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Add Clear Descriptions</h6>
+                                <p class="text-muted mb-0">Help students understand what each material contains</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip-item">
+                        <div class="d-flex">
+                            <div class="tip-icon me-3">
+                                <span class="badge bg-warning p-2 rounded-circle">
+                                    <i class="bi bi-check-lg"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Use Tags Wisely</h6>
+                                <p class="text-muted mb-0">Tag materials for easy filtering and organization</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Usage -->
+        <div class="card mt-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-hdd me-2"></i>Storage Usage</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Used: 2.3 GB</span>
+                        <span>Available: 7.7 GB</span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-warning" style="width: 23%"></div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#storageModal">
+                        Manage Storage
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .file-upload-area:hover {
+        border-color: #4e73df;
+        background-color: #f8f9fc;
+    }
+    
+    .file-upload-area.dragover {
+        border-color: #4e73df;
+        background-color: #e7f1ff;
+    }
+    
+    .tip-item {
+        transition: transform 0.2s;
+    }
+    
+    .tip-item:hover {
+        transform: translateX(5px);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // File upload functionality
+    const fileUploadArea = document.querySelector('.file-upload-area');
+    const fileInput = document.getElementById('file');
+    const browseButton = document.getElementById('browseButton');
+    const selectedFileDiv = document.getElementById('selectedFile');
+
+    // Click to browse
+    browseButton.addEventListener('click', () => fileInput.click());
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            displaySelectedFile(files[0]);
+        }
+    });
+
+    // File selection
+    fileInput.addEventListener('change', (e) => {
+        if (fileInput.files.length > 0) {
+            displaySelectedFile(fileInput.files[0]);
+        }
+    });
+
+    function displaySelectedFile(file) {
+        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+        selectedFileDiv.innerHTML = `
+            <div class="alert alert-success d-flex align-items-center">
+                <i class="bi bi-file-earmark-check fs-4 me-3 text-success"></i>
+                <div class="flex-grow-1">
+                    <strong>${file.name}</strong>
+                    <br>
+                    <small class="text-muted">Size: ${fileSize} MB • Type: ${file.type || 'Unknown'}</small>
+                </div>
+                <button type="button" class="btn-close" onclick="clearSelectedFile()"></button>
+            </div>
+        `;
+    }
+
+    function clearSelectedFile() {
+        fileInput.value = '';
+        selectedFileDiv.innerHTML = '';
+    }
+
+    // Visibility options
+    document.querySelectorAll('input[name="visibility"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const classSelection = document.getElementById('classSelection');
+            if (this.value === 'specific') {
+                classSelection.style.display = 'block';
+            } else {
+                classSelection.style.display = 'none';
+            }
+        });
+    });
+
+    // Form validation
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        const file = fileInput.files[0];
+        if (!file) {
+            e.preventDefault();
+            alert('Please select a file to upload.');
+            return;
+        }
+
+        // Check file size (50MB limit)
+        if (file.size > 50 * 1024 * 1024) {
+            e.preventDefault();
+            alert('File size exceeds 50MB limit. Please choose a smaller file.');
+            return;
+        }
+
+        // Check file type
+        const allowedTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain'
+        ];
+        
+        if (!allowedTypes.includes(file.type)) {
+            e.preventDefault();
+            alert('Please select a supported file type (PDF, DOC, DOCX, PPT, PPTX, TXT).');
+            return;
+        }
+
+        // Show loading state
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.innerHTML = '<i class="bi bi-arrow-repeat spinner-border spinner-border-sm me-1"></i> Uploading...';
+        submitButton.disabled = true;
+
+        // Re-enable after 3 seconds (in case of error)
+        setTimeout(() => {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }, 3000);
+    });
+
+    // Auto-fill title based on file name
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0 && !document.getElementById('title').value) {
+            const fileName = this.files[0].name;
+            // Remove extension and clean up the name
+            const title = fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+            document.getElementById('title').value = title;
+        }
+    });
+</script>
+{% endblock %}

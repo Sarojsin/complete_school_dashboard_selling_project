@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Course Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ course.subject }} ({{ course.grade }})</h2>
+        <a href="{{ url_for('teacher_courses') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Courses
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Course Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Code:</strong> {{ course.code }}</p>
+                    <p><strong>Description:</strong> {{ course.description }}</p>
+                    <p><strong>Schedule:</strong> {{ course.schedule }}</p>
+                    <p><strong>Progress:</strong> {{ course.progress }}%</p>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: {{ course.progress }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('teacher_course_students', id=course.id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-users me-2"></i> View Students
+                        </a>
+                        <a href="{{ url_for('teacher_take_attendance') }}?class={{ course.id }}"
+                            class="btn btn-outline-success">
+                            <i class="fas fa-clipboard-list me-2"></i> Take Attendance
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

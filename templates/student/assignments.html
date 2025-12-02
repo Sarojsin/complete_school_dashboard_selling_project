@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}My Assignments{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/student/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/profile">
+            <i class="bi bi-person me-2"></i>Profile
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/student/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/attendance">
+            <i class="bi bi-calendar-check me-2"></i>Attendance
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}My Assignments{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-filter me-1"></i>Filter
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="?status=all">All Assignments</a></li>
+        <li><a class="dropdown-item" href="?status=pending">Pending</a></li>
+        <li><a class="dropdown-item" href="?status=submitted">Submitted</a></li>
+        <li><a class="dropdown-item" href="?status=graded">Graded</a></li>
+        <li><a class="dropdown-item" href="?status=overdue">Overdue</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Assignment Stats -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card primary h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Assignments</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">15</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-journal-text fs-1 text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card warning h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">3</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-clock fs-1 text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card success h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-success text-uppercase mb-1">Submitted</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">10</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-check-circle fs-1 text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card danger h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="text-xs fw-bold text-danger text-uppercase mb-1">Overdue</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">2</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments Table -->
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-list-task me-2"></i>All Assignments</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Assignment</th>
+                                <th>Course</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Grade</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">{{ assignment.title }}</h6>
+                                        <small class="text-muted">{{ assignment.description[:100] }}...</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ assignment.course }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-calendar-event me-2 text-muted"></i>
+                                        <span class="{{ 'text-danger' if assignment.is_overdue else 'text-muted' }}">
+                                            {{ assignment.due_date }}
+                                        </span>
+                                        {% if assignment.is_overdue %}
+                                        <i class="bi bi-exclamation-triangle text-danger ms-2"></i>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ assignment.status_color }}">
+                                        {{ assignment.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if assignment.grade %}
+                                    <span class="badge bg-{{ 'success' if assignment.grade >= 90 else 'warning' if assignment.grade >= 70 else 'danger' }}">
+                                        {{ assignment.grade }}%
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/student/assignments/{{ assignment.id }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if assignment.status == 'Pending' %}
+                                        <a href="/student/assignments/{{ assignment.id }}/submit" class="btn btn-outline-success">
+                                            <i class="bi bi-upload"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Assignment pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

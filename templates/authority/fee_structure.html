@@ -1,0 +1,376 @@
+<!-- templates/authority/fee_structure.html -->
+{% extends 'base.html' %}
+
+{% block title %}Fee Structure Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Fee Structure Management</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeeStructureModal">
+            <i class="fas fa-plus me-2"></i> Add Fee Structure
+        </button>
+    </div>
+
+    <!-- Fee Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Structures</h6>
+                            <h3>{{ stats.total_structures }}</h3>
+                        </div>
+                        <i class="fas fa-layer-group fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Structures</h6>
+                            <h3>{{ stats.active_structures }}</h3>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Revenue</h6>
+                            <h3>${{ stats.total_revenue }}</h3>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pending Fees</h6>
+                            <h3>${{ stats.pending_fees }}</h3>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fee Structures -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Fee Structures</h5>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" 
+                        data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i> Excel</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i> PDF</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Grade Level</th>
+                            <th>Academic Year</th>
+                            <th>Tuition Fee</th>
+                            <th>Other Fees</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Students</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for structure in fee_structures %}
+                        <tr>
+                            <td>
+                                <strong>{{ structure.grade_level }}</strong>
+                            </td>
+                            <td>{{ structure.academic_year }}</td>
+                            <td>${{ structure.tuition_fee }}</td>
+                            <td>${{ structure.other_fees }}</td>
+                            <td>
+                                <strong>${{ structure.total_amount }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if structure.status == 'active' else 'secondary' }}">
+                                    {{ structure.status|title }}
+                                </span>
+                            </td>
+                            <td>{{ structure.student_count }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary view-structure" 
+                                            data-id="{{ structure.id }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info edit-structure" 
+                                            data-id="{{ structure.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger delete-structure" 
+                                            data-id="{{ structure.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not fee_structures %}
+            <div class="text-center py-5">
+                <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Fee Structures</h5>
+                <p class="text-muted">Create fee structures for different grade levels.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeeStructureModal">
+                    <i class="fas fa-plus me-2"></i> Create Fee Structure
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Fee Breakdown by Grade -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Fee Breakdown by Grade Level</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for grade in fee_breakdown %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">{{ grade.grade_level }}</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <small class="text-muted">Tuition Fee:</small>
+                                <div class="fw-bold">${{ grade.tuition_fee }}</div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">Other Fees:</small>
+                                <div class="fw-bold">${{ grade.other_fees }}</div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">Total:</small>
+                                <div class="fw-bold text-primary">${{ grade.total_amount }}</div>
+                            </div>
+                            <div class="mt-3">
+                                <small class="text-muted">{{ grade.student_count }} students</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Fee Structure Modal -->
+<div class="modal fade" id="addFeeStructureModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Fee Structure</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Grade Level *</label>
+                                <select class="form-select" name="grade_level" required>
+                                    <option value="">Select Grade</option>
+                                    {% for grade in grades %}
+                                    <option value="{{ grade }}">{{ grade }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Academic Year *</label>
+                                <input type="text" class="form-control" name="academic_year" 
+                                       value="{{ current_year }}-{{ current_year + 1 }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-3">Fee Components</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tuition Fee *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="tuition_fee" 
+                                           min="0" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Registration Fee</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="registration_fee" 
+                                           min="0" step="0.01" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Library Fee</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="library_fee" 
+                                           min="0" step="0.01" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Sports Fee</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="sports_fee" 
+                                           min="0" step="0.01" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Lab Fee</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="lab_fee" 
+                                           min="0" step="0.01" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Activity Fee</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="activity_fee" 
+                                           min="0" step="0.01" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Other Charges</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" name="other_charges" 
+                                   min="0" step="0.01" value="0">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" class="form-control" name="due_date">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Fee Structure</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View fee structure details
+    document.querySelectorAll('.view-structure').forEach(button => {
+        button.addEventListener('click', function() {
+            const structureId = this.getAttribute('data-id');
+            // Implement view functionality
+            window.location.href = `/authority/fee-structure/${structureId}`;
+        });
+    });
+
+    // Edit fee structure
+    document.querySelectorAll('.edit-structure').forEach(button => {
+        button.addEventListener('click', function() {
+            const structureId = this.getAttribute('data-id');
+            // Implement edit functionality
+            window.location.href = `/authority/fee-structure/${structureId}/edit`;
+        });
+    });
+
+    // Delete fee structure
+    document.querySelectorAll('.delete-structure').forEach(button => {
+        button.addEventListener('click', function() {
+            const structureId = this.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this fee structure?')) {
+                fetch(`/authority/fee-structure/${structureId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

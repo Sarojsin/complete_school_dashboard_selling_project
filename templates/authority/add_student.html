@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Student{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/authority/add-student">
+            <i class="bi bi-person-plus me-2"></i>Add Student
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Add New Student{% endblock %}
+
+{% block page_actions %}
+<a href="/authority/students" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back to Students
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-person-plus me-2"></i>Student Registration Form</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/authority/students/add" id="studentForm">
+                    <!-- Personal Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-person me-2"></i>Personal Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="firstName" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="lastName" name="last_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="dob" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="dob" name="dob" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                            <select class="form-select" id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-telephone me-2"></i>Contact Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="emergency_contact" class="form-label">Emergency Contact</label>
+                            <input type="text" class="form-control" id="emergency_contact" name="emergency_contact">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="emergency_phone" class="form-label">Emergency Phone</label>
+                            <input type="tel" class="form-control" id="emergency_phone" name="emergency_phone">
+                        </div>
+                    </div>
+
+                    <!-- Academic Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-book me-2"></i>Academic Information
+                            </h6>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="grade" class="form-label">Grade Level <span class="text-danger">*</span></label>
+                            <select class="form-select" id="grade" name="grade" required>
+                                <option value="">Select Grade</option>
+                                <option value="9">Grade 9</option>
+                                <option value="10">Grade 10</option>
+                                <option value="11">Grade 11</option>
+                                <option value="12">Grade 12</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="section" class="form-label">Section <span class="text-danger">*</span></label>
+                            <select class="form-select" id="section" name="section" required>
+                                <option value="">Select Section</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="roll_number" class="form-label">Roll Number</label>
+                            <input type="text" class="form-control" id="roll_number" name="roll_number">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="admission_date" class="form-label">Admission Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="admission_date" name="admission_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="student_id" class="form-label">Student ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_id" name="student_id" required>
+                            <div class="form-text">Auto-generated if left blank</div>
+                        </div>
+                    </div>
+
+                    <!-- Parent/Guardian Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-people me-2"></i>Parent/Guardian Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parent_name" class="form-label">Parent/Guardian Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="parent_name" name="parent_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parent_relation" class="form-label">Relationship <span class="text-danger">*</span></label>
+                            <select class="form-select" id="parent_relation" name="parent_relation" required>
+                                <option value="">Select Relationship</option>
+                                <option value="father">Father</option>
+                                <option value="mother">Mother</option>
+                                <option value="guardian">Guardian</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parent_email" class="form-label">Parent Email</label>
+                            <input type="email" class="form-control" id="parent_email" name="parent_email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parent_phone" class="form-label">Parent Phone <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="parent_phone" name="parent_phone" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="parent_occupation" class="form-label">Parent Occupation</label>
+                            <input type="text" class="form-control" id="parent_occupation" name="parent_occupation">
+                        </div>
+                    </div>
+
+                    <!-- Medical Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-heart-pulse me-2"></i>Medical Information
+                            </h6>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="medical_conditions" class="form-label">Medical Conditions</label>
+                            <textarea class="form-control" id="medical_conditions" name="medical_conditions" rows="3" placeholder="List any known medical conditions, allergies, or special requirements..."></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="blood_group" class="form-label">Blood Group</label>
+                            <select class="form-select" id="blood_group" name="blood_group">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="disability" class="form-label">Disability (if any)</label>
+                            <input type="text" class="form-control" id="disability" name="disability" placeholder="Specify any disabilities...">
+                        </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Additional Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="previous_school" class="form-label">Previous School</label>
+                            <input type="text" class="form-control" id="previous_school" name="previous_school">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transport_required" class="form-label">Transport Required</label>
+                            <select class="form-select" id="transport_required" name="transport_required">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="notes" class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Any additional information or special notes..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Document Upload -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-files me-2"></i>Document Upload
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="birth_certificate" class="form-label">Birth Certificate</label>
+                            <input type="file" class="form-control" id="birth_certificate" name="birth_certificate" accept=".pdf,.jpg,.png">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="photo" class="form-label">Student Photo</label>
+                            <input type="file" class="form-control" id="photo" name="photo" accept=".jpg,.jpeg,.png">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transfer_certificate" class="form-label">Transfer Certificate</label>
+                            <input type="file" class="form-control" id="transfer_certificate" name="transfer_certificate" accept=".pdf,.jpg,.png">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="other_documents" class="form-label">Other Documents</label>
+                            <input type="file" class="form-control" id="other_documents" name="other_documents" accept=".pdf,.jpg,.png" multiple>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <button type="reset" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Reset Form
+                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" name="action" value="save" class="btn btn-primary">
+                                        <i class="bi bi-save me-1"></i>Save Student
+                                    </button>
+                                    <button type="submit" name="action" value="save_and_new" class="btn btn-success">
+                                        <i class="bi bi-plus-circle me-1"></i>Save & Add Another
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-generate student ID
+    document.getElementById('grade').addEventListener('change', function() {
+        generateStudentId();
+    });
+
+    document.getElementById('section').addEventListener('change', function() {
+        generateStudentId();
+    });
+
+    function generateStudentId() {
+        const grade = document.getElementById('grade').value;
+        const section = document.getElementById('section').value;
+        const studentIdField = document.getElementById('student_id');
+        
+        if (grade && section && !studentIdField.value) {
+            const randomNum = Math.floor(100 + Math.random() * 900); // 3-digit random number
+            const studentId = `${grade}${section}${randomNum}`;
+            studentIdField.value = studentId;
+        }
+    }
+
+    // Form validation
+    document.getElementById('studentForm').addEventListener('submit', function(e) {
+        const dob = new Date(document.getElementById('dob').value);
+        const today = new Date();
+        const age = today.getFullYear() - dob.getFullYear();
+        
+        if (age < 5 || age > 20) {
+            e.preventDefault();
+            alert('Student age must be between 5 and 20 years.');
+            return false;
+        }
+    });
+
+    // Calculate age from DOB
+    document.getElementById('dob').addEventListener('change', function() {
+        const dob = new Date(this.value);
+        const today = new Date();
+        const age = today.getFullYear() - dob.getFullYear();
+        
+        if (age < 5 || age > 20) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+</script>
+{% endblock %}

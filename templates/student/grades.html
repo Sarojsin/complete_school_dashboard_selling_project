@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+
+{% block title %}My Grades{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/student/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-link active">
+        <a class="nav-link active" href="/student/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/attendance">
+            <i class="bi bi-calendar-check me-2"></i>Attendance
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}My Grades{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-filter me-1"></i>Filter
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="?semester=all">All Semesters</a></li>
+        <li><a class="dropdown-item" href="?semester=1">Semester 1</a></li>
+        <li><a class="dropdown-item" href="?semester=2">Semester 2</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="?course=all">All Courses</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Overall Performance -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Current GPA</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">3.75</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>0.15
+                            </span>
+                            <span class="text-muted small">from last term</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-up fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Average Grade</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">87%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>2%
+                            </span>
+                            <span class="text-muted small">improvement</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-percent fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Courses Taken</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">6</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">5 Passed</span>
+                            <span class="text-muted small">1 Ongoing</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-book fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Class Rank</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">15/156</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">Top 10%</span>
+                            <span class="text-muted small">in class</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-trophy fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Course-wise Grades -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-list-check me-2"></i>Course Grades</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Course</th>
+                                <th>Teacher</th>
+                                <th>Assignments</th>
+                                <th>Exams</th>
+                                <th>Overall</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">{{ course.name }}</h6>
+                                        <small class="text-muted">Code: {{ course.code }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ course.teacher }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if course.assignment_avg >= 80 else 'warning' if course.assignment_avg >= 70 else 'danger' }}">
+                                        {{ course.assignment_avg }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if course.exam_avg >= 80 else 'warning' if course.exam_avg >= 70 else 'danger' }}">
+                                        {{ course.exam_avg }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px; width: 80px;">
+                                            <div class="progress-bar bg-{{ 'success' if course.overall >= 80 else 'warning' if course.overall >= 70 else 'danger' }}" 
+                                                 style="width: {{ course.overall }}%"></div>
+                                        </div>
+                                        <strong>{{ course.overall }}%</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if course.grade in ['A','A+','A-'] else 'warning' if course.grade in ['B','B+','B-'] else 'danger' }} fs-6">
+                                        {{ course.grade }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if course.status == 'Completed' else 'info' if course.status == 'In Progress' else 'secondary' }}">
+                                        {{ course.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Distribution -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-pie-chart me-2"></i>Grade Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="gradeChart" height="250"></canvas>
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted d-block">A Grades</small>
+                            <strong class="text-success">3</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">B Grades</small>
+                            <strong class="text-warning">2</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">C Grades</small>
+                            <strong class="text-danger">1</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Grade Breakdown -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i>Detailed Grade Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="gradeAccordion">
+                    {% for course in courses %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                                <div class="d-flex justify-content-between w-100 me-3">
+                                    <span>
+                                        <strong>{{ course.name }}</strong> 
+                                        <span class="badge bg-secondary ms-2">{{ course.code }}</span>
+                                    </span>
+                                    <span>
+                                        <span class="badge bg-{{ 'success' if course.overall >= 80 else 'warning' if course.overall >= 70 else 'danger' }} me-2">
+                                            {{ course.overall }}%
+                                        </span>
+                                        <span class="badge bg-dark">{{ course.grade }}</span>
+                                    </span>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#gradeAccordion">
+                            <div class="accordion-body">
+                                <!-- Assignments -->
+                                <h6 class="mb-3">Assignments</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Assignment</th>
+                                                <th>Due Date</th>
+                                                <th>Score</th>
+                                                <th>Grade</th>
+                                                <th>Feedback</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for assignment in course.assignments %}
+                                            <tr>
+                                                <td>{{ assignment.title }}</td>
+                                                <td>{{ assignment.due_date }}</td>
+                                                <td>{{ assignment.score }}/{{ assignment.max_score }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'success' if assignment.percentage >= 80 else 'warning' if assignment.percentage >= 70 else 'danger' }}">
+                                                        {{ assignment.percentage }}%
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="{{ assignment.feedback }}">
+                                                        <i class="bi bi-chat-left-text"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Exams -->
+                                <h6 class="mb-3 mt-4">Exams & Tests</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Exam</th>
+                                                <th>Date</th>
+                                                <th>Score</th>
+                                                <th>Weight</th>
+                                                <th>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for exam in course.exams %}
+                                            <tr>
+                                                <td>{{ exam.title }}</td>
+                                                <td>{{ exam.date }}</td>
+                                                <td>{{ exam.score }}/{{ exam.max_score }}</td>
+                                                <td>{{ exam.weight }}%</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'success' if exam.percentage >= 80 else 'warning' if exam.percentage >= 70 else 'danger' }}">
+                                                        {{ exam.percentage }}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Overall Calculation -->
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <h6>Grade Calculation</h6>
+                                        <ul class="list-unstyled">
+                                            <li class="d-flex justify-content-between">
+                                                <span>Assignments (40%):</span>
+                                                <strong>{{ course.assignment_avg }}%</strong>
+                                            </li>
+                                            <li class="d-flex justify-content-between">
+                                                <span>Exams (50%):</span>
+                                                <strong>{{ course.exam_avg }}%</strong>
+                                            </li>
+                                            <li class="d-flex justify-content-between">
+                                                <span>Participation (10%):</span>
+                                                <strong>{{ course.participation }}%</strong>
+                                            </li>
+                                            <li class="d-flex justify-content-between border-top pt-2">
+                                                <span><strong>Final Grade:</strong></span>
+                                                <strong class="text-primary">{{ course.overall }}%</strong>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Teacher Comments</h6>
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <p class="mb-0">{{ course.comments }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Over Time -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Academic Progress</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="progressChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Grade Distribution Chart
+    const gradeCtx = document.getElementById('gradeChart').getContext('2d');
+    const gradeChart = new Chart(gradeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['A (90-100%)', 'B (80-89%)', 'C (70-79%)', 'D (60-69%)', 'F (<60%)'],
+            datasets: [{
+                data: [3, 2, 1, 0, 0],
+                backgroundColor: [
+                    '#1cc88a',
+                    '#36b9cc',
+                    '#4e73df',
+                    '#f6c23e',
+                    '#e74a3b'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+
+    // Progress Chart
+    const progressCtx = document.getElementById('progressChart').getContext('2d');
+    const progressChart = new Chart(progressCtx, {
+        type: 'line',
+        data: {
+            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Current'],
+            datasets: [{
+                label: 'GPA',
+                data: [3.2, 3.4, 3.5, 3.6, 3.7, 3.75],
+                borderColor: 'rgb(78, 115, 223)',
+                backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Average Grade %',
+                data: [78, 82, 83, 85, 86, 87],
+                borderColor: 'rgb(28, 200, 138)',
+                backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 70,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+{% endblock %}

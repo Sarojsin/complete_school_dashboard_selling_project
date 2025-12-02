@@ -1,0 +1,651 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Admin{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/authority/analytics">
+            <i class="bi bi-graph-up me-2"></i>Analytics
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/reports">
+            <i class="bi bi-file-text me-2"></i>Reports
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-calendar me-1"></i>Last 30 Days
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="?period=7">Last 7 Days</a></li>
+        <li><a class="dropdown-item" href="?period=30">Last 30 Days</a></li>
+        <li><a class="dropdown-item" href="?period=90">Last 90 Days</a></li>
+        <li><a class="dropdown-item" href="?period=365">Last Year</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="?period=custom">Custom Range</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Key Metrics Overview -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Students</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">1,247</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>5.2%
+                            </span>
+                            <span class="text-muted small">Since last month</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Avg Attendance</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">94.2%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>1.8%
+                            </span>
+                            <span class="text-muted small">Improvement</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-check fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Avg Grade</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">84.7%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>2.3%
+                            </span>
+                            <span class="text-muted small">Since last term</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-percent fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Fee Collection</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">93.8%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>3.1%
+                            </span>
+                            <span class="text-muted small">This quarter</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cash-coin fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card secondary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Teacher Ratio</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">1:14.5</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">Optimal</span>
+                            <span class="text-muted small">ratio</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-badge fs-1 text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">Dropout Rate</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">1.2%</div>
+                        <div class="mt-2">
+                            <span class="text-danger small fw-bold">
+                                <i class="bi bi-arrow-down me-1"></i>0.3%
+                            </span>
+                            <span class="text-muted small">Improvement</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-x fs-1 text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Charts Row -->
+<div class="row">
+    <!-- Student Performance Trend -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Academic Performance Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceTrendChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Distribution -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-pie-chart me-2"></i>Grade Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="gradeDistributionChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Charts Row -->
+<div class="row">
+    <!-- Attendance Analytics -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-calendar-check me-2"></i>Attendance Analytics</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Performance -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i>Department Performance</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="departmentChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analytics -->
+<div class="row">
+    <!-- Student Demographics -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Student Demographics</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="demographicsChart" height="200"></canvas>
+                <div class="row text-center mt-3">
+                    <div class="col-4">
+                        <small class="text-muted d-block">Grade 9</small>
+                        <strong>312</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block">Grade 10</small>
+                        <strong>298</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block">Grade 11</small>
+                        <strong>315</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Performance -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-person-badge me-2"></i>Teacher Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Teacher</th>
+                                <th>Department</th>
+                                <th>Avg Grade</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for teacher in teacher_performance %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ teacher.avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ teacher.name }}">
+                                        {{ teacher.name }}
+                                    </div>
+                                </td>
+                                <td>{{ teacher.department }}</td>
+                                <td>{{ teacher.avg_grade }}%</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px; width: 60px;">
+                                            <div class="progress-bar bg-{{ 'success' if teacher.performance >= 90 else 'warning' if teacher.performance >= 80 else 'danger' }}" 
+                                                 style="width: {{ teacher.performance }}%"></div>
+                                        </div>
+                                        <small>{{ teacher.performance }}%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Insights -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-lightbulb me-2"></i>Key Insights</h5>
+            </div>
+            <div class="card-body">
+                <div class="insights-list">
+                    <div class="insight-item mb-3">
+                        <div class="d-flex">
+                            <div class="insight-icon me-3">
+                                <span class="badge bg-success p-2 rounded-circle">
+                                    <i class="bi bi-arrow-up"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Mathematics Performance Up</h6>
+                                <p class="text-muted mb-0">Average grades increased by 5.2% this semester</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insight-item mb-3">
+                        <div class="d-flex">
+                            <div class="insight-icon me-3">
+                                <span class="badge bg-warning p-2 rounded-circle">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Attendance Alert</h6>
+                                <p class="text-muted mb-0">Grade 10B showing 8% lower attendance than average</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insight-item mb-3">
+                        <div class="d-flex">
+                            <div class="insight-icon me-3">
+                                <span class="badge bg-info p-2 rounded-circle">
+                                    <i class="bi bi-graph-up"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Fee Collection Improved</h6>
+                                <p class="text-muted mb-0">Current quarter collection rate at 93.8%, up 3.1%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="d-flex">
+                            <div class="insight-icon me-3">
+                                <span class="badge bg-primary p-2 rounded-circle">
+                                    <i class="bi bi-people"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">New Enrollment Peak</h6>
+                                <p class="text-muted mb-0">34 new students enrolled this month, highest this year</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comparative Analysis -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-bar-chart-line me-2"></i>Comparative Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Current Year vs Previous Year</h6>
+                        <canvas id="comparisonChart" height="120"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Top Performing Classes</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Class</th>
+                                        <th>Avg Grade</th>
+                                        <th>Attendance</th>
+                                        <th>Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for class in top_classes %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ class.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ class.teacher }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if class.avg_grade >= 85 else 'warning' if class.avg_grade >= 75 else 'danger' }}">
+                                                {{ class.avg_grade }}%
+                                            </span>
+                                        </td>
+                                        <td>{{ class.attendance }}%</td>
+                                        <td>
+                                            {% if class.trend == 'up' %}
+                                            <i class="bi bi-arrow-up text-success"></i>
+                                            {% elif class.trend == 'down' %}
+                                            <i class="bi bi-arrow-down text-danger"></i>
+                                            {% else %}
+                                            <i class="bi bi-dash text-secondary"></i>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export and Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-2">Generate Comprehensive Report</h6>
+                        <p class="text-muted mb-0">Export detailed analytics and insights for stakeholders</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary">
+                                <i class="bi bi-file-pdf me-1"></i>PDF Report
+                            </button>
+                            <button class="btn btn-outline-success">
+                                <i class="bi bi-file-excel me-1"></i>Excel Export
+                            </button>
+                            <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#shareModal">
+                                <i class="bi bi-share me-1"></i>Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Performance Trend Chart
+    const trendCtx = document.getElementById('performanceTrendChart').getContext('2d');
+    const trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+                {
+                    label: 'Average Grades',
+                    data: [78, 82, 80, 85, 83, 87, 85, 88, 86, 89, 87, 90],
+                    borderColor: 'rgb(78, 115, 223)',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Attendance Rate',
+                    data: [88, 90, 89, 92, 91, 94, 92, 95, 93, 96, 94, 97],
+                    borderColor: 'rgb(28, 200, 138)',
+                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 70,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Grade Distribution Chart
+    const gradeCtx = document.getElementById('gradeDistributionChart').getContext('2d');
+    const gradeChart = new Chart(gradeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['A (90-100%)', 'B (80-89%)', 'C (70-79%)', 'D (60-69%)', 'F (<60%)'],
+            datasets: [{
+                data: [25, 35, 20, 15, 5],
+                backgroundColor: [
+                    '#1cc88a',
+                    '#36b9cc',
+                    '#4e73df',
+                    '#f6c23e',
+                    '#e74a3b'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+
+    // Attendance Chart
+    const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+    const attendanceChart = new Chart(attendanceCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'],
+            datasets: [{
+                label: 'Attendance Rate',
+                data: [92, 94, 95, 96],
+                backgroundColor: [
+                    'rgba(78, 115, 223, 0.8)',
+                    'rgba(28, 200, 138, 0.8)',
+                    'rgba(54, 185, 204, 0.8)',
+                    'rgba(246, 194, 62, 0.8)'
+                ],
+                borderColor: [
+                    'rgb(78, 115, 223)',
+                    'rgb(28, 200, 138)',
+                    'rgb(54, 185, 204)',
+                    'rgb(246, 194, 62)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 85,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Department Performance Chart
+    const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    const deptChart = new Chart(deptCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Mathematics', 'Science', 'English', 'History', 'Arts', 'Sports'],
+            datasets: [{
+                label: 'Average Grades',
+                data: [85, 88, 82, 79, 84, 90],
+                backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                borderColor: 'rgb(78, 115, 223)',
+                pointBackgroundColor: 'rgb(78, 115, 223)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgb(78, 115, 223)'
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    beginAtZero: false,
+                    min: 70,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Demographics Chart
+    const demoCtx = document.getElementById('demographicsChart').getContext('2d');
+    const demoChart = new Chart(demoCtx, {
+        type: 'polarArea',
+        data: {
+            labels: ['Male', 'Female'],
+            datasets: [{
+                data: [680, 567],
+                backgroundColor: [
+                    'rgba(54, 185, 204, 0.8)',
+                    'rgba(246, 194, 62, 0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Comparison Chart
+    const compCtx = document.getElementById('comparisonChart').getContext('2d');
+    const compChart = new Chart(compCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+            datasets: [
+                {
+                    label: 'Current Year',
+                    data: [82, 85, 87, 89],
+                    backgroundColor: 'rgba(78, 115, 223, 0.8)'
+                },
+                {
+                    label: 'Previous Year',
+                    data: [78, 81, 83, 85],
+                    backgroundColor: 'rgba(158, 158, 158, 0.8)'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 75,
+                    max: 95
+                }
+            }
+        }
+    });
+
+    // Auto-refresh data every 5 minutes
+    setInterval(() => {
+        console.log('Refreshing analytics data...');
+        // Implement data refresh logic here
+    }, 300000);
+</script>
+{% endblock %}

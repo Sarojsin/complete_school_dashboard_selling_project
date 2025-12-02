@@ -1,0 +1,509 @@
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from contextlib import asynccontextmanager
+import os
+
+from config.config import settings
+from database.database import engine, Base
+
+# Import routes
+from routes import auth, students, teachers, authority, tests, websocket_chat
+from routes import courses, assignments, attendance, grades, fees
+from routes import notices, notes, videos, chat
+
+# Import services
+from services.chat_cleanup_service import cleanup_expired_messages
+
+# Create upload directories
+os.makedirs("templates", exist_ok=True)
+os.makedirs("app/static", exist_ok=True)
+os.makedirs(f"{settings.UPLOAD_DIR}/assignments", exist_ok=True)
+os.makedirs(f"{settings.UPLOAD_DIR}/notes", exist_ok=True)
+os.makedirs(f"{settings.UPLOAD_DIR}/videos", exist_ok=True)
+os.makedirs(f"{settings.UPLOAD_DIR}/avatars", exist_ok=True)
+os.makedirs(f"{settings.UPLOAD_DIR}/notices", exist_ok=True)
+os.makedirs(f"{settings.UPLOAD_DIR}/chat", exist_ok=True)
+
+# Scheduler for background tasks
+scheduler = AsyncIOScheduler()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    Base.metadata.create_all(bind=engine)
+    
+    # Schedule cleanup job
+    scheduler.add_job(
+        cleanup_expired_messages,
+        'cron',
+        hour=settings.CHAT_CLEANUP_HOUR,
+        minute=0
+    )
+    scheduler.start()
+    
+    yield
+    
+    # Shutdown
+    scheduler.shutdown()
+
+# Create FastAPI app
+app = FastAPI(
+    title=settings.APP_NAME,
+    debug=settings.DEBUG,
+    lifespan=lifespan
+)
+# # Health check testing purpose
+# @app.get("/health")
+# async def health_check():
+#     return {"status": "healthy"}
+
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Templates
+templates = Jinja2Templates(directory="templates")
+
+# Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(students.router, prefix="/api/students", tags=["Students"])
+app.include_router(teachers.router, prefix="/api/teachers", tags=["Teachers"])
+app.include_router(authority.router, prefix="/api/authority", tags=["Authority"])
+app.include_router(courses.router, prefix="/api/courses", tags=["Courses"])
+app.include_router(assignments.router, prefix="/api/assignments", tags=["Assignments"])
+app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
+app.include_router(grades.router, prefix="/api/grades", tags=["Grades"])
+async def student_courses(request: Request):
+    return templates.TemplateResponse("student/courses.html", {"request": request})
+
+@app.get("/student/assignments")
+async def student_assignments(request: Request):
+    return templates.TemplateResponse("student/assignments.html", {"request": request})
+
+@app.get("/student/assignments/{assignment_id}")
+async def student_assignment_detail(request: Request, assignment_id: int):
+    return templates.TemplateResponse("student/assignments_detail.html", {
+        "request": request,
+        "assignment_id": assignment_id
+    })
+
+@app.get("/student/grades")
+async def student_grades(request: Request):
+    return templates.TemplateResponse("student/grades.html", {"request": request})
+
+@app.get("/student/attendance")
+async def student_attendance(request: Request):
+    return templates.TemplateResponse("student/attendance.html", {"request": request})
+
+@app.get("/student/fees")
+async def student_fees(request: Request):
+    return templates.TemplateResponse("student/fees.html", {"request": request})
+
+@app.get("/student/tests")
+async def student_tests(request: Request):
+    return templates.TemplateResponse("student/test_list.html", {"request": request})
+
+@app.get("/student/tests/{test_id}/start")
+async def student_take_test(request: Request, test_id: int):
+    return templates.TemplateResponse("student/take_test.html", {
+        "request": request,
+        "test_id": test_id
+    })
+
+@app.get("/student/tests/{test_id}/result")
+async def student_test_result(request: Request, test_id: int):
+    return templates.TemplateResponse("student/test_result.html", {
+        "request": request,
+        "test_id": test_id
+    })
+
+@app.get("/student/notices")
+async def student_notices(request: Request):
+    return templates.TemplateResponse("student/notices.html", {"request": request})
+
+@app.get("/student/timetable")
+async def student_timetable(request: Request):
+    return templates.TemplateResponse("student/timetable.html", {"request": request})
+
+@app.get("/student/notes")
+async def student_notes(request: Request):
+    return templates.TemplateResponse("student/notes.html", {"request": request})
+
+@app.get("/student/videos")
+async def student_videos(request: Request):
+    return templates.TemplateResponse("student/videos.html", {"request": request})
+
+# ------------------ TEACHER PAGES ------------------
+@app.get("/teacher/dashboard")
+async def teacher_dashboard(request: Request):
+    return templates.TemplateResponse("teacher/dashboard.html", {"request": request})
+
+@app.get("/teacher/students")
+async def teacher_students(request: Request):
+    return templates.TemplateResponse("teacher/students.html", {"request": request})
+
+@app.get("/teacher/students/{student_id}")
+async def teacher_student_detail(request: Request, student_id: int):
+    return templates.TemplateResponse("teacher/student_detail.html", {
+        "request": request,
+        "student_id": student_id
+    })
+
+@app.get("/teacher/courses")
+async def teacher_courses(request: Request):
+    return templates.TemplateResponse("teacher/courses.html", {"request": request})
+
+@app.get("/teacher/assignments")
+async def teacher_assignments(request: Request):
+    return templates.TemplateResponse("teacher/assignments.html", {"request": request})
+
+@app.get("/teacher/assignments/create")
+async def teacher_create_assignment(request: Request):
+    return templates.TemplateResponse("teacher/create_assignment.html", {"request": request})
+
+@app.get("/teacher/assignments/{assignment_id}/edit")
+async def teacher_edit_assignment(request: Request, assignment_id: int):
+    return templates.TemplateResponse("teacher/edit_assignment.html", {
+        "request": request,
+        "assignment_id": assignment_id
+    })
+
+@app.get("/teacher/attendance")
+async def teacher_attendance(request: Request):
+    return templates.TemplateResponse("teacher/attendance.html", {"request": request})
+
+@app.get("/teacher/attendance/take")
+async def teacher_take_attendance(request: Request):
+    return templates.TemplateResponse("teacher/take_attendance.html", {"request": request})
+
+@app.get("/teacher/grades")
+async def teacher_grades(request: Request):
+    return templates.TemplateResponse("teacher/grades.html", {"request": request})
+
+@app.get("/teacher/grades/add")
+async def teacher_add_grade(request: Request):
+    return templates.TemplateResponse("teacher/add_grade.html", {"request": request})
+
+@app.get("/teacher/tests")
+async def teacher_tests(request: Request):
+    return templates.TemplateResponse("teacher/view_tests.html", {"request": request})
+
+@app.get("/teacher/tests/create")
+async def teacher_create_test(request: Request):
+    return templates.TemplateResponse("teacher/create_test.html", {"request": request})
+
+@app.get("/teacher/tests/{test_id}/edit")
+async def teacher_edit_test(request: Request, test_id: int):
+    return templates.TemplateResponse("teacher/edit_test.html", {
+        "request": request,
+        "test_id": test_id
+    })
+
+@app.get("/teacher/notes/upload")
+async def teacher_upload_notes(request: Request):
+    return templates.TemplateResponse("teacher/upload_notes.html", {"request": request})
+
+@app.get("/teacher/videos/upload")
+async def teacher_upload_videos(request: Request):
+    return templates.TemplateResponse("teacher/upload_videos.html", {"request": request})
+
+@app.get("/teacher/notices/create")
+async def teacher_create_notice(request: Request):
+    return templates.TemplateResponse("teacher/create_notice.html", {"request": request})
+
+@app.get("/teacher/timetable")
+async def teacher_timetable(request: Request):
+    return templates.TemplateResponse("teacher/timetable.html", {"request": request})
+
+@app.get("/teacher/chat")
+async def teacher_chat(request: Request):
+    return templates.TemplateResponse("teacher/chat.html", {"request": request})
+
+# ------------------ AUTHORITY/ADMIN PAGES ------------------
+@app.get("/authority/dashboard")
+async def authority_dashboard(request: Request):
+    return templates.TemplateResponse("authority/dashboard.html", {"request": request})
+
+@app.get("/authority/students")
+async def authority_students(request: Request):
+    return templates.TemplateResponse("authority/students.html", {"request": request})
+
+@app.get("/authority/students/add")
+async def authority_add_student(request: Request):
+    return templates.TemplateResponse("authority/add_student.html", {"request": request})
+
+@app.get("/authority/students/{student_id}/edit")
+async def authority_edit_student(request: Request, student_id: int):
+    return templates.TemplateResponse("authority/edit_student.html", {
+        "request": request,
+        "student_id": student_id
+    })
+
+@app.get("/authority/teachers")
+async def authority_teachers(request: Request):
+    return templates.TemplateResponse("authority/teachers.html", {"request": request})
+
+@app.get("/authority/teachers/add")
+async def authority_add_teacher(request: Request):
+    return templates.TemplateResponse("authority/add_teacher.html", {"request": request})
+
+@app.get("/authority/teachers/{teacher_id}/edit")
+async def authority_edit_teacher(request: Request, teacher_id: int):
+    return templates.TemplateResponse("authority/edit_teacher.html", {
+        "request": request,
+        "teacher_id": teacher_id
+    })
+
+@app.get("/authority/courses")
+async def authority_courses(request: Request):
+    return templates.TemplateResponse("authority/courses.html", {"request": request})
+
+@app.get("/authority/courses/add")
+async def authority_add_course(request: Request):
+    return templates.TemplateResponse("authority/add_course.html", {"request": request})
+
+@app.get("/authority/courses/{course_id}/edit")
+async def authority_edit_course(request: Request, course_id: int):
+    return templates.TemplateResponse("authority/edit_course.html", {
+        "request": request,
+        "course_id": course_id
+    })
+
+@app.get("/authority/fees")
+async def authority_fees(request: Request):
+    return templates.TemplateResponse("authority/fees.html", {"request": request})
+
+@app.get("/authority/fees/structure")
+async def authority_fee_structure(request: Request):
+    return templates.TemplateResponse("authority/fee_structure.html", {"request": request})
+
+@app.get("/authority/fees/add")
+async def authority_add_fee(request: Request):
+    return templates.TemplateResponse("authority/add_fee.html", {"request": request})
+
+@app.get("/authority/notices")
+async def authority_notices(request: Request):
+    return templates.TemplateResponse("authority/notices.html", {"request": request})
+
+@app.get("/student/tests/{test_id}/start")
+async def student_take_test(request: Request, test_id: int):
+    return templates.TemplateResponse("student/take_test.html", {
+        "request": request,
+        "test_id": test_id
+    })
+
+@app.get("/student/tests/{test_id}/result")
+async def student_test_result(request: Request, test_id: int):
+    return templates.TemplateResponse("student/test_result.html", {
+        "request": request,
+        "test_id": test_id
+    })
+
+@app.get("/student/notices")
+async def student_notices(request: Request):
+    return templates.TemplateResponse("student/notices.html", {"request": request})
+
+@app.get("/student/timetable")
+async def student_timetable(request: Request):
+    return templates.TemplateResponse("student/timetable.html", {"request": request})
+
+@app.get("/student/notes")
+async def student_notes(request: Request):
+    return templates.TemplateResponse("student/notes.html", {"request": request})
+
+@app.get("/student/videos")
+async def student_videos(request: Request):
+    return templates.TemplateResponse("student/videos.html", {"request": request})
+
+# ------------------ TEACHER PAGES ------------------
+@app.get("/teacher/dashboard")
+async def teacher_dashboard(request: Request):
+    return templates.TemplateResponse("teacher/dashboard.html", {"request": request})
+
+@app.get("/teacher/students")
+async def teacher_students(request: Request):
+    return templates.TemplateResponse("teacher/students.html", {"request": request})
+
+@app.get("/teacher/students/{student_id}")
+async def teacher_student_detail(request: Request, student_id: int):
+    return templates.TemplateResponse("teacher/student_detail.html", {
+        "request": request,
+        "student_id": student_id
+    })
+
+@app.get("/teacher/courses")
+async def teacher_courses(request: Request):
+    return templates.TemplateResponse("teacher/courses.html", {"request": request})
+
+@app.get("/teacher/assignments")
+async def teacher_assignments(request: Request):
+    return templates.TemplateResponse("teacher/assignments.html", {"request": request})
+
+@app.get("/teacher/assignments/create")
+async def teacher_create_assignment(request: Request):
+    return templates.TemplateResponse("teacher/create_assignment.html", {"request": request})
+
+@app.get("/teacher/assignments/{assignment_id}/edit")
+async def teacher_edit_assignment(request: Request, assignment_id: int):
+    return templates.TemplateResponse("teacher/edit_assignment.html", {
+        "request": request,
+        "assignment_id": assignment_id
+    })
+
+@app.get("/teacher/attendance")
+async def teacher_attendance(request: Request):
+    return templates.TemplateResponse("teacher/attendance.html", {"request": request})
+
+@app.get("/teacher/attendance/take")
+async def teacher_take_attendance(request: Request):
+    return templates.TemplateResponse("teacher/take_attendance.html", {"request": request})
+
+@app.get("/teacher/grades")
+async def teacher_grades(request: Request):
+    return templates.TemplateResponse("teacher/grades.html", {"request": request})
+
+@app.get("/teacher/grades/add")
+async def teacher_add_grade(request: Request):
+    return templates.TemplateResponse("teacher/add_grade.html", {"request": request})
+
+@app.get("/teacher/tests")
+async def teacher_tests(request: Request):
+    return templates.TemplateResponse("teacher/view_tests.html", {"request": request})
+
+@app.get("/teacher/tests/create")
+async def teacher_create_test(request: Request):
+    return templates.TemplateResponse("teacher/create_test.html", {"request": request})
+
+@app.get("/teacher/tests/{test_id}/edit")
+async def teacher_edit_test(request: Request, test_id: int):
+    return templates.TemplateResponse("teacher/edit_test.html", {
+        "request": request,
+        "test_id": test_id
+    })
+
+@app.get("/teacher/notes/upload")
+async def teacher_upload_notes(request: Request):
+    return templates.TemplateResponse("teacher/upload_notes.html", {"request": request})
+
+@app.get("/teacher/videos/upload")
+async def teacher_upload_videos(request: Request):
+    return templates.TemplateResponse("teacher/upload_videos.html", {"request": request})
+
+@app.get("/teacher/notices/create")
+async def teacher_create_notice(request: Request):
+    return templates.TemplateResponse("teacher/create_notice.html", {"request": request})
+
+@app.get("/teacher/timetable")
+async def teacher_timetable(request: Request):
+    return templates.TemplateResponse("teacher/timetable.html", {"request": request})
+
+@app.get("/teacher/chat")
+async def teacher_chat(request: Request):
+    return templates.TemplateResponse("teacher/chat.html", {"request": request})
+
+# ------------------ AUTHORITY/ADMIN PAGES ------------------
+@app.get("/authority/dashboard")
+async def authority_dashboard(request: Request):
+    return templates.TemplateResponse("authority/dashboard.html", {"request": request})
+
+@app.get("/authority/students")
+async def authority_students(request: Request):
+    return templates.TemplateResponse("authority/students.html", {"request": request})
+
+@app.get("/authority/students/add")
+async def authority_add_student(request: Request):
+    return templates.TemplateResponse("authority/add_student.html", {"request": request})
+
+@app.get("/authority/students/{student_id}/edit")
+async def authority_edit_student(request: Request, student_id: int):
+    return templates.TemplateResponse("authority/edit_student.html", {
+        "request": request,
+        "student_id": student_id
+    })
+
+@app.get("/authority/teachers")
+async def authority_teachers(request: Request):
+    return templates.TemplateResponse("authority/teachers.html", {"request": request})
+
+@app.get("/authority/teachers/add")
+async def authority_add_teacher(request: Request):
+    return templates.TemplateResponse("authority/add_teacher.html", {"request": request})
+
+@app.get("/authority/teachers/{teacher_id}/edit")
+async def authority_edit_teacher(request: Request, teacher_id: int):
+    return templates.TemplateResponse("authority/edit_teacher.html", {
+        "request": request,
+        "teacher_id": teacher_id
+    })
+
+@app.get("/authority/courses")
+async def authority_courses(request: Request):
+    return templates.TemplateResponse("authority/courses.html", {"request": request})
+
+@app.get("/authority/courses/add")
+async def authority_add_course(request: Request):
+    return templates.TemplateResponse("authority/add_course.html", {"request": request})
+
+@app.get("/authority/courses/{course_id}/edit")
+async def authority_edit_course(request: Request, course_id: int):
+    return templates.TemplateResponse("authority/edit_course.html", {
+        "request": request,
+        "course_id": course_id
+    })
+
+@app.get("/authority/fees")
+async def authority_fees(request: Request):
+    return templates.TemplateResponse("authority/fees.html", {"request": request})
+
+@app.get("/authority/fees/structure")
+async def authority_fee_structure(request: Request):
+    return templates.TemplateResponse("authority/fee_structure.html", {"request": request})
+
+@app.get("/authority/fees/add")
+async def authority_add_fee(request: Request):
+    return templates.TemplateResponse("authority/add_fee.html", {"request": request})
+
+@app.get("/authority/notices")
+async def authority_notices(request: Request):
+    return templates.TemplateResponse("authority/notices.html", {"request": request})
+
+@app.get("/authority/notices/add")
+async def authority_add_notice(request: Request):
+    return templates.TemplateResponse("authority/add_notice.html", {"request": request})
+
+@app.get("/authority/notices/{notice_id}/edit")
+async def authority_edit_notice(request: Request, notice_id: int):
+    return templates.TemplateResponse("authority/edit_notice.html", {
+        "request": request,
+        "notice_id": notice_id
+    })
+
+@app.get("/authority/analytics")
+async def authority_analytics(request: Request):
+    return templates.TemplateResponse("authority/analytics.html", {"request": request})
+
+# ------------------ FAVICON ------------------
+@app.get("/favicon.ico")
+async def favicon():
+    from fastapi.responses import FileResponse, Response
+    import os
+    
+    favicon_path = "app/static/favicon.ico"
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    else:
+        # Return 204 No Content if favicon doesn't exist
+        return Response(status_code=204)

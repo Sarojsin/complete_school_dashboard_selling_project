@@ -1,0 +1,564 @@
+<!-- templates/teacher/edit_test.html -->
+{% extends 'base.html' %}
+
+{% block title %}Edit Test - {{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_tests') }}">Tests</a></li>
+                    <li class="breadcrumb-item active">Edit Test</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Test: {{ test.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="testForm">
+                        <!-- Test Basic Information -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">Test Title *</label>
+                                    <input type="text" class="form-control" name="title" value="{{ test.title }}"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Subject *</label>
+                                    <select class="form-select" name="subject" required>
+                                        <option value="">Select Subject</option>
+                                        {% for subject in subjects %}
+                                        <option value="{{ subject }}" {% if test.subject==subject %}selected{% endif %}>
+                                            {{ subject }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Class/Grade *</label>
+                                    <select class="form-select" name="class" required>
+                                        <option value="">Select Class</option>
+                                        {% for class in classes %}
+                                        <option value="{{ class }}" {% if test.class==class %}selected{% endif %}>
+                                            {{ class }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Total Marks *</label>
+                                    <input type="number" class="form-control" name="total_marks"
+                                        value="{{ test.total_marks }}" min="1" max="1000" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Instructions</label>
+                            <textarea class="form-control" name="instructions"
+                                rows="3">{{ test.instructions }}</textarea>
+                        </div>
+
+                        <!-- Test Settings -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Test Settings</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Start Date & Time *</label>
+                                            <input type="datetime-local" class="form-control" name="start_time"
+                                                value="{{ test.start_time_iso }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">End Date & Time *</label>
+                                            <input type="datetime-local" class="form-control" name="end_time"
+                                                value="{{ test.end_time_iso }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Duration (minutes) *</label>
+                                            <input type="number" class="form-control" name="duration"
+                                                value="{{ test.duration }}" min="1" max="480" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Passing Percentage</label>
+                                            <input type="number" class="form-control" name="passing_percentage"
+                                                value="{{ test.passing_percentage }}" min="0" max="100">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Max Attempts</label>
+                                            <input type="number" class="form-control" name="max_attempts"
+                                                value="{{ test.max_attempts }}" min="1" max="10">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Order</label>
+                                            <select class="form-select" name="question_order">
+                                                <option value="sequential" {% if test.question_order=='sequential'
+                                                    %}selected{% endif %}>Sequential</option>
+                                                <option value="random" {% if test.question_order=='random' %}selected{%
+                                                    endif %}>Random</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Answer Visibility</label>
+                                            <select class="form-select" name="answer_visibility">
+                                                <option value="after_submission" {% if
+                                                    test.answer_visibility=='after_submission' %}selected{% endif %}>
+                                                    After Submission</option>
+                                                <option value="after_test_end" {% if
+                                                    test.answer_visibility=='after_test_end' %}selected{% endif %}>After
+                                                    Test Ends</option>
+                                                <option value="never" {% if test.answer_visibility=='never' %}selected{%
+                                                    endif %}>Never</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="shuffle_questions"
+                                            id="shuffle_questions" {% if test.shuffle_questions %}checked{% endif %}>
+                                        <label class="form-check-label" for="shuffle_questions">
+                                            Shuffle Questions
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="shuffle_options"
+                                            id="shuffle_options" {% if test.shuffle_options %}checked{% endif %}>
+                                        <label class="form-check-label" for="shuffle_options">
+                                            Shuffle Options
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="allow_backtracking"
+                                            id="allow_backtracking" {% if test.allow_backtracking %}checked{% endif %}>
+                                        <label class="form-check-label" for="allow_backtracking">
+                                            Allow Backtracking
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="show_progress"
+                                            id="show_progress" {% if test.show_progress %}checked{% endif %}>
+                                        <label class="form-check-label" for="show_progress">
+                                            Show Progress Bar
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Questions Section -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Test Questions</h6>
+                                <button type="button" class="btn btn-sm btn-primary" id="addQuestion">
+                                    <i class="fas fa-plus me-1"></i> Add Question
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="questionsContainer">
+                                    {% for question in test.questions %}
+                                    <div class="question-card card mb-3">
+                                        <div
+                                            class="card-header bg-light d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0 question-title">Question <span class="question-number">{{
+                                                    loop.index }}</span></h6>
+                                            <div>
+                                                <button type="button"
+                                                    class="btn btn-sm btn-outline-danger remove-question">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Question Type</label>
+                                                        <select class="form-select question-type"
+                                                            name="questions[{{ loop.index0 }}][type]" required>
+                                                            <option value="multiple_choice" {% if
+                                                                question.type=='multiple_choice' %}selected{% endif %}>
+                                                                Multiple Choice</option>
+                                                            <option value="true_false" {% if question.type=='true_false'
+                                                                %}selected{% endif %}>True/False</option>
+                                                            <option value="short_answer" {% if
+                                                                question.type=='short_answer' %}selected{% endif %}>
+                                                                Short Answer</option>
+                                                            <option value="essay" {% if question.type=='essay'
+                                                                %}selected{% endif %}>Essay</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Marks</label>
+                                                        <input type="number" class="form-control question-marks"
+                                                            name="questions[{{ loop.index0 }}][marks]"
+                                                            value="{{ question.marks }}" min="1" max="100" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Question Text *</label>
+                                                <textarea class="form-control question-text"
+                                                    name="questions[{{ loop.index0 }}][text]" rows="3"
+                                                    required>{{ question.text }}</textarea>
+                                            </div>
+
+                                            <!-- Multiple Choice Options -->
+                                            <div class="multiple-choice-options"
+                                                style="display: {% if question.type in ['multiple_choice', 'true_false'] %}block{% else %}none{% endif %};">
+                                                <label class="form-label">Options</label>
+                                                <div class="options-container">
+                                                    {% for option in question.options %}
+                                                    <div class="option-item mb-2">
+                                                        <div class="input-group">
+                                                            <div class="input-group-text">
+                                                                <input class="form-check-input mt-0 correct-answer"
+                                                                    type="radio"
+                                                                    name="questions[{{ loop.parent.loop.index0 }}][correct_answer]"
+                                                                    value="{{ loop.index0 }}" {% if
+                                                                    question.correct_answer==loop.index0 %}checked{%
+                                                                    endif %} required>
+                                                            </div>
+                                                            <input type="text" class="form-control option-text"
+                                                                name="questions[{{ loop.parent.loop.index0 }}][options][{{ loop.index0 }}]"
+                                                                value="{{ option }}" required>
+                                                            <button type="button"
+                                                                class="btn btn-outline-danger remove-option">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                                <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary add-option">
+                                                    <i class="fas fa-plus me-1"></i> Add Option
+                                                </button>
+                                            </div>
+
+                                            <!-- Explanation -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Explanation (Optional)</label>
+                                                <textarea class="form-control explanation"
+                                                    name="questions[{{ loop.index0 }}][explanation]">{{ question.explanation }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Statistics -->
+                        <div class="card bg-info text-white mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Test Statistics</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <h5>{{ test.stats.total_students }}</h5>
+                                        <small>Total Students</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5>{{ test.stats.attempted }}</h5>
+                                        <small>Attempted</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5>{{ test.stats.avg_score }}%</h5>
+                                        <small>Average Score</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5>{{ test.stats.pass_rate }}%</h5>
+                                        <small>Pass Rate</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('teacher_tests') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal">
+                                            <i class="fas fa-trash me-2"></i> Delete Test
+                                        </button>
+                                        <button type="submit" name="action" value="draft"
+                                            class="btn btn-outline-primary me-2">
+                                            <i class="fas fa-save me-2"></i> Save as Draft
+                                        </button>
+                                        <button type="submit" name="action" value="publish" class="btn btn-primary">
+                                            <i class="fas fa-check me-2"></i> Update Test
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete test <strong>{{ test.title }}</strong>?</p>
+                <p class="text-danger"><strong>Warning:</strong> This action cannot be undone. All test data including
+                    student attempts and results will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('teacher_delete_test', id=test.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Test</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const questionsContainer = document.getElementById('questionsContainer');
+        const addQuestionBtn = document.getElementById('addQuestion');
+        let questionCount = {{ test.questions| length
+    }};
+
+    // Question template for new questions
+    const questionTemplate = `
+        <div class="question-card card mb-3">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 question-title">Question <span class="question-number">${questionCount + 1}</span></h6>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-question">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Question Type</label>
+                            <select class="form-select question-type" name="questions[${questionCount}][type]" required>
+                                <option value="multiple_choice">Multiple Choice</option>
+                                <option value="true_false">True/False</option>
+                                <option value="short_answer">Short Answer</option>
+                                <option value="essay">Essay</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Marks</label>
+                            <input type="number" class="form-control question-marks" name="questions[${questionCount}][marks]" 
+                                   min="1" max="100" value="1" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Question Text *</label>
+                    <textarea class="form-control question-text" name="questions[${questionCount}][text]" 
+                              rows="3" placeholder="Enter your question..." required></textarea>
+                </div>
+
+                <div class="multiple-choice-options">
+                    <label class="form-label">Options</label>
+                    <div class="options-container">
+                        <div class="option-item mb-2">
+                            <div class="input-group">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0 correct-answer" type="radio" 
+                                           name="questions[${questionCount}][correct_answer]" value="0" required>
+                                </div>
+                                <input type="text" class="form-control option-text" 
+                                       name="questions[${questionCount}][options][0]" placeholder="Option 1" required>
+                                <button type="button" class="btn btn-outline-danger remove-option">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="option-item mb-2">
+                            <div class="input-group">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0 correct-answer" type="radio" 
+                                           name="questions[${questionCount}][correct_answer]" value="1" required>
+                                </div>
+                                <input type="text" class="form-control option-text" 
+                                       name="questions[${questionCount}][options][1]" placeholder="Option 2" required>
+                                <button type="button" class="btn btn-outline-danger remove-option">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary add-option">
+                        <i class="fas fa-plus me-1"></i> Add Option
+                    </button>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Explanation (Optional)</label>
+                    <textarea class="form-control explanation" name="questions[${questionCount}][explanation]" 
+                              rows="2" placeholder="Explanation for the correct answer..."></textarea>
+                </div>
+            </div>
+        </div>
+    `;
+
+    function addQuestion() {
+        questionCount++;
+        const questionElement = document.createElement('div');
+        questionElement.innerHTML = questionTemplate.replace(/${questionCount - 1}/g, questionCount - 1);
+        questionsContainer.appendChild(questionElement);
+
+        // Initialize question type handling
+        const typeSelect = questionElement.querySelector('.question-type');
+        handleQuestionTypeChange(typeSelect);
+
+        typeSelect.addEventListener('change', function () {
+            handleQuestionTypeChange(this);
+        });
+    }
+
+    function handleQuestionTypeChange(selectElement) {
+        const questionCard = selectElement.closest('.question-card');
+        const optionsContainer = questionCard.querySelector('.multiple-choice-options');
+
+        if (selectElement.value === 'multiple_choice' || selectElement.value === 'true_false') {
+            optionsContainer.style.display = 'block';
+        } else {
+            optionsContainer.style.display = 'none';
+        }
+    }
+
+    // Add question event listeners
+    addQuestionBtn.addEventListener('click', addQuestion);
+
+    // Remove question
+    questionsContainer.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-question') ||
+            e.target.parentElement.classList.contains('remove-question')) {
+            const button = e.target.classList.contains('remove-question') ? e.target : e.target.parentElement;
+            button.closest('.question-card').remove();
+            questionCount--;
+            // Update question numbers
+            updateQuestionNumbers();
+        }
+    });
+
+    // Add option
+    questionsContainer.addEventListener('click', function (e) {
+        if (e.target.classList.contains('add-option') ||
+            e.target.parentElement.classList.contains('add-option')) {
+            const button = e.target.classList.contains('add-option') ? e.target : e.target.parentElement;
+            const optionsContainer = button.previousElementSibling;
+            const optionCount = optionsContainer.querySelectorAll('.option-item').length;
+            const questionIndex = button.closest('.question-card').querySelector('.question-type').name.match(/\[(\d+)\]/)[1];
+
+            const optionHTML = `
+                <div class="option-item mb-2">
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0 correct-answer" type="radio" 
+                                   name="questions[${questionIndex}][correct_answer]" 
+                                   value="${optionCount}" required>
+                        </div>
+                        <input type="text" class="form-control option-text" 
+                               name="questions[${questionIndex}][options][${optionCount}]" 
+                               placeholder="Option ${optionCount + 1}" required>
+                        <button type="button" class="btn btn-outline-danger remove-option">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const optionElement = document.createElement('div');
+            optionElement.innerHTML = optionHTML;
+            optionsContainer.appendChild(optionElement);
+        }
+    });
+
+    // Remove option
+    questionsContainer.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-option') ||
+            e.target.parentElement.classList.contains('remove-option')) {
+            const button = e.target.classList.contains('remove-option') ? e.target : e.target.parentElement;
+            const optionItem = button.closest('.option-item');
+            if (optionItem && optionItem.parentElement.querySelectorAll('.option-item').length > 2) {
+                optionItem.remove();
+            }
+        }
+    });
+
+    // Update question numbers
+    function updateQuestionNumbers() {
+        const questionCards = questionsContainer.querySelectorAll('.question-card');
+        questionCards.forEach((card, index) => {
+            const numberSpan = card.querySelector('.question-number');
+            numberSpan.textContent = index + 1;
+        });
+    }
+
+    // Initialize question type handlers for existing questions
+    questionsContainer.querySelectorAll('.question-type').forEach(select => {
+        select.addEventListener('change', function () {
+            handleQuestionTypeChange(this);
+        });
+    });
+});
+</script>
+{% endblock %}

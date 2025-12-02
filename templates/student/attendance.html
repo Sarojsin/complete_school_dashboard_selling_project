@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/student/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/student/attendance">
+            <i class="bi bi-calendar-check me-2"></i>Attendance
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/timetable">
+            <i class="bi bi-calendar-week me-2"></i>Timetable
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}My Attendance{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-calendar me-1"></i>{{ current_month }}
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="?month=january">January</a></li>
+        <li><a class="dropdown-item" href="?month=february">February</a></li>
+        <li><a class="dropdown-item" href="?month=march">March</a></li>
+        <li><a class="dropdown-item" href="?month=april">April</a></li>
+        <li><a class="dropdown-item" href="?month=may">May</a></li>
+        <li><a class="dropdown-item" href="?month=june">June</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Attendance Overview -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Overall Attendance</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">94%</div>
+                        <div class="mt-2">
+                            <span class="text-success small fw-bold">
+                                <i class="bi bi-arrow-up me-1"></i>2%
+                            </span>
+                            <span class="text-muted small">from last month</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-check fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Classes Attended</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">112</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">out of 119 total</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Classes Missed</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">7</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">5 with permission</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-x-circle fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">Late Arrivals</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">3</div>
+                        <div class="mt-2">
+                            <span class="text-muted small">this month</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fs-1 text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Monthly Calendar View -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="bi bi-calendar-month me-2"></i>Attendance Calendar - {{ current_month }}</h5>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="attendance-calendar">
+                    <div class="row text-center fw-bold border-bottom pb-2 mb-3">
+                        <div class="col p-2">Sun</div>
+                        <div class="col p-2">Mon</div>
+                        <div class="col p-2">Tue</div>
+                        <div class="col p-2">Wed</div>
+                        <div class="col p-2">Thu</div>
+                        <div class="col p-2">Fri</div>
+                        <div class="col p-2">Sat</div>
+                    </div>
+                    <div class="row">
+                        {% for day in calendar_days %}
+                        <div class="col p-2 text-center">
+                            {% if day.date %}
+                            <div class="day-cell {% if day.is_weekend %}text-muted{% endif %}">
+                                <div class="date-number">{{ day.date.day }}</div>
+                                <div class="attendance-status">
+                                    {% if day.attendance == 'present' %}
+                                    <i class="bi bi-check-circle-fill text-success" data-bs-toggle="tooltip" title="Present"></i>
+                                    {% elif day.attendance == 'absent' %}
+                                    <i class="bi bi-x-circle-fill text-danger" data-bs-toggle="tooltip" title="Absent"></i>
+                                    {% elif day.attendance == 'late' %}
+                                    <i class="bi bi-clock-fill text-warning" data-bs-toggle="tooltip" title="Late"></i>
+                                    {% elif day.attendance == 'half_day' %}
+                                    <i class="bi bi-record-circle text-info" data-bs-toggle="tooltip" title="Half Day"></i>
+                                    {% elif day.attendance == 'holiday' %}
+                                    <i class="bi bi-star-fill text-secondary" data-bs-toggle="tooltip" title="Holiday"></i>
+                                    {% else %}
+                                    <i class="bi bi-dash-circle text-muted" data-bs-toggle="tooltip" title="No Class"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if loop.index % 7 == 0 and not loop.last %}
+                    </div>
+                    <div class="row">
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-center flex-wrap gap-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                <small>Present</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-x-circle-fill text-danger me-1"></i>
+                                <small>Absent</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock-fill text-warning me-1"></i>
+                                <small>Late</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-record-circle text-info me-1"></i>
+                                <small>Half Day</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-star-fill text-secondary me-1"></i>
+                                <small>Holiday</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-dash-circle text-muted me-1"></i>
+                                <small>No Class</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course-wise Attendance -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-book me-2"></i>Course-wise Attendance</h5>
+            </div>
+            <div class="card-body">
+                {% for course in course_attendance %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">{{ course.name }}</h6>
+                        <span class="badge bg-{{ 'success' if course.percentage >= 85 else 'warning' if course.percentage >= 75 else 'danger' }}">
+                            {{ course.percentage }}%
+                        </span>
+                    </div>
+                    <div class="progress mb-1" style="height: 8px;">
+                        <div class="progress-bar bg-{{ 'success' if course.percentage >= 85 else 'warning' if course.percentage >= 75 else 'danger' }}" 
+                             style="width: {{ course.percentage }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>{{ course.present }}/{{ course.total }} classes</span>
+                        <span>{{ course.absent }} absent</span>
+                    </div>
+                </div>
+                {% if not loop.last %}
+                <hr>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Attendance Trends -->
+        <div class="card mt-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Monthly Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceTrendChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Attendance Records -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-list-check me-2"></i>Detailed Attendance Records</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Day</th>
+                                <th>Period 1</th>
+                                <th>Period 2</th>
+                                <th>Period 3</th>
+                                <th>Period 4</th>
+                                <th>Period 5</th>
+                                <th>Period 6</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in detailed_records %}
+                            <tr>
+                                <td>
+                                    <strong>{{ record.date }}</strong>
+                                </td>
+                                <td>{{ record.day }}</td>
+                                {% for period in record.periods %}
+                                <td class="text-center">
+                                    {% if period.status == 'present' %}
+                                    <i class="bi bi-check-circle-fill text-success" data-bs-toggle="tooltip" title="Present"></i>
+                                    {% elif period.status == 'absent' %}
+                                    <i class="bi bi-x-circle-fill text-danger" data-bs-toggle="tooltip" title="Absent"></i>
+                                    {% elif period.status == 'late' %}
+                                    <i class="bi bi-clock-fill text-warning" data-bs-toggle="tooltip" title="Late"></i>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                                <td>
+                                    <small class="text-muted">{{ record.remarks or '-' }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Attendance pagination">
+                    <ul class="pagination justify-content-center mt-4">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Policy -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Attendance Policy</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Minimum Attendance Requirement</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Minimum 75% attendance required</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Medical leaves are considered with certificate</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Prior permission required for planned absence</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Current Status</h6>
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <strong>Good Standing:</strong> Your current attendance meets the minimum requirements.
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" style="width: 94%"></div>
+                            <div class="progress-bar bg-danger" style="width: 6%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small>Present: 94%</small>
+                            <small>Required: 75%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Attendance Trend Chart
+    const trendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
+    const trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Attendance %',
+                data: [89, 92, 90, 94, 93, 94],
+                borderColor: 'rgb(78, 115, 223)',
+                backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 80,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+
+<style>
+    .attendance-calendar .day-cell {
+        padding: 8px 4px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+
+    .attendance-calendar .day-cell:hover {
+        background-color: #f8f9fa;
+    }
+
+    .attendance-calendar .date-number {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    .attendance-calendar .attendance-status {
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}

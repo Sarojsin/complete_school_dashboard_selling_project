@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Discussion Forum{% endblock %}
+
+{% block sidebar_content %}
+{% include 'student/sidebar.html' %}
+{% endblock %}
+
+{% block page_title %}Discussion Forum{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Discussion Forum</h4>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newPostModal">
+                        <i class="bi bi-plus-circle me-2"></i>New Post
+                    </button>
+                </div>
+                <p class="text-muted">Discuss with classmates and teachers</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Forum Categories -->
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Categories</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="#" class="list-group-item list-group-item-action active">
+                    <i class="bi bi-chat-text me-2"></i>General Discussion
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">
+                    <i class="bi bi-book me-2"></i>Academics
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">
+                    <i class="bi bi-people me-2"></i>Study Groups
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">
+                    <i class="bi bi-question-circle me-2"></i>Q&A
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">
+                    <i class="bi bi-megaphone me-2"></i>Announcements
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forum Posts -->
+    <div class="col-md-9">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <img src="/static/images/default-avatar.png" class="rounded-circle me-3" width="50" height="50"
+                        alt="User">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-1">Mathematics Homework Help</h5>
+                            <small class="text-muted">2 hours ago</small>
+                        </div>
+                        <p class="text-muted mb-2 small">Posted by John Doe in Academics</p>
+                        <p class="mb-2">Can someone help me understand the quadratic formula? I'm having trouble with
+                            the discriminant part.</p>
+                        <div class="d-flex gap-3">
+                            <small><i class="bi bi-chat-left me-1"></i>5 replies</small>
+                            <small><i class="bi bi-eye me-1"></i>23 views</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <img src="/static/images/default-avatar.png" class="rounded-circle me-3" width="50" height="50"
+                        alt="User">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-1">Study Group for Chemistry</h5>
+                            <small class="text-muted">5 hours ago</small>
+                        </div>
+                        <p class="text-muted mb-2 small">Posted by Sarah Smith in Study Groups</p>
+                        <p class="mb-2">Looking for students interested in forming a chemistry study group for the
+                            upcoming exams.</p>
+                        <div class="d-flex gap-3">
+                            <small><i class="bi bi-chat-left me-1"></i>12 replies</small>
+                            <small><i class="bi bi-eye me-1"></i>45 views</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <img src="/static/images/default-avatar.png" class="rounded-circle me-3" width="50" height="50"
+                        alt="User">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-1">Tips for Time Management</h5>
+                            <small class="text-muted">1 day ago</small>
+                        </div>
+                        <p class="text-muted mb-2 small">Posted by Mike Johnson in General Discussion</p>
+                        <p class="mb-2">What are your best tips for managing time between studies, assignments, and
+                            extracurricular activities?</p>
+                        <div class="d-flex gap-3">
+                            <small><i class="bi bi-chat-left me-1"></i>8 replies</small>
+                            <small><i class="bi bi-eye me-1"></i>67 views</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- New Post Modal -->
+<div class="modal fade" id="newPostModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newPostForm">
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" required>
+                            <option value="">Select Category</option>
+                            <option>General Discussion</option>
+                            <option>Academics</option>
+                            <option>Study Groups</option>
+                            <option>Q&A</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" placeholder="Enter post title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" rows="4" placeholder="Write your post here..."
+                            required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Post</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

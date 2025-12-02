@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Create Assignment{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Create New Assignment{% endblock %}
+
+{% block page_actions %}
+<a href="/teacher/assignments" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back to Assignments
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-journal-plus me-2"></i>Assignment Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/teacher/assignments/create">
+                    <!-- Basic Information -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label">Assignment Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required placeholder="Enter assignment title">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
+                            <select class="form-select" id="course" name="course_id" required>
+                                <option value="">Select Course</option>
+                                <option value="math101">Mathematics 101</option>
+                                <option value="sci201">Science 201</option>
+                                <option value="eng101">English 101</option>
+                                <option value="hist301">History 301</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Assignment Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Provide detailed instructions for the assignment..."></textarea>
+                        <div class="form-text">You can include formatting, submission guidelines, and evaluation criteria.</div>
+                    </div>
+
+                    <!-- Due Date and Points -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="due_date" class="form-label">Due Date <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="due_date" name="due_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="total_points" class="form-label">Total Points</label>
+                            <input type="number" class="form-control" id="total_points" name="total_points" value="100" min="1" max="1000">
+                        </div>
+                    </div>
+
+                    <!-- Assignment Type and Weight -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">Assignment Type</label>
+                            <select class="form-select" id="type" name="type">
+                                <option value="homework">Homework</option>
+                                <option value="project">Project</option>
+                                <option value="quiz">Quiz</option>
+                                <option value="exam">Exam</option>
+                                <option value="essay">Essay</option>
+                                <option value="presentation">Presentation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="weight" class="form-label">Weight in Final Grade (%)</label>
+                            <input type="number" class="form-control" id="weight" name="weight" value="10" min="1" max="100">
+                        </div>
+                    </div>
+
+                    <!-- Target Classes -->
+                    <div class="mb-3">
+                        <label class="form-label">Assign To Classes</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="class_9a" name="classes[]" value="9A">
+                                    <label class="form-check-label" for="class_9a">Grade 9A</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="class_9b" name="classes[]" value="9B">
+                                    <label class="form-check-label" for="class_9b">Grade 9B</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="class_10a" name="classes[]" value="10A">
+                                    <label class="form-check-label" for="class_10a">Grade 10A</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="class_10b" name="classes[]" value="10B">
+                                    <label class="form-check-label" for="class_10b">Grade 10B</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="class_11a" name="classes[]" value="11A">
+                                    <label class="form-check-label" for="class_11a">Grade 11A</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="class_11b" name="classes[]" value="11B">
+                                    <label class="form-check-label" for="class_11b">Grade 11B</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attachment -->
+                    <div class="mb-4">
+                        <label for="attachment" class="form-label">Attachment</label>
+                        <input type="file" class="form-control" id="attachment" name="attachment">
+                        <div class="form-text">Upload any relevant files (PDF, DOC, PPT, etc.) - Max 10MB</div>
+                    </div>
+
+                    <!-- Submission Options -->
+                    <div class="mb-4">
+                        <label class="form-label">Submission Options</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="allow_late" name="allow_late">
+                            <label class="form-check-label" for="allow_late">Allow late submissions</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="online_submission" name="online_submission" checked>
+                            <label class="form-check-label" for="online_submission">Enable online submission</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notify_students" name="notify_students" checked>
+                            <label class="form-check-label" for="notify_students">Notify students via email</label>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>Create Assignment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
