@@ -135,6 +135,19 @@ async def signup_teacher_page(request: Request):
 async def signup_authority_page(request: Request):
     return templates.TemplateResponse("auth/signup_authority.html", {"request": request})
 
+# Registration aliases (for home page links)
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse("auth/signup.html", {"request": request})
+
+@app.get("/register/student", response_class=HTMLResponse)
+async def register_student_page(request: Request):
+    return templates.TemplateResponse("auth/signup_student.html", {"request": request})
+
+@app.get("/register/teacher", response_class=HTMLResponse)
+async def register_teacher_page(request: Request):
+    return templates.TemplateResponse("auth/signup_teacher.html", {"request": request})
+
 # ------------------ STUDENT PAGES ------------------
 @app.get("/student/dashboard")
 async def student_dashboard(request: Request, current_user: User = Depends(get_current_user)):
