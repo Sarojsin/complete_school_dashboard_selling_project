@@ -797,7 +797,17 @@ async def authority_notices(request: Request, current_user: User = Depends(get_c
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "notices": []
+        "notices": [],
+        "stats": {
+            "total_notices": 0,
+            "active_notices": 0,
+            "expired_notices": 0,
+            "this_month": 0
+        },
+        "current_page": 1,
+        "total_pages": 1,
+        "has_prev": False,
+        "has_next": False
     })
 
 @app.get("/authority/notices/add")

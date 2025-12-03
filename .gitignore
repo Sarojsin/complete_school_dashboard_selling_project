@@ -53,6 +53,4 @@ Thumbs.db
 uploads/*
 !uploads/.gitkeep
 
-# Test files
-test_*.py
-*_test.py
+

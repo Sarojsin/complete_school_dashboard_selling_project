@@ -5,7 +5,7 @@ Creates tables and adds initial data
 from database.database import engine, Base
 from models.models import User, Student, Teacher, Authority, UserRole
 from models.chat_models import ChatMessage
-from models.test_models import Test, Question, TestSubmission
+from models.test_models import Test, TestQuestion, TestSubmission
 from repositories.user_repository import UserRepository
 from database.database import SessionLocal
 from datetime import datetime

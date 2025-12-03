@@ -12,7 +12,11 @@ class UserRepository:
     
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return pwd_context.verify(plain_password, hashed_password)
+        try:
+            return pwd_context.verify(plain_password, hashed_password)
+        except ValueError:
+            # Handle passwords longer than 72 bytes (bcrypt limitation)
+            return False
     
     @staticmethod
     def get_by_id(db: Session, user_id: int) -> Optional[User]:
