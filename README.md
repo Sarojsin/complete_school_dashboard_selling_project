@@ -63,17 +63,42 @@ Once running, visit:
 
 ```
 claud/
-├── routes/          # API route handlers
-├── models/          # Database models
-├── repositories/    # Data access layer
-├── services/        # Business logic
-├── templates/       # HTML templates
-├── static/          # Static files (CSS, JS, images)
-├── config/          # Configuration files
-├── database/        # Database connection
-├── dependencies.py  # Authentication dependencies
-├── main.py          # Application entry point
-└── run.py           # Server runner
+├── routes/                  # API route handlers
+│   ├── auth.py              # Authentication routes
+│   ├── chat.py              # Chat REST endpoints
+│   ├── parents.py           # Parent portal routes
+│   ├── students.py          # Student portal routes
+│   ├── teachers.py          # Teacher portal routes
+│   ├── websocket_chat.py    # WebSocket handlers
+│   └── ... (assignments, attendance, courses, fees, grades, notes, notices, tests, videos)
+├── models/                  # Database models
+│   ├── models.py            # Core models (User, Student, Teacher, Parent)
+│   ├── chat_models.py       # ChatMessage model
+│   └── test_models.py       # Test/Quiz models
+├── repositories/            # Data access layer
+│   ├── chat_repository.py   # Chat database operations
+│   ├── parent_repository.py # Parent database operations
+│   ├── student_repository.py
+│   ├── teacher_repository.py
+│   ├── user_repository.py
+│   └── ... (assignment, attendance, course, fee, grade, note, notice, test, video)
+├── templates/               # HTML templates
+│   ├── base.html            # Base layout
+│   ├── index.html           # Landing page
+│   ├── parent/              # Parent portal templates
+│   │   ├── chat.html        # Parent-Teacher chat
+│   │   ├── dashboard.html   # Parent dashboard
+│   │   └── ... (attendance, grades, homework, notices, profile)
+│   ├── student/             # Student portal templates
+│   └── teacher/             # Teacher portal templates
+│       ├── chat.html        # Teacher-Parent chat
+│       └── dashboard.html   # Teacher dashboard
+├── static/                  # Static files (CSS, JS, images)
+├── config/                  # Configuration files
+├── database/                # Database connection
+├── dependencies.py          # Authentication dependencies
+├── main.py                  # Application entry point
+└── run.py                   # Server runner
 ```
 
 ## API Endpoints
@@ -111,6 +136,11 @@ claud/
 - `GET /api/authority/notices` - All notices
 - `GET /api/authority/analytics` - System analytics
 - `GET /api/authority/reports` - System reports
+
+### Chat Endpoints
+- `GET /api/chat/contacts/parent` - Get parent's teacher contacts
+- `GET /api/chat/messages/{user_id}` - Get chat history with a user
+- `POST /api/chat/messages/{user_id}` - Send a message to a user
 
 ## Testing
 

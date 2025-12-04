@@ -93,6 +93,18 @@ python setup_database.py
 python run.py --host 127.0.0.1 --port 8000
 ```
 
+#### Option C: Render Deployment (Easiest)
+
+1. **Use Blueprint**:
+   - Push `render.yaml` to your repository.
+   - Go to Render Dashboard -> New -> Blueprint.
+   - Select your repository.
+   - Render will auto-configure the database and web service.
+
+2. **Manual Setup**:
+   - See detailed instructions in [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md).
+
+
 ### 4. Systemd Service (For Traditional Deployment)
 
 Create systemd service file:

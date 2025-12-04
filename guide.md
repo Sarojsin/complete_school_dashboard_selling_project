@@ -45,6 +45,11 @@ Visit: `http://localhost:8000`
 
 Based on the project structure document, here's what you need to implement:
 
+### Feature Highlights
+- **Parent Chat System**: Real-time messaging with teachers, search functionality, and auto-updates.
+- **Authorization**: Role-based access control with case-insensitive checks.
+- **Profile Management**: Name fields stored directly in profile tables for efficient querying.
+
 ### Core Application Files (Priority 1)
 
 **Already Created:**
@@ -69,6 +74,10 @@ Based on the project structure document, here's what you need to implement:
 **Templates Created:**
 - ✅ `app/templates/base.html` - Base template
 - ✅ `app/templates/student/take_test.html` - Test taking interface
+- ✅ `app/templates/parent/chat.html` - Parent chat interface
+- ✅ `app/templates/teacher/chat.html` - Teacher chat interface
+- ✅ `app/templates/parent/dashboard.html` - Parent dashboard
+- ✅ `app/templates/teacher/dashboard.html` - Teacher dashboard
 
 **Static Files Created:**
 - ✅ `app/static/css/style.css` - Main styles
@@ -84,9 +93,16 @@ Based on the project structure document, here's what you need to implement:
 **Routes Created:**
 - ✅ `app/routes/auth.py` - Auth endpoints
 - ✅ `app/routes/websocket_chat.py` - WebSocket chat
+- ✅ `app/routes/chat.py` - Chat REST API
+- ✅ `app/routes/parents.py` - Parent operations
 
 **Repositories Created:**
 - ✅ `app/repositories/user_repository.py` - User CRUD
+- ✅ `app/repositories/student_repository.py` - Student CRUD
+- ✅ `app/repositories/teacher_repository.py` - Teacher CRUD
+- ✅ `app/repositories/parent_repository.py` - Parent CRUD
+- ✅ `app/repositories/authority_repository.py` - Authority CRUD
+- ✅ `app/repositories/chat_repository.py` - Chat operations
 
 ### Remaining Files to Implement (Priority 2)
 
