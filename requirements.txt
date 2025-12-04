@@ -11,7 +11,7 @@ alembic
 python-jose[cryptography]
 passlib[bcrypt]
 python-dotenv
-bcrypt
+bcrypt==3.2.2
 
 # Validation
 pydantic
