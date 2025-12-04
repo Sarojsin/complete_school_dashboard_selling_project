@@ -286,3 +286,22 @@ class Video(Base):
     # Relationships
     course = relationship("Course", back_populates="videos")
     teacher = relationship("Teacher", back_populates="videos")
+
+class FeeStructure(Base):
+    __tablename__ = "fee_structures"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    grade_level = Column(String(20), nullable=False)
+    academic_year = Column(String(20), nullable=False)
+    tuition_fee = Column(Float, default=0.0)
+    registration_fee = Column(Float, default=0.0)
+    library_fee = Column(Float, default=0.0)
+    sports_fee = Column(Float, default=0.0)
+    lab_fee = Column(Float, default=0.0)
+    activity_fee = Column(Float, default=0.0)
+    other_charges = Column(Float, default=0.0)
+    total_amount = Column(Float, default=0.0)
+    due_date = Column(Date)
+    status = Column(String(20), default="active")  # active, inactive
+    description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -255,14 +255,51 @@ async def student_test_result(request: Request, test_id: int):
     })
 
 @app.get("/student/notices")
-async def student_notices(request: Request, current_user: User = Depends(get_current_user)):
+async def student_notices(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.notice_repository import NoticeRepository
+    
+    # Get notices for students or all
+    notices_data = NoticeRepository.get_active_notices(db, target_role="students")
+    
+    # Format notices for template
+    notices = []
+    important_notices = []
+    
+    for n in notices_data:
+        formatted_notice = {
+            "id": n.id,
+            "title": n.title,
+            "content": n.content,
+            "excerpt": n.content[:100] + "..." if len(n.content) > 100 else n.content,
+            "priority": n.priority,
+            "date": n.created_at.strftime('%Y-%m-%d'),
+            "time": n.created_at.strftime('%H:%M'),
+            "author": n.authority.full_name if n.authority else "School Authority",
+            "from_": n.authority.full_name if n.authority else "School Authority",
+            "audience": "Students" if n.target_role == "students" else "All",
+            "attachment": None # Placeholder
+        }
+        
+        notices.append(formatted_notice)
+        if n.priority == "high" or n.priority == "urgent":
+            important_notices.append(formatted_notice)
+    
     return templates.TemplateResponse("student/notices.html", {
         "request": request,
         "current_user": current_user,
         "student": current_user,
-        "notices": [],
-        "important_notices": []
+        "notices": notices,
+        "important_notices": important_notices,
+        "current_page": 1,
+        "total_pages": 1,
+        "has_prev": False,
+        "has_next": False
     })
+
 
 @app.get("/student/timetable")
 async def student_timetable(request: Request, current_user: User = Depends(get_current_user)):
@@ -798,13 +835,47 @@ async def authority_dashboard(request: Request, current_user: User = Depends(get
     })
 
 @app.get("/authority/students")
-async def authority_students(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_students(
+    request: Request,
+    search: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    
+    if search:
+        students_data = StudentRepository.search(db, search)
+    else:
+        students_data = StudentRepository.get_all(db)
+    
+    # Format students for template
+    formatted_students = []
+    for s in students_data:
+        formatted_students.append({
+            "id": s.id,
+            "full_name": s.user.full_name if s.user else "N/A",
+            "email": s.user.email if s.user else "N/A",
+            "student_id": s.student_id,
+            "grade_level": s.grade_level,
+            "section": s.section or "N/A",
+            "date_of_birth": s.date_of_birth.strftime('%Y-%m-%d') if s.date_of_birth else "N/A",
+            "phone": s.phone or "N/A",
+            "avatar": f"https://ui-avatars.com/api/?name={s.user.full_name.replace(' ', '+') if s.user else 'User'}&background=random",
+            "gpa": "N/A",
+            "roll_number": s.student_id,
+            "fee_status": "paid",
+            "attendance": 0,
+            "status": "active"
+        })
+        
     return templates.TemplateResponse("authority/students.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "students": []
+        "students": formatted_students,
+        "search_query": search
     })
+
 
 @app.get("/authority/students/add")
 async def authority_add_student(request: Request, current_user: User = Depends(get_current_user)):
@@ -824,13 +895,46 @@ async def authority_edit_student(request: Request, student_id: int, current_user
     })
 
 @app.get("/authority/teachers")
-async def authority_teachers(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_teachers(
+    request: Request,
+    search: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    
+    if search:
+        teachers_data = TeacherRepository.search(db, search)
+    else:
+        teachers_data = TeacherRepository.get_all(db)
+    
+    # Format teachers for template
+    formatted_teachers = []
+    for t in teachers_data:
+        formatted_teachers.append({
+            "id": t.id,
+            "full_name": t.user.full_name if t.user else "N/A",
+            "email": t.user.email if t.user else "N/A",
+            "employee_id": t.employee_id,
+            "department": t.department or "N/A",
+            "specialization": t.specialization or "N/A",
+            "phone": t.phone or "N/A",
+            "hire_date": t.joining_date.strftime('%Y-%m-%d') if t.joining_date else "N/A",
+            "avatar": f"https://ui-avatars.com/api/?name={t.user.full_name.replace(' ', '+') if t.user else 'User'}&background=random",
+            "courses_taught": 0,
+            "students": 0,
+            "performance": 95, # Mock performance score
+            "status": "active"
+        })
+        
     return templates.TemplateResponse("authority/teachers.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "teachers": []
+        "teachers": formatted_teachers,
+        "search_query": search
     })
+
 
 @app.get("/authority/teachers/add")
 async def authority_add_teacher(request: Request, current_user: User = Depends(get_current_user)):
@@ -850,13 +954,49 @@ async def authority_edit_teacher(request: Request, teacher_id: int, current_user
     })
 
 @app.get("/authority/courses")
-async def authority_courses(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_courses(
+    request: Request,
+    search: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.course_repository import CourseRepository
+    
+    if search:
+        courses_data = CourseRepository.search(db, search)
+    else:
+        courses_data = CourseRepository.get_all(db)
+    
+    # Format courses for template
+    formatted_courses = []
+    for c in courses_data:
+        formatted_courses.append({
+            "id": c.id,
+            "code": c.course_code,
+            "name": c.course_name,
+            "description": c.description,
+            "credits": c.credits,
+            "grade_level": c.grade_level,
+            "semester": c.semester,
+            "instructor": c.teacher.user.full_name if c.teacher and c.teacher.user else "Unassigned",
+            "instructor_avatar": f"https://ui-avatars.com/api/?name={c.teacher.user.full_name if c.teacher and c.teacher.user else 'Unassigned'}&background=random",
+            "teacher_id": c.teacher_id,
+            "student_count": 0,
+            "class_count": 0,
+            "avg_grade": 0,
+            "department": "Science",
+            "department_color": "primary",
+            "status": "active"
+        })
+    
     return templates.TemplateResponse("authority/courses.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "courses": []
+        "courses": formatted_courses,
+        "search_query": search
     })
+
 
 @app.get("/authority/courses/add")
 async def authority_add_course(request: Request, current_user: User = Depends(get_current_user)):
@@ -904,6 +1044,45 @@ async def authority_fee_structure(request: Request, current_user: User = Depends
         "current_year": 2023
     })
 
+@app.post("/authority/fees/structure")
+async def authority_create_fee_structure(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.fee_structure_repository import FeeStructureRepository
+    from datetime import datetime    
+    form = await request.form()
+    
+    # Extract form data
+    tuition_fee = float(form.get("tuition_fee", 0))
+    registration_fee = float(form.get("registration_fee", 0))
+    library_fee = float(form.get("library_fee", 0))
+    sports_fee = float(form.get("sports_fee", 0))
+    lab_fee = float(form.get("lab_fee", 0))
+    activity_fee = float(form.get("activity_fee", 0))
+    other_charges = float(form.get("other_charges", 0))
+    
+    total_amount = (tuition_fee + registration_fee + library_fee + 
+                   sports_fee + lab_fee + activity_fee + other_charges)
+    
+    structure_data = {
+        "grade_level": form.get("grade_level"),
+        "academic_year": form.get("academic_year"),
+        "tuition_fee": tuition_fee,
+        "registration_fee": registration_fee,
+        "library_fee": library_fee,
+        "sports_fee": sports_fee,
+        "lab_fee": lab_fee,
+        "activity_fee": activity_fee,
+        "other_charges": other_charges,
+        "total_amount": total_amount,
+        "status": form.get("status", "active"),
+        "description": form.get("description"),
+        "due_date": datetime.strptime(form.get("due_date"), '%Y-%m-%d').date() if form.get("due_date") else None
+    }
+    
+    FeeStructureRepository.create(db, structure_data)
+    
+    return RedirectResponse(url="/authority/fees/structure", status_code=303)
+
+
 @app.get("/authority/fees/add")
 async def authority_add_fee(request: Request, current_user: User = Depends(get_current_user)):
     return templates.TemplateResponse("authority/add_fee.html", {
@@ -913,17 +1092,55 @@ async def authority_add_fee(request: Request, current_user: User = Depends(get_c
     })
 
 @app.get("/authority/notices")
-async def authority_notices(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_notices(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.notice_repository import NoticeRepository
+    
+    # Get all notices
+    notices = NoticeRepository.get_all(db)
+    
+    # Calculate stats
+    total_notices = len(notices)
+    active_notices_list = NoticeRepository.get_active_notices(db)
+    active_count = len(active_notices_list)
+    expired_count = total_notices - active_count
+    
+    # Format notices for template
+    from datetime import datetime
+    formatted_notices = []
+    for n in notices:
+        is_expired = n.expires_at and n.expires_at < datetime.utcnow()
+        days_remaining = (n.expires_at - datetime.utcnow()).days if n.expires_at and not is_expired else 0
+        
+        formatted_notices.append({
+            "id": n.id,
+            "title": n.title,
+            "excerpt": n.content[:100] + "..." if len(n.content) > 100 else n.content,
+            "priority": n.priority,
+            "audience": n.target_role,
+            "published_date": n.created_at.strftime('%Y-%m-%d'),
+            "published_time": n.created_at.strftime('%H:%M'),
+            "expiry_date": n.expires_at.strftime('%Y-%m-%d') if n.expires_at else None,
+            "is_expired": is_expired,
+            "days_remaining": f"{days_remaining} days" if days_remaining > 0 else "Expired" if is_expired else "No expiry",
+            "status": "expired" if is_expired else "active",
+            "views": 0, # Placeholder
+            "is_important": n.priority == "urgent" or n.priority == "high"
+        })
+    
     return templates.TemplateResponse("authority/notices.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "notices": [],
+        "notices": formatted_notices,
         "stats": {
-            "total_notices": 0,
-            "active_notices": 0,
-            "expired_notices": 0,
-            "this_month": 0
+            "total_notices": total_notices,
+            "active_notices": active_count,
+            "expired_notices": expired_count,
+            "this_month": 0 # Placeholder
         },
         "current_page": 1,
         "total_pages": 1,
@@ -939,11 +1156,73 @@ async def authority_add_notice(request: Request, current_user: User = Depends(ge
         "authority": current_user
     })
 
-@app.get("/authority/notices/{notice_id}/edit")
-async def authority_edit_notice(request: Request, notice_id: int):
+@app.post("/authority/notices/add")
+async def authority_create_notice(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.notice_repository import NoticeRepository
+    from datetime import datetime
+    
+    form = await request.form()
+    
+    # Create notice data
+    notice_data = {
+        "title": form.get("title"),
+        "content": form.get("content"),
+        "priority": form.get("priority", "normal"),
+        "target_role": form.get("audience", "all"),  # Form field is 'audience'
+        "expires_at": datetime.fromisoformat(form.get("expiry_date")) if form.get("expiry_date") else None,
+        "authority_id": current_user.authority_profile.id
+    }
+    
+    NoticeRepository.create(db, notice_data)
+    
+    return RedirectResponse(url="/authority/notices", status_code=303)
+
+
+@app.get("/authority/notices/{id}/edit", name="authority_edit_notice")
+async def authority_edit_notice(request: Request, id: int):
     return templates.TemplateResponse("authority/edit_notice.html", {
         "request": request,
-        "notice_id": notice_id
+        "notice_id": id
+    })
+
+@app.delete("/authority/notices/delete/{id}")
+async def authority_delete_notice(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.notice_repository import NoticeRepository
+    
+    notice = NoticeRepository.get_by_id(db, id)
+    if not notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+        
+    NoticeRepository.delete(db, notice)
+    return JSONResponse(content={"message": "Notice deleted successfully"})
+
+@app.get("/authority/notices/view/{id}")
+async def authority_view_notice(
+    id: int,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.notice_repository import NoticeRepository
+    
+    notice = NoticeRepository.get_by_id(db, id)
+    if not notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+        
+    from datetime import datetime
+    return templates.TemplateResponse("authority/view_notice.html", {
+        "request": request,
+        "current_user": current_user,
+        "notice": notice,
+        "now": datetime.utcnow()
     })
 
 @app.get("/authority/analytics")

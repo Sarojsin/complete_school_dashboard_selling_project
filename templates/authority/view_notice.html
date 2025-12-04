@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}View Notice - {{ notice.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_notices') }}">Notices</a></li>
+                    <li class="breadcrumb-item active">View Notice</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white p-4 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="mb-2">{{ notice.title }}</h2>
+                            <div class="text-muted">
+                                <span class="me-3"><i class="fas fa-calendar me-1"></i> {{
+                                    notice.created_at.strftime('%Y-%m-%d') }}</span>
+                                <span class="me-3"><i class="fas fa-clock me-1"></i> {{
+                                    notice.created_at.strftime('%H:%M') }}</span>
+                                <span
+                                    class="badge bg-{{ 'danger' if notice.priority == 'high' or notice.priority == 'urgent' else 'info' }}">
+                                    {{ notice.priority|title }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <a href="{{ url_for('authority_edit_notice', id=notice.id) }}"
+                                class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="notice-content mb-4">
+                        {{ notice.content | safe }}
+                    </div>
+
+                    <hr>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Notice Details</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><strong>Target Audience:</strong> {{ notice.target_role|title }}</li>
+                                <li class="mb-2"><strong>Status:</strong>
+                                    {% if notice.expires_at and notice.expires_at < now %} <span class="text-danger">
+                                        Expired</span>
+                                        {% else %}
+                                        <span class="text-success">Active</span>
+                                        {% endif %}
+                                </li>
+                                <li class="mb-2"><strong>Expires:</strong> {{ notice.expires_at.strftime('%Y-%m-%d') if
+                                    notice.expires_at else 'Never' }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light p-3 text-end">
+                    <button onclick="window.close()" class="btn btn-secondary">Close Window</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

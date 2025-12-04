@@ -44,6 +44,37 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- Success/Error Messages -->
+<script>
+    // Get success message from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const successMsg = urlParams.get('success');
+    const errorMsg = urlParams.get('error');
+
+    if (successMsg) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show mb-4';
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            <i class="bi bi-check-circle me-2"></i>${decodeURIComponent(successMsg)}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+    }
+
+    if (errorMsg) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show mb-4';
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle me-2"></i>${decodeURIComponent(errorMsg)}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+    }
+</script>
+
 <!-- Student Statistics -->
 <div class="row mb-4">
     <div class="col-xl-2 col-md-4 mb-4">
@@ -140,11 +171,15 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Search Students</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search by name, ID, or email...">
-                    <button class="btn btn-primary">Search</button>
-                </div>
+                <form action="/authority/students" method="GET">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control"
+                            placeholder="Search by name, ID, or email..."
+                            value="{{ search_query if search_query else '' }}">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </form>
             </div>
             <div class="col-md-6">
                 <label class="form-label">&nbsp;</label>
@@ -188,12 +223,14 @@
                     <tr>
                         <td>
                             <div class="form-check">
-                                <input class="form-check-input student-checkbox" type="checkbox" value="{{ student.id }}">
+                                <input class="form-check-input student-checkbox" type="checkbox"
+                                    value="{{ student.id }}">
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="{{ student.avatar }}" class="rounded-circle me-3" width="45" height="45" alt="{{ student.name }}">
+                                <img src="{{ student.avatar }}" class="rounded-circle me-3" width="45" height="45"
+                                    alt="{{ student.name }}">
                                 <div>
                                     <h6 class="mb-1">{{ student.name }}</h6>
                                     <small class="text-muted">ID: {{ student.id }}</small><br>
@@ -210,13 +247,15 @@
                         </td>
                         <td>
                             <div>
-                                <span class="badge bg-secondary mb-1">{{ student.grade }}{{ student.section }}</span><br>
+                                <span class="badge bg-secondary mb-1">{{ student.grade }}{{ student.section
+                                    }}</span><br>
                                 <small class="text-muted">GPA: {{ student.gpa }}</small><br>
                                 <small class="text-muted">Roll No: {{ student.roll_number }}</small>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-{{ 'success' if student.fee_status == 'paid' else 'warning' if student.fee_status == 'due' else 'danger' }}">
+                            <span
+                                class="badge bg-{{ 'success' if student.fee_status == 'paid' else 'warning' if student.fee_status == 'due' else 'danger' }}">
                                 {{ student.fee_status|title }}
                             </span>
                             {% if student.fee_due_date %}
@@ -226,38 +265,49 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="progress flex-grow-1 me-2" style="height: 6px; width: 60px;">
-                                    <div class="progress-bar bg-{{ 'success' if student.attendance >= 90 else 'warning' if student.attendance >= 75 else 'danger' }}" 
-                                         style="width: {{ student.attendance }}%"></div>
+                                    <div class="progress-bar bg-{{ 'success' if student.attendance >= 90 else 'warning' if student.attendance >= 75 else 'danger' }}"
+                                        style="width: {{ student.attendance }}%"></div>
                                 </div>
                                 <small>{{ student.attendance }}%</small>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-{{ 'success' if student.status == 'active' else 'secondary' if student.status == 'graduated' else 'danger' }}">
+                            <span
+                                class="badge bg-{{ 'success' if student.status == 'active' else 'secondary' if student.status == 'graduated' else 'danger' }}">
                                 {{ student.status|title }}
                             </span>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="/authority/students/{{ student.id }}" class="btn btn-outline-primary" title="View">
+                                <a href="/authority/students/{{ student.id }}" class="btn btn-outline-primary"
+                                    title="View">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="/authority/edit-student/{{ student.id }}" class="btn btn-outline-success" title="Edit">
+                                <a href="/authority/edit-student/{{ student.id }}" class="btn btn-outline-success"
+                                    title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-outline-info" title="Contact" data-bs-toggle="modal" data-bs-target="#contactModal{{ student.id }}">
+                                <button class="btn btn-outline-info" title="Contact" data-bs-toggle="modal"
+                                    data-bs-target="#contactModal{{ student.id }}">
                                     <i class="bi bi-envelope"></i>
                                 </button>
                                 <div class="dropdown">
-                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown">
                                         <i class="bi bi-three-dots"></i>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-card-text me-2"></i>Generate Report</a></li>
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-cash-coin me-2"></i>Fee History</a></li>
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-graph-up me-2"></i>Performance</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Deactivate</a></li>
+                                        <li><a class="dropdown-item" href="#"><i
+                                                    class="bi bi-card-text me-2"></i>Generate Report</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-cash-coin me-2"></i>Fee
+                                                History</a></li>
+                                        <li><a class="dropdown-item" href="#"><i
+                                                    class="bi bi-graph-up me-2"></i>Performance</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i
+                                                    class="bi bi-person-x me-2"></i>Deactivate</a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -272,15 +322,22 @@
         <div class="row mt-3">
             <div class="col-md-6">
                 <div class="btn-group">
-                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="bulkActionsBtn" disabled>
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" id="bulkActionsBtn" disabled>
                         Bulk Actions
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="bulkExport"><i class="bi bi-download me-2"></i>Export Selected</a></li>
-                        <li><a class="dropdown-item" href="#" id="bulkEmail"><i class="bi bi-envelope me-2"></i>Send Email</a></li>
-                        <li><a class="dropdown-item" href="#" id="bulkSMS"><i class="bi bi-chat me-2"></i>Send SMS</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" id="bulkDeactivate"><i class="bi bi-person-x me-2"></i>Deactivate Selected</a></li>
+                        <li><a class="dropdown-item" href="#" id="bulkExport"><i class="bi bi-download me-2"></i>Export
+                                Selected</a></li>
+                        <li><a class="dropdown-item" href="#" id="bulkEmail"><i class="bi bi-envelope me-2"></i>Send
+                                Email</a></li>
+                        <li><a class="dropdown-item" href="#" id="bulkSMS"><i class="bi bi-chat me-2"></i>Send SMS</a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="#" id="bulkDeactivate"><i
+                                    class="bi bi-person-x me-2"></i>Deactivate Selected</a></li>
                     </ul>
                 </div>
                 <span class="ms-2 text-muted small" id="selectedCount">0 students selected</span>
@@ -317,7 +374,8 @@
                 <div class="mb-3">
                     <label class="form-label">Select File</label>
                     <input type="file" class="form-control" accept=".csv,.xlsx,.xls">
-                    <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls). <a href="#">Download template</a></div>
+                    <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls). <a href="#">Download
+                            template</a></div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Import Options</label>
@@ -392,7 +450,7 @@
 {% block extra_js %}
 <script>
     // Bulk selection functionality
-    document.getElementById('selectAll').addEventListener('change', function() {
+    document.getElementById('selectAll').addEventListener('change', function () {
         const checkboxes = document.querySelectorAll('.student-checkbox');
         checkboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
@@ -411,7 +469,7 @@
     }
 
     // Filter functionality
-    document.getElementById('resetFilters').addEventListener('click', function() {
+    document.getElementById('resetFilters').addEventListener('click', function () {
         document.getElementById('gradeFilter').value = '';
         document.getElementById('sectionFilter').value = '';
         document.getElementById('statusFilter').value = '';
@@ -419,13 +477,13 @@
     });
 
     // Bulk actions
-    document.getElementById('bulkExport').addEventListener('click', function() {
+    document.getElementById('bulkExport').addEventListener('click', function () {
         const selectedIds = Array.from(document.querySelectorAll('.student-checkbox:checked'))
             .map(checkbox => checkbox.value);
         alert(`Exporting ${selectedIds.length} students...`);
     });
 
-    document.getElementById('bulkEmail').addEventListener('click', function() {
+    document.getElementById('bulkEmail').addEventListener('click', function () {
         const selectedIds = Array.from(document.querySelectorAll('.student-checkbox:checked'))
             .map(checkbox => checkbox.value);
         alert(`Sending email to ${selectedIds.length} students...`);

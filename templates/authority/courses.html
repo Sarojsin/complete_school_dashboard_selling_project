@@ -124,11 +124,15 @@
             </div>
             <div class="col-md-8">
                 <label class="form-label">Search Courses</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search by course name, code, or instructor...">
-                    <button class="btn btn-primary">Search</button>
-                </div>
+                <form action="/authority/courses" method="GET">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control"
+                            placeholder="Search by course name, code, or instructor..."
+                            value="{{ search_query if search_query else '' }}">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </form>
             </div>
             <div class="col-md-4">
                 <label class="form-label">&nbsp;</label>
@@ -170,7 +174,8 @@
                                         <h6 class="card-title mb-1">{{ course.name }}</h6>
                                         <p class="text-muted mb-0 small">{{ course.code }}</p>
                                     </div>
-                                    <span class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' if course.status == 'upcoming' else 'danger' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' if course.status == 'upcoming' else 'danger' }}">
                                         {{ course.status|title }}
                                     </span>
                                 </div>
@@ -199,7 +204,8 @@
                                 <div class="mb-3">
                                     <small class="text-muted d-block">Instructor</small>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ course.instructor }}">
+                                        <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="24"
+                                            height="24" alt="{{ course.instructor }}">
                                         <strong>{{ course.instructor }}</strong>
                                     </div>
                                 </div>
@@ -225,23 +231,33 @@
                                     <a href="/authority/courses/{{ course.id }}" class="btn btn-outline-primary btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="/authority/edit-course/{{ course.id }}" class="btn btn-outline-success btn-sm">
+                                    <a href="/authority/edit-course/{{ course.id }}"
+                                        class="btn btn-outline-success btn-sm">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal{{ course.id }}">
+                                    <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#assignModal{{ course.id }}">
                                         <i class="bi bi-person-plus"></i>
                                     </button>
                                     <div class="dropdown">
-                                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown">
                                             <i class="bi bi-three-dots"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-people me-2"></i>View Students</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-graph-up me-2"></i>Performance</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-calendar me-2"></i>Schedule</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-warning" href="#"><i class="bi bi-pause-circle me-2"></i>Suspend</a></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Delete</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-people me-2"></i>View
+                                                    Students</a></li>
+                                            <li><a class="dropdown-item" href="#"><i
+                                                        class="bi bi-graph-up me-2"></i>Performance</a></li>
+                                            <li><a class="dropdown-item" href="#"><i
+                                                        class="bi bi-calendar me-2"></i>Schedule</a></li>
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li><a class="dropdown-item text-warning" href="#"><i
+                                                        class="bi bi-pause-circle me-2"></i>Suspend</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i
+                                                        class="bi bi-trash me-2"></i>Delete</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -280,7 +296,8 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="32" height="32" alt="{{ course.instructor }}">
+                                        <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="32"
+                                            height="32" alt="{{ course.instructor }}">
                                         {{ course.instructor }}
                                     </div>
                                 </td>
@@ -290,18 +307,21 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="progress flex-grow-1 me-2" style="height: 6px; width: 60px;">
-                                            <div class="progress-bar bg-primary" style="width: {{ (course.student_count / 40) * 100 }}%"></div>
+                                            <div class="progress-bar bg-primary"
+                                                style="width: {{ (course.student_count / 40) * 100 }}%"></div>
                                         </div>
                                         <small>{{ course.student_count }}/40</small>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' if course.status == 'upcoming' else 'danger' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' if course.status == 'upcoming' else 'danger' }}">
                                         {{ course.status|title }}
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if course.avg_grade >= 80 else 'warning' if course.avg_grade >= 70 else 'danger' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.avg_grade >= 80 else 'warning' if course.avg_grade >= 70 else 'danger' }}">
                                         {{ course.avg_grade }}%
                                     </span>
                                 </td>
@@ -310,7 +330,8 @@
                                         <a href="/authority/courses/{{ course.id }}" class="btn btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="/authority/edit-course/{{ course.id }}" class="btn btn-outline-success">
+                                        <a href="/authority/edit-course/{{ course.id }}"
+                                            class="btn btn-outline-success">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                     </div>
@@ -355,7 +376,8 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h6 class="card-title text-{{ department.color }}">{{ department.name }}</h6>
-                                    <span class="badge bg-{{ department.color }}">{{ department.course_count }} courses</span>
+                                    <span class="badge bg-{{ department.color }}">{{ department.course_count }}
+                                        courses</span>
                                 </div>
                                 <div class="row text-center mb-3">
                                     <div class="col-4">
@@ -372,7 +394,8 @@
                                     </div>
                                 </div>
                                 <div class="progress mb-2" style="height: 8px;">
-                                    <div class="progress-bar bg-{{ department.color }}" style="width: {{ department.utilization }}%"></div>
+                                    <div class="progress-bar bg-{{ department.color }}"
+                                        style="width: {{ department.utilization }}%"></div>
                                 </div>
                                 <small class="text-muted">Capacity Utilization: {{ department.utilization }}%</small>
                             </div>
@@ -397,7 +420,8 @@
                 <div class="mb-3">
                     <label class="form-label">Select File</label>
                     <input type="file" class="form-control" accept=".csv,.xlsx,.xls">
-                    <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls). <a href="#">Download template</a></div>
+                    <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls). <a href="#">Download
+                            template</a></div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Import Options</label>
@@ -476,12 +500,12 @@
         border: none;
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
-    
+
     .course-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
-    
+
     .course-badge {
         position: absolute;
         top: 0;
@@ -490,12 +514,12 @@
         height: 100%;
         border-radius: 4px 0 0 4px;
     }
-    
+
     .course-card .card-header {
         border-bottom: 1px solid rgba(0, 0, 0, 0.125);
         background: white;
     }
-    
+
     .course-stats {
         border-top: 1px solid #e9ecef;
         padding-top: 1rem;
@@ -508,15 +532,15 @@
 <script>
     // View toggle functionality
     document.querySelectorAll('[data-view]').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const view = this.getAttribute('data-view');
-            
+
             // Update active button
             document.querySelectorAll('[data-view]').forEach(btn => {
                 btn.classList.remove('active');
             });
             this.classList.add('active');
-            
+
             // Show/hide views
             if (view === 'grid') {
                 document.getElementById('coursesGridView').classList.remove('d-none');
@@ -529,7 +553,7 @@
     });
 
     // Filter functionality
-    document.getElementById('resetFilters').addEventListener('click', function() {
+    document.getElementById('resetFilters').addEventListener('click', function () {
         document.getElementById('departmentFilter').value = '';
         document.getElementById('gradeFilter').value = '';
         document.getElementById('statusFilter').value = '';
@@ -538,16 +562,16 @@
 
     // Quick status update
     document.querySelectorAll('.course-card .badge').forEach(badge => {
-        badge.addEventListener('click', function() {
+        badge.addEventListener('click', function () {
             const courseId = this.closest('.course-card').querySelector('a[href*="/courses/"]').href.split('/').pop();
             const currentStatus = this.textContent.trim().toLowerCase();
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            
+
             // Confirm status change
             if (confirm(`Change course status to ${newStatus}?`)) {
                 // Update via AJAX
                 console.log(`Updating course ${courseId} to ${newStatus}`);
-                
+
                 // Update badge appearance
                 this.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
                 this.className = `badge bg-${newStatus === 'active' ? 'success' : 'danger'}`;

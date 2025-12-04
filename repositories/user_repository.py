@@ -12,20 +12,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class UserRepository:
     @staticmethod
     def get_password_hash(password: str) -> str:
-        try:
-            logger.error(f"DEBUG: Hashing password type {type(password)}, length {len(password)}")
-            logger.error(f"DEBUG: Password value: {password}")
-        except Exception as e:
-            logger.error(f"DEBUG: Error logging password: {e}")
+        # Bcrypt has a 72-byte password limit. Truncate if necessary.
+        # Convert to bytes to properly handle multibyte characters
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            password = password_bytes[:72].decode('utf-8', errors='ignore')
             
         return pwd_context.hash(password)
     
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
+        # Bcrypt has a 72-byte password limit. Truncate if necessary.
+        password_bytes = plain_password.encode('utf-8')
+        if len(password_bytes) > 72:
+            plain_password = password_bytes[:72].decode('utf-8', errors='ignore')
+            
         try:
             return pwd_context.verify(plain_password, hashed_password)
         except ValueError:
-            # Handle passwords longer than 72 bytes (bcrypt limitation)
+            # Handle any other bcrypt errors
             return False
     
     @staticmethod
