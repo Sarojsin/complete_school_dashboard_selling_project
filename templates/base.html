@@ -164,23 +164,6 @@
                     <li class="nav-item"><a class="nav-link" href="/student/dashboard">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/student/courses">Courses</a></li>
                     <li class="nav-item"><a class="nav-link" href="/student/grades">Grades</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/student/tests">Tests</a></li>
-                    {% elif current_user and current_user.role == 'teacher' %}
-                    <li class="nav-item"><a class="nav-link" href="/teacher/dashboard">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/teacher/courses">Courses</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/teacher/students">Students</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/teacher/tests">Tests</a></li>
-                    {% elif current_user and current_user.role == 'authority' %}
-                    <li class="nav-item"><a class="nav-link" href="/authority/dashboard">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/authority/students">Students</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/authority/teachers">Teachers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/authority/analytics">Analytics</a></li>
-                    {% endif %}
-                </ul>
-                
-                <ul class="navbar-nav">
-                    {% if current_user %}
-                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                             <div class="user-avatar me-2">
                                 {{ current_user.full_name[0] }}

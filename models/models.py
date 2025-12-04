@@ -8,6 +8,7 @@ class UserRole(str, enum.Enum):
     STUDENT = "student"
     TEACHER = "teacher"
     AUTHORITY = "authority"
+    PARENT = "parent"
 
 class User(Base):
     __tablename__ = "users"
@@ -26,6 +27,7 @@ class User(Base):
     student_profile = relationship("Student", back_populates="user", uselist=False, cascade="all, delete-orphan")
     teacher_profile = relationship("Teacher", back_populates="user", uselist=False, cascade="all, delete-orphan")
     authority_profile = relationship("Authority", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    parent_profile = relationship("Parent", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class Student(Base):
     __tablename__ = "students"
@@ -33,17 +35,20 @@ class Student(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     student_id = Column(String(50), unique=True, nullable=False, index=True)
+    full_name = Column(String(255))
     date_of_birth = Column(Date)
     phone = Column(String(20))
     address = Column(Text)
     parent_name = Column(String(255))
     parent_phone = Column(String(20))
+    parent_id = Column(Integer, ForeignKey("parents.id"), nullable=True)
     enrollment_date = Column(Date, default=datetime.utcnow)
     grade_level = Column(String(20))
     section = Column(String(10))
     
     # Relationships
     user = relationship("User", back_populates="student_profile")
+    parent = relationship("Parent", back_populates="children")
     enrollments = relationship("CourseEnrollment", back_populates="student", cascade="all, delete-orphan")
     assignments = relationship("AssignmentSubmission", back_populates="student", cascade="all, delete-orphan")
     attendance_records = relationship("Attendance", back_populates="student", cascade="all, delete-orphan")
@@ -57,6 +62,7 @@ class Teacher(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     employee_id = Column(String(50), unique=True, nullable=False, index=True)
+    full_name = Column(String(255))
     phone = Column(String(20))
     department = Column(String(100))
     qualification = Column(String(255))
@@ -76,6 +82,7 @@ class Authority(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    full_name = Column(String(255))
     position = Column(String(100))
     department = Column(String(100))
     phone = Column(String(20))
@@ -83,6 +90,21 @@ class Authority(Base):
     # Relationships
     user = relationship("User", back_populates="authority_profile")
     notices = relationship("Notice", back_populates="authority", cascade="all, delete-orphan")
+
+class Parent(Base):
+    __tablename__ = "parents"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    full_name = Column(String(255))
+    phone = Column(String(20))
+    address = Column(Text)
+    occupation = Column(String(100))
+    
+    # Relationships
+    user = relationship("User", back_populates="parent_profile")
+    children = relationship("Student", back_populates="parent")
+
 
 class Course(Base):
     __tablename__ = "courses"

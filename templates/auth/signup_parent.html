@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Parent Sign Up - School Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold text-primary">Parent Registration</h2>
+                        <p class="text-muted">Create your parent account</p>
+                    </div>
+
+                    <form id="signupForm">
+                        <!-- Personal Info -->
+                        <h5 class="mb-3 text-muted">Personal Information</h5>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="fullName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="fullName" name="full_name" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+
+                        <!-- Parent Details -->
+                        <h5 class="mb-3 mt-4 text-muted">Parent Details</h5>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="occupation" class="form-label">Occupation</label>
+                            <input type="text" class="form-control" id="occupation" name="occupation">
+                        </div>
+
+                        <!-- Child Link -->
+                        <h5 class="mb-3 mt-4 text-muted">Link Child</h5>
+                        <div class="alert alert-info py-2">
+                            <small><i class="bi bi-info-circle me-1"></i> You must link at least one child to
+                                register.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentId" class="form-label">Child's Student ID</label>
+                            <input type="text" class="form-control" id="studentId" name="student_id"
+                                placeholder="Enter your child's Student ID" required>
+                            <div class="form-text">This is required to verify your relationship.</div>
+                        </div>
+
+                        <!-- Security -->
+                        <h5 class="mb-3 mt-4 text-muted">Security</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3">
+                            Create Account
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <a href="/signup" class="text-decoration-none text-muted"><i
+                                class="bi bi-arrow-left me-1"></i>Back to Role Selection</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('signupForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+        }
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Account...';
+
+        try {
+            const response = await fetch('/api/auth/signup/parent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Account created successfully! Please login.');
+                window.location.href = '/login';
+            } else {
+                // Handle error messages properly - convert objects to strings
+                let errorMsg = 'Registration failed';
+                if (result.detail) {
+                    if (typeof result.detail === 'string') {
+                        errorMsg = result.detail;
+                    } else {
+                        // If it's an object or array, convert to readable format
+                        errorMsg = JSON.stringify(result.detail, null, 2);
+                    }
+                }
+                alert(errorMsg);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    });
+</script>
+{% endblock %}

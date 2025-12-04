@@ -1,0 +1,422 @@
+<!-- templates/parent/chat.html -->
+{% extends 'base.html' %}
+
+{% block title %}Parent Chat{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Messages</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                    <i class="bi bi-pencil-square me-2"></i> New Message
+                </button>
+            </div>
+
+            <div class="row">
+                <!-- Contacts Sidebar -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-light">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control border-start-0" placeholder="Search teachers..."
+                                    id="contactSearch">
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush" id="contactsList">
+                                <!-- Teachers -->
+                                <div class="list-group-item bg-light">
+                                    <small class="text-muted fw-bold">TEACHERS</small>
+                                </div>
+                                <div id="teachersListContainer">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="col-md-8">
+                    <div class="card shadow-sm h-100">
+                        <div
+                            class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <div id="currentChatInfo">
+                                <h5 class="mb-0">Select a teacher to start chatting</h5>
+                            </div>
+                            <div class="dropdown" id="chatActions" style="display: none;">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item text-danger" href="#" id="clearChatBtn"><i
+                                                class="bi bi-trash me-2"></i>Clear Chat</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body p-0 d-flex flex-column" style="height: 500px;">
+                            <!-- Chat Messages -->
+                            <div class="chat-messages p-3 flex-grow-1" id="chatMessages" style="overflow-y: auto;">
+                                <div class="text-center text-muted py-5 mt-5">
+                                    <i class="bi bi-chat-text display-1 mb-3"></i>
+                                    <p class="lead">Select a contact to view messages</p>
+                                    <small>Messages are automatically deleted after 24 hours.</small>
+                                </div>
+                            </div>
+
+                            <!-- Message Input -->
+                            <div class="card-footer bg-light" id="messageInput" style="display: none;">
+                                <form id="messageForm">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Type your message..."
+                                            id="messageText" required autocomplete="off">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-send-fill"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">Messages expire in 24 hours.</small>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newMessageForm">
+                    <div class="mb-3">
+                        <label class="form-label">Select Teacher</label>
+                        <select class="form-select" id="recipientSelect" required>
+                            <option value="">Loading teachers...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" id="newMessageText" rows="4"
+                            placeholder="Type your message here..." required></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let currentChat = null;
+        let socket = null;
+        let currentUser = {{ user.id }};
+
+
+    const contactsList = document.getElementById('contactsList');
+    const teachersListContainer = document.getElementById('teachersListContainer');
+    const currentChatInfo = document.getElementById('currentChatInfo');
+    const chatActions = document.getElementById('chatActions');
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const messageForm = document.getElementById('messageForm');
+    const messageText = document.getElementById('messageText');
+    const recipientSelect = document.getElementById('recipientSelect');
+    const newMessageForm = document.getElementById('newMessageForm');
+    const newMessageModal = new bootstrap.Modal(document.getElementById('newMessageModal'));
+
+    // Initialize WebSocket
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/`;
+
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = function () {
+            console.log('WebSocket connected');
+        };
+
+        socket.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            handleWebSocketMessage(data);
+        };
+
+        socket.onclose = function () {
+            console.log('WebSocket disconnected. Reconnecting...');
+            setTimeout(connectWebSocket, 3000);
+        };
+    }
+
+    connectWebSocket();
+
+    // Fetch contacts (Teachers)
+    function loadContacts() {
+        fetch('/api/chat/contacts/parent')
+            .then(response => response.json())
+            .then(data => {
+                renderContacts(data);
+                populateRecipientSelect(data);
+            })
+            .catch(error => console.error('Error fetching contacts:', error));
+    }
+
+    // Initial load
+    loadContacts();
+
+    // Poll every 30 seconds
+    setInterval(loadContacts, 30000);
+
+    function renderContacts(contacts) {
+        teachersListContainer.innerHTML = '';
+
+        if (contacts.length === 0) {
+            teachersListContainer.innerHTML = '<div class="p-3 text-muted text-center">No teachers found</div>';
+            return;
+        }
+
+        contacts.forEach(contact => {
+            const user = contact.user;
+            const teacher = contact.teacher;
+            const unreadBadge = contact.unread_count > 0 ?
+                <span class="badge bg-danger rounded-pill ms-auto"></span> : '';
+            const onlineIndicator = contact.is_online ?
+                '<span class="position-absolute bottom-0 end-0 p-1 bg-success border border-light rounded-circle"></span>' :
+                '<span class="position-absolute bottom-0 end-0 p-1 bg-secondary border border-light rounded-circle"></span>';
+
+            const div = document.createElement('a');
+            div.href = '#';
+            div.className = 'list-group-item list-group-item-action contact-item';
+            div.dataset.id = user.id;
+            div.dataset.name = user.full_name;
+            div.dataset.role = 'teacher';
+
+            div.innerHTML =
+                <div class="d-flex align-items-center">
+                    <div class="position-relative me-3">
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">
+
+                        </div>
+
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <h6 class="mb-0 text-truncate"></h6>
+                        <small class="text-muted d-block text-truncate"></small>
+                    </div>
+
+                </div>
+                ;
+
+            div.addEventListener('click', function (e) {
+                e.preventDefault();
+                selectContact(this, user);
+            });
+
+            teachersListContainer.appendChild(div);
+        });
+    }
+
+    function populateRecipientSelect(contacts) {
+        recipientSelect.innerHTML = '<option value="">Select Teacher</option>';
+        contacts.forEach(contact => {
+            const option = document.createElement('option');
+            option.value = contact.user.id;
+            option.textContent = `${contact.user.full_name}`;
+            recipientSelect.appendChild(option);
+        });
+    }
+
+    function selectContact(element, user) {
+        // Update UI
+        document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        currentChat = user;
+
+        // Update Header
+        currentChatInfo.innerHTML =
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 40px; height: 40px;">
+
+                </div>
+                <div>
+                    <h5 class="mb-0"></h5>
+                    <small class="text-white-50">Teacher</small>
+                </div>
+            </div>
+            ;
+
+        chatActions.style.display = 'block';
+        messageInput.style.display = 'block';
+
+        // Load Messages
+        loadMessages(user.id);
+
+        // Mark as read
+        markAsRead(user.id);
+
+        // Remove badge
+        const badge = element.querySelector('.badge');
+        if (badge) badge.remove();
+    }
+
+    function loadMessages(userId) {
+        chatMessages.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+
+        fetch('/api/chat/messages/' + userId)
+            .then(response => response.json())
+            .then(data => {
+                chatMessages.innerHTML = '';
+                if (data.messages.length === 0) {
+                    chatMessages.innerHTML = '<div class="text-center text-muted py-5"><p>No messages yet. Start the conversation!</p></div>';
+                } else {
+                    // Reverse to show oldest first (if API returns newest first)
+                    // Assuming API returns newest first based on repository code
+                    const messages = data.messages.reverse();
+                    messages.forEach(msg => appendMessage(msg));
+                    scrollToBottom();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading messages:', error);
+                chatMessages.innerHTML = '<div class="text-center text-danger py-5"><p>Error loading messages.</p></div>';
+            });
+    }
+
+    function appendMessage(msg) {
+        const isMe = msg.sender_id === currentUser;
+        const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const div = document.createElement('div');
+        div.className = 'd-flex mb-3';
+
+        div.innerHTML =
+            <div class="card border-0 shadow-sm " style="max-width: 75%; border-radius: 15px; ">
+                <div class="card-body p-2 px-3">
+                    <p class="mb-1"></p>
+                    <div class="d-flex align-items-center justify-content-end">
+                        <small class="" style="font-size: 0.7rem;"></small>
+
+                    </div>
+                </div>
+            </div>
+            ;
+
+        chatMessages.appendChild(div);
+    }
+
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Send Message
+    messageForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const content = messageText.value.trim();
+        if (!content || !currentChat) return;
+
+        sendMessage(currentChat.id, content);
+        messageText.value = '';
+    });
+
+    // New Message Modal Submit
+    newMessageForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const recipientId = recipientSelect.value;
+        const content = document.getElementById('newMessageText').value.trim();
+
+        if (!recipientId || !content) return;
+
+        sendMessage(recipientId, content);
+        newMessageModal.hide();
+        document.getElementById('newMessageText').value = '';
+
+        // If we're not already chatting with this person, select them
+        if (!currentChat || currentChat.id != recipientId) {
+            // Find contact item and click it
+            const contactItem = document.querySelector(`.contact-item[data-id="${recipientId}"]`);
+            if (contactItem) {
+                contactItem.click();
+            } else {
+                // Reload contacts if new one (unlikely here as list is static)
+                location.reload();
+            }
+        }
+    });
+
+    function sendMessage(receiverId, content) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                receiver_id: parseInt(receiverId),
+                content: content
+            }));
+
+            // Optimistically append message
+            appendMessage({
+                sender_id: currentUser,
+                content: content,
+                created_at: new Date().toISOString(),
+                is_read: false
+            });
+            scrollToBottom();
+        } else {
+            alert('Connection lost. Please refresh the page.');
+        }
+    }
+
+    function handleWebSocketMessage(data) {
+        // If message is for current chat, append it
+        if (currentChat && (data.sender_id === currentChat.id || data.receiver_id === currentChat.id)) {
+            if (data.sender_id !== currentUser) { // Don't duplicate own messages if we appended optimistically
+                appendMessage(data);
+                scrollToBottom();
+                markAsRead(currentChat.id);
+            }
+        } else {
+            // Update unread count for other contacts
+            // This would require finding the contact item and updating badge
+            // For simplicity, we could reload contacts or just show a toast
+        }
+    }
+
+    function markAsRead(senderId) {
+        fetch(`/api/chat/mark-read/${senderId}`, { method: 'POST' });
+    }
+
+    // Search functionality
+    document.getElementById('contactSearch').addEventListener('input', function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const contactItems = contactsList.querySelectorAll('.contact-item');
+
+        contactItems.forEach(item => {
+            const name = item.dataset.name.toLowerCase();
+            if (name.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+    });
+</script>
+{% endblock %}

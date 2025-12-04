@@ -6,7 +6,8 @@ from routes import (
     tests,
     assignments,
     attendance,
-    websocket_chat
+    websocket_chat,
+    parents
 )
 
 # You can add more imports as you create additional route files:
@@ -19,5 +20,6 @@ __all__ = [
     'tests',
     'assignments',
     'attendance',
-    'websocket_chat'
+    'websocket_chat',
+    'parents'
 ]

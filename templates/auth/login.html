@@ -95,6 +95,7 @@
                 if (role === 'student') window.location.href = '/student/dashboard';
                 else if (role === 'teacher') window.location.href = '/teacher/dashboard';
                 else if (role === 'authority') window.location.href = '/authority/dashboard';
+                else if (role === 'parent') window.location.href = '/parent/dashboard';
                 else window.location.href = '/';
             } else {
                 alert(data.detail || 'Login failed');

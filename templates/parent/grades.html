@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Grades - EduManage{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2>Academic Performance</h2>
+    <p>Grades for {{ child.user.full_name }}</p>
+    <div class="alert alert-info">Detailed grades view coming soon.</div>
+    <a href="/parent/dashboard" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

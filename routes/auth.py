@@ -1,7 +1,3 @@
-# update main.py to include home page route
-
-# update main.py to include home page route
-
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -9,7 +5,7 @@ from sqlalchemy.orm import Session
 from database.database import get_db
 from repositories.user_repository import UserRepository
 from services.auth_service import AuthService
-from tables.tables import Token, LoginRequest, UserResponse, StudentCreate, TeacherCreate, AuthorityCreate
+from tables.tables import Token, LoginRequest, UserResponse, StudentCreate, TeacherCreate, AuthorityCreate, ParentCreate
 from models.models import User, UserRole
 from config.config import settings
 
@@ -111,6 +107,7 @@ async def signup_student(
     student_profile_data = {
         "user_id": user.id,
         "student_id": student_data.student_id,
+        "full_name": student_data.full_name,
         "date_of_birth": student_data.date_of_birth,
         "phone": student_data.phone,
         "address": student_data.address,
@@ -162,6 +159,7 @@ async def signup_teacher(
     teacher_profile_data = {
         "user_id": user.id,
         "employee_id": teacher_data.employee_id,
+        "full_name": teacher_data.full_name,
         "phone": teacher_data.phone,
         "department": teacher_data.department,
         "qualification": teacher_data.qualification,
@@ -205,12 +203,6 @@ async def signup_authority(
     )
     
     # Create authority profile
-    # We need an AuthorityRepository, but for now we can do it directly or add it.
-    # Let's check if AuthorityRepository exists or just use generic DB add.
-    # Looking at other endpoints, they use repositories.
-    # Let's use direct DB for now to avoid creating a new file if not needed, 
-    # but wait, `routes/authority.py` imports `get_current_authority`.
-    # Let's just do direct DB insertion for the profile here to be safe and quick.
     from models.models import Authority
     
     authority_profile = Authority(
@@ -227,3 +219,63 @@ async def signup_authority(
         "message": "Authority account created successfully",
         "user": UserResponse.from_orm(user)
     }
+
+@router.post("/signup/parent")
+async def signup_parent(
+    parent_data: ParentCreate,
+    db: Session = Depends(get_db)
+):
+    """Public parent registration"""
+    # Check if user already exists
+    existing_user = UserRepository.get_by_email(db, parent_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    existing_username = UserRepository.get_by_username(db, parent_data.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    # Verify student exists
+    from repositories.student_repository import StudentRepository
+    student = StudentRepository.get_by_student_id(db, parent_data.student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Check if student already has a parent
+    if student.parent_id:
+        raise HTTPException(status_code=400, detail="Student already has a linked parent")
+    
+    # Create user
+    user = UserRepository.create(
+        db=db,
+        email=parent_data.email,
+        username=parent_data.username,
+        password=parent_data.password,
+        full_name=parent_data.full_name,
+        role=UserRole.PARENT
+    )
+    
+    # Create parent profile
+    from repositories.parent_repository import ParentRepository
+    parent_profile_data = {
+        "user_id": user.id,
+        "phone": parent_data.phone,
+        "full_name": parent_data.full_name,
+        "address": parent_data.address,
+        "occupation": parent_data.occupation
+    }
+    
+    created_parent = ParentRepository.create(db, parent_profile_data)
+    
+    # Link student to parent
+    ParentRepository.link_child(db, created_parent.id, student.id)
+    
+    return {
+        "message": "Parent account created successfully",
+        "user": UserResponse.from_orm(user)
+    }
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"message": "Logged out successfully"}

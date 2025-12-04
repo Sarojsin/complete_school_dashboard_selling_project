@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Attendance - EduManage{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2>Attendance Record</h2>
+    <p>Attendance details for {{ child.user.full_name }}</p>
+    <div class="alert alert-info">Detailed attendance view coming soon.</div>
+    <a href="/parent/dashboard" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

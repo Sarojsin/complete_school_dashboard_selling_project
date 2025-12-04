@@ -2,12 +2,22 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from models.models import User, UserRole
 from passlib.context import CryptContext
+import logging
+
+# Configure logger
+logger = logging.getLogger("uvicorn.error")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class UserRepository:
     @staticmethod
     def get_password_hash(password: str) -> str:
+        try:
+            logger.error(f"DEBUG: Hashing password type {type(password)}, length {len(password)}")
+            logger.error(f"DEBUG: Password value: {password}")
+        except Exception as e:
+            logger.error(f"DEBUG: Error logging password: {e}")
+            
         return pwd_context.hash(password)
     
     @staticmethod

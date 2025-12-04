@@ -8,10 +8,11 @@ from contextlib import asynccontextmanager
 import os
 
 from config.config import settings
-from database.database import engine, Base
+from database.database import engine, Base, get_db
+from sqlalchemy.orm import Session
 
 # Import routes
-from routes import auth, students, teachers, authority, tests, websocket_chat
+from routes import auth, students, teachers, authority, tests, websocket_chat, parents
 from routes import courses, assignments, attendance, grades, fees
 from routes import notices, notes, videos, chat
 
@@ -88,6 +89,7 @@ app.include_router(assignments.router, prefix="/api/assignments", tags=["Assignm
 app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
 app.include_router(grades.router, prefix="/api/grades", tags=["Grades"])
 app.include_router(fees.router, prefix="/api/fees", tags=["Fees"])
+app.include_router(parents.router, prefix="/parent", tags=["Parents"])
 app.include_router(notices.router, prefix="/api/notices", tags=["Notices"])
 app.include_router(notes.router, prefix="/api/notes", tags=["Notes"])
 app.include_router(videos.router, prefix="/api/videos", tags=["Videos"])
@@ -135,6 +137,10 @@ async def signup_teacher_page(request: Request):
 async def signup_authority_page(request: Request):
     return templates.TemplateResponse("auth/signup_authority.html", {"request": request})
 
+@app.get("/signup/parent", response_class=HTMLResponse)
+async def signup_parent_page(request: Request):
+    return templates.TemplateResponse("auth/signup_parent.html", {"request": request})
+
 # Registration aliases (for home page links)
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
@@ -147,6 +153,10 @@ async def register_student_page(request: Request):
 @app.get("/register/teacher", response_class=HTMLResponse)
 async def register_teacher_page(request: Request):
     return templates.TemplateResponse("auth/signup_teacher.html", {"request": request})
+
+@app.get("/register/parent", response_class=HTMLResponse)
+async def register_parent_page(request: Request):
+    return templates.TemplateResponse("auth/signup_parent.html", {"request": request})
 
 # ------------------ STUDENT PAGES ------------------
 @app.get("/student/dashboard")
@@ -670,13 +680,111 @@ async def teacher_timetable(request: Request, current_user: User = Depends(get_c
     })
 
 @app.get("/teacher/chat")
-async def teacher_chat(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_chat(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.chat_repository import ChatRepository
+    from models.chat_models import ChatMessage
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        # Fallback if not a teacher profile yet
+        return templates.TemplateResponse("teacher/chat.html", {
+            "request": request,
+            "current_user": current_user,
+            "teacher": current_user,
+            "students": [],
+            "parents": [],
+            "teachers": []
+        })
+
+    # Fetch contacts
+    parents = ChatRepository.get_teacher_parents(db, teacher.id)
+    # For students, we can reuse get_my_students logic or add a helper
+    # For now, let's just get parents as that was the main task. 
+    # But the template expects students and teachers too.
+    
+    # Get students
+    from repositories.course_repository import CourseRepository
+    courses = TeacherRepository.get_teaching_courses(db, teacher.id)
+    all_students = set()
+    for course in courses:
+        students = CourseRepository.get_enrolled_students(db, course.id)
+        all_students.update(students)
+    
+    # Get colleagues (other teachers) - simplified for now
+    from models.models import Teacher
+    other_teachers = db.query(Teacher).filter(Teacher.id != teacher.id).all()
+    
+    # Format for template
+    # The template expects objects with .name, .id, .unread_count
+    # My ChatRepository.get_teacher_parents returns dicts with 'user', 'parent', 'unread_count'
+    # I need to adapt the data or update the template. 
+    # The template uses: parent.name, parent.student_name, parent.unread_count
+    # The repository returns: {'user': User, 'parent': Parent, 'unread_count': int}
+    
+    formatted_parents = []
+    for p in parents:
+        # Need to find student name for this parent
+        # Parent model has children relationship
+        student_names = ", ".join([s.user.full_name for s in p['parent'].children])
+        formatted_parents.append({
+            "id": p['user'].id, # Chat uses User ID
+            "name": p['user'].full_name,
+            "student_name": student_names,
+            "unread_count": p['unread_count']
+        })
+        
+    formatted_students = []
+    for s in all_students:
+        # Get unread count for student
+        unread = ChatRepository.get_unread_count(db, s.user_id) # Wait, get_unread_count gets unread for ME from THEM?
+        # No, get_unread_count(db, user_id) gets messages sent TO user_id that are unread.
+        # We want messages sent FROM student TO teacher that are unread.
+        # ChatRepository doesn't have a specific method for that in the generic list, 
+        # but get_conversations_list does.
+        # Let's just use 0 for now or implement a quick count.
+        unread = db.query(ChatMessage).filter(
+            ChatMessage.sender_id == s.user_id,
+            ChatMessage.receiver_id == current_user.id,
+            ChatMessage.is_read == False
+        ).count()
+        
+        formatted_students.append({
+            "id": s.user_id,
+            "name": s.user.full_name,
+            "grade": s.grade_level,
+            "section": s.section,
+            "profile_pic": None,
+            "unread_count": unread
+        })
+
+    formatted_teachers = []
+    for t in other_teachers:
+        unread = db.query(ChatMessage).filter(
+            ChatMessage.sender_id == t.user_id,
+            ChatMessage.receiver_id == current_user.id,
+            ChatMessage.is_read == False
+        ).count()
+        
+        formatted_teachers.append({
+            "id": t.user_id,
+            "name": t.user.full_name,
+            "department": t.department,
+            "profile_pic": None,
+            "unread_count": unread
+        })
+
     return templates.TemplateResponse("teacher/chat.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "conversations": []
+        "students": formatted_students,
+        "parents": formatted_parents,
+        "teachers": formatted_teachers,
+        "classes": [], # Placeholder
+        "announcements": [] # Placeholder
     })
+
 
 # ------------------ AUTHORITY/ADMIN PAGES ------------------
 @app.get("/authority/dashboard")
@@ -980,3 +1088,16 @@ async def teacher_edit_video(request: Request, id: int, current_user: User = Dep
 @app.delete("/teacher/videos/{id}")
 async def teacher_delete_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
     return JSONResponse(content={"message": "Video deleted successfully"})
+
+# ------------------ SCHEDULER ------------------
+from apscheduler.schedulers.background import BackgroundScheduler
+from services.chat_cleanup_service import cleanup_expired_messages
+
+@app.on_event("startup")
+async def startup_event():
+    scheduler = BackgroundScheduler()
+    # Run cleanup every hour
+    scheduler.add_job(cleanup_expired_messages, 'interval', hours=1)
+    scheduler.start()
+    print("Scheduler started for chat message cleanup")
+

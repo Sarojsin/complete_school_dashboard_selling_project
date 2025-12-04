@@ -51,7 +51,8 @@ async def get_current_user(
     return user
 
 async def get_current_student(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != UserRole.STUDENT:
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.upper() != UserRole.STUDENT.value.upper():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized. Student access required."
@@ -59,7 +60,8 @@ async def get_current_student(current_user: User = Depends(get_current_user)) ->
     return current_user
 
 async def get_current_teacher(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != UserRole.TEACHER:
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.upper() != UserRole.TEACHER.value.upper():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized. Teacher access required."
@@ -67,7 +69,8 @@ async def get_current_teacher(current_user: User = Depends(get_current_user)) ->
     return current_user
 
 async def get_current_authority(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != UserRole.AUTHORITY:
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.upper() != UserRole.AUTHORITY.value.upper():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized. Authority access required."
@@ -75,9 +78,19 @@ async def get_current_authority(current_user: User = Depends(get_current_user)) 
     return current_user
 
 async def get_current_teacher_or_authority(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role not in [UserRole.TEACHER, UserRole.AUTHORITY]:
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.upper() not in [UserRole.TEACHER.value.upper(), UserRole.AUTHORITY.value.upper()]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized. Teacher or Authority access required."
+        )
+    return current_user
+
+async def get_current_parent(current_user: User = Depends(get_current_user)) -> User:
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.upper() != UserRole.PARENT.value.upper():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized. Parent access required."
         )
     return current_user

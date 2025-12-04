@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}My Profile - EduManage{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2>Parent Profile</h2>
+    <p>Profile details for {{ user.full_name }}</p>
+    <div class="alert alert-info">Profile editing coming soon.</div>
+    <a href="/parent/dashboard" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

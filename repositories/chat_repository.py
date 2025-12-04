@@ -111,3 +111,135 @@ class ChatRepository:
             or_(ChatMessage.sender_id == user_id, ChatMessage.receiver_id == user_id),
             ChatMessage.content.ilike(search_pattern)
         ).order_by(ChatMessage.created_at.desc()).limit(50).all()
+
+    @staticmethod
+    def get_parent_teachers(db: Session, parent_id: int) -> List[dict]:
+        """Get all teachers associated with a parent's children"""
+        from models.models import Parent, Student, CourseEnrollment, Course, Teacher, User
+        
+        # Get parent to access user_id
+        parent = db.query(Parent).filter(Parent.id == parent_id).first()
+        if not parent:
+            return []
+            
+        # Get parent's children
+        children = db.query(Student).filter(Student.parent_id == parent_id).all()
+        child_ids = [child.id for child in children]
+        
+        if not child_ids:
+            return []
+            
+        # Get courses children are enrolled in
+        enrollments = db.query(CourseEnrollment).filter(
+            CourseEnrollment.student_id.in_(child_ids)
+        ).all()
+        
+        course_ids = [e.course_id for e in enrollments]
+        
+        if not course_ids:
+            return []
+            
+        # Get teachers of these courses
+        teachers = db.query(Teacher).join(Course).filter(
+            Course.id.in_(course_ids)
+        ).distinct().all()
+        
+        # Format result
+        result = []
+        for teacher in teachers:
+            # Get unread count
+            unread = db.query(ChatMessage).filter(
+                ChatMessage.sender_id == teacher.user_id,
+                ChatMessage.receiver_id == parent.user_id,
+                ChatMessage.is_read == False
+            ).count()
+            
+            result.append({
+                'user': teacher.user,
+                'teacher': teacher,
+                'unread_count': unread
+            })
+            
+        return result
+
+    @staticmethod
+    def get_teacher_parents(db: Session, teacher_id: int) -> List[dict]:
+        """Get all parents of students taught by a teacher"""
+        from models.models import Teacher, Course, CourseEnrollment, Student, Parent, User
+        
+        # Get teacher to access user_id
+        teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
+        if not teacher:
+            return []
+            
+        # Get courses taught by teacher
+        courses = db.query(Course).filter(Course.teacher_id == teacher_id).all()
+        course_ids = [c.id for c in courses]
+        
+        if not course_ids:
+            return []
+            
+        # Get students enrolled in these courses
+        enrollments = db.query(CourseEnrollment).filter(
+            CourseEnrollment.course_id.in_(course_ids)
+        ).all()
+        
+        student_ids = [e.student_id for e in enrollments]
+        
+        if not student_ids:
+            return []
+            
+        # Get parents of these students
+        parents = db.query(Parent).join(Student).filter(
+            Student.id.in_(student_ids),
+            Student.parent_id.isnot(None)
+        ).distinct().all()
+        
+        # Format result
+        result = []
+        for parent in parents:
+            # Get unread count
+            unread = db.query(ChatMessage).filter(
+                ChatMessage.sender_id == parent.user_id,
+                ChatMessage.receiver_id == teacher.user_id,
+                ChatMessage.is_read == False
+            ).count()
+            
+            result.append({
+                'user': parent.user,
+                'parent': parent,
+                'unread_count': unread
+            })
+            
+        return result
+
+    @staticmethod
+    def get_all_teachers(db: Session, parent_id: int) -> List[dict]:
+        """Get all teachers in the system for a parent to contact"""
+        from models.models import Parent, Teacher, User
+        
+        # Get parent to access user_id
+        parent = db.query(Parent).filter(Parent.id == parent_id).first()
+        if not parent:
+            return []
+            
+        # Get all teachers
+        teachers = db.query(Teacher).all()
+        
+        # Format result
+        result = []
+        for teacher in teachers:
+            # Get unread count
+            unread = db.query(ChatMessage).filter(
+                ChatMessage.sender_id == teacher.user_id,
+                ChatMessage.receiver_id == parent.user_id,
+                ChatMessage.is_read == False
+            ).count()
+            
+            result.append({
+                'user': teacher.user,
+                'teacher': teacher,
+                'unread_count': unread
+            })
+            
+        return result

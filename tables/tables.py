@@ -104,6 +104,28 @@ class AuthorityResponse(AuthorityBase):
     class Config:
         from_attributes = True
 
+# Parent Schemas
+class ParentBase(BaseModel):
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    occupation: Optional[str] = None
+
+class ParentCreate(UserCreate, ParentBase):
+    student_id: str  # Link to existing student
+
+class ParentUpdate(BaseModel):
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    occupation: Optional[str] = None
+
+class ParentResponse(ParentBase):
+    id: int
+    user_id: int
+    user: UserResponse
+    
+    class Config:
+        from_attributes = True
+
 # Course Schemas
 class CourseBase(BaseModel):
     course_code: str

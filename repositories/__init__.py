@@ -2,6 +2,7 @@
 from repositories.user_repository import UserRepository
 from repositories.student_repository import StudentRepository
 from repositories.teacher_repository import TeacherRepository
+from repositories.parent_repository import ParentRepository
 from repositories.course_repository import CourseRepository
 from repositories.assignment_repository import AssignmentRepository
 from repositories.attendance_repository import AttendanceRepository
@@ -17,6 +18,7 @@ __all__ = [
     'UserRepository',
     'StudentRepository',
     'TeacherRepository',
+    'ParentRepository',
     'CourseRepository',
     'AssignmentRepository',
     'AttendanceRepository',
