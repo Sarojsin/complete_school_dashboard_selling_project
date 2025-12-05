@@ -119,32 +119,44 @@
         <!-- Search and Filters -->
         <div class="card mb-4">
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control" placeholder="Search students by name or ID...">
-                            <button class="btn btn-primary">Search</button>
+                <form action="/teacher/students" method="GET" id="filterForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" name="search" class="form-control"
+                                    placeholder="Search students by name or ID..."
+                                    value="{{ search_query if search_query else '' }}">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="grade" onchange="this.form.submit()">
+                                <option value="">All Grades</option>
+                                <option value="9" {% if filters.grade=='9' %}selected{% endif %}>Grade 9</option>
+                                <option value="10" {% if filters.grade=='10' %}selected{% endif %}>Grade 10</option>
+                                <option value="11" {% if filters.grade=='11' %}selected{% endif %}>Grade 11</option>
+                                <option value="12" {% if filters.grade=='12' %}selected{% endif %}>Grade 12</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <select class="form-select" name="section" onchange="this.form.submit()">
+                                    <option value="">All Sections</option>
+                                    <option value="A" {% if filters.section=='A' %}selected{% endif %}>Section A
+                                    </option>
+                                    <option value="B" {% if filters.section=='B' %}selected{% endif %}>Section B
+                                    </option>
+                                    <option value="C" {% if filters.section=='C' %}selected{% endif %}>Section C
+                                    </option>
+                                </select>
+                                <a href="/teacher/students" class="btn btn-outline-secondary" title="Reset Filters">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <select class="form-select">
-                            <option value="">All Grades</option>
-                            <option value="9">Grade 9</option>
-                            <option value="10">Grade 10</option>
-                            <option value="11">Grade 11</option>
-                            <option value="12">Grade 12</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select">
-                            <option value="">All Sections</option>
-                            <option value="A">Section A</option>
-                            <option value="B">Section B</option>
-                            <option value="C">Section C</option>
-                        </select>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
 
@@ -152,7 +164,7 @@
         <div class="card">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Student List</h5>
-                <span class="badge bg-primary">156 Students</span>
+                <span class="badge bg-primary">{{ students|length }} Students</span>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -173,7 +185,8 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ student.avatar }}" class="rounded-circle me-3" width="40" height="40" alt="{{ student.name }}">
+                                        <img src="{{ student.avatar }}" class="rounded-circle me-3" width="40"
+                                            height="40" alt="{{ student.name }}">
                                         <div>
                                             <h6 class="mb-1">{{ student.name }}</h6>
                                             <small class="text-muted">{{ student.email }}</small>
@@ -189,18 +202,21 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                            <div class="progress-bar bg-{{ 'success' if student.attendance >= 90 else 'warning' if student.attendance >= 75 else 'danger' }}" style="width: {{ student.attendance }}%"></div>
+                                            <div class="progress-bar bg-{{ 'success' if student.attendance >= 90 else 'warning' if student.attendance >= 75 else 'danger' }}"
+                                                style="width: {{ student.attendance }}%"></div>
                                         </div>
                                         <small>{{ student.attendance }}%</small>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if student.average_grade >= 90 else 'warning' if student.average_grade >= 70 else 'danger' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if student.average_grade >= 90 else 'warning' if student.average_grade >= 70 else 'danger' }}">
                                         {{ student.average_grade }}%
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'warning' if student.pending_assignments > 0 else 'success' }}">
+                                    <span
+                                        class="badge bg-{{ 'warning' if student.pending_assignments > 0 else 'success' }}">
                                         {{ student.pending_assignments }}
                                     </span>
                                 </td>
@@ -209,10 +225,12 @@
                                         <a href="/teacher/students/{{ student.id }}" class="btn btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="/teacher/students/{{ student.id }}/grades" class="btn btn-outline-success">
+                                        <a href="/teacher/students/{{ student.id }}/grades"
+                                            class="btn btn-outline-success">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
-                                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#contactModal{{ student.id }}">
+                                        <button class="btn btn-outline-info" data-bs-toggle="modal"
+                                            data-bs-target="#contactModal{{ student.id }}">
                                             <i class="bi bi-envelope"></i>
                                         </button>
                                     </div>
@@ -241,6 +259,36 @@
         </div>
     </div>
 </div>
+
+<!-- Contact Modals -->
+{% for student in students %}
+<div class="modal fade" id="contactModal{{ student.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contact {{ student.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/teacher/students/{{ student.id }}/contact" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" class="form-control" name="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" name="message" rows="4" required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <!-- Export Modal -->
 <div class="modal fade" id="exportModal" tabindex="-1">

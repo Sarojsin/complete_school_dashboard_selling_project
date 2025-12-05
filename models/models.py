@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float, Boolean, Date, Time, Enum as SQLEnum
+﻿from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float, Boolean, Date, Time, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -287,21 +287,17 @@ class Video(Base):
     course = relationship("Course", back_populates="videos")
     teacher = relationship("Teacher", back_populates="videos")
 
-class FeeStructure(Base):
-    __tablename__ = "fee_structures"
+class Message(Base):
+    __tablename__ = "messages"
     
     id = Column(Integer, primary_key=True, index=True)
-    grade_level = Column(String(20), nullable=False)
-    academic_year = Column(String(20), nullable=False)
-    tuition_fee = Column(Float, default=0.0)
-    registration_fee = Column(Float, default=0.0)
-    library_fee = Column(Float, default=0.0)
-    sports_fee = Column(Float, default=0.0)
-    lab_fee = Column(Float, default=0.0)
-    activity_fee = Column(Float, default=0.0)
-    other_charges = Column(Float, default=0.0)
-    total_amount = Column(Float, default=0.0)
-    due_date = Column(Date)
-    status = Column(String(20), default="active")  # active, inactive
-    description = Column(Text)
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    subject = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    sender = relationship("User", foreign_keys=[sender_id])
+    recipient = relationship("User", foreign_keys=[recipient_id])

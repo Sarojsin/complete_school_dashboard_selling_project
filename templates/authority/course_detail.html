@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Course Details - {{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/authority/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/authority/courses">Courses</a></li>
+            <li class="breadcrumb-item active">{{ course.code }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Course Info Card -->
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-{{ course.department_color }} mb-2">{{ course.department }}</span>
+                            <h4 class="mb-1">{{ course.name }}</h4>
+                            <p class="text-muted mb-0">{{ course.code }}</p>
+                        </div>
+                        <span class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' }}">
+                            {{ course.status|title }}
+                        </span>
+                    </div>
+
+                    <p class="text-muted">{{ course.description }}</p>
+
+                    <hr>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Credits</small>
+                            <span class="fw-bold">{{ course.credits }}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Grade Level</small>
+                            <span class="fw-bold">{{ course.grade_level }}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Semester</small>
+                            <span class="fw-bold">{{ course.semester }}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Type</small>
+                            <span class="fw-bold">{{ course.course_type|title }}</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="/authority/courses/{{ course.id }}/edit" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-2"></i>Edit Course
+                        </a>
+                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#assignModal">
+                            <i class="bi bi-person-plus me-2"></i>Assign Student
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructor Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Instructor</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ course.instructor_avatar }}" class="rounded-circle me-3" width="50" height="50"
+                            alt="{{ course.instructor }}">
+                        <div>
+                            <h6 class="mb-1">{{ course.instructor }}</h6>
+                            <small class="text-muted d-block">Teacher ID: {{ course.teacher_id }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule & Stats -->
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Schedule</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Time</th>
+                                    <th>Room</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if course.schedule %}
+                                {% for slot in course.schedule %}
+                                <tr>
+                                    <td>{{ slot.day|title }}</td>
+                                    <td>{{ slot.time }}</td>
+                                    <td>{{ slot.room }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No schedule defined</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Enrolled Students</h5>
+                    <span class="badge bg-primary">{{ course.student_count }} Students</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Roll No</th>
+                                    <th>Name</th>
+                                    <th>Grade</th>
+                                    <th>Attendance</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Placeholder for students -->
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No students enrolled</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Modal -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Student to {{ course.code }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Select Student</label>
+                        <select class="form-select">
+                            <option>Search student...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Assign</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

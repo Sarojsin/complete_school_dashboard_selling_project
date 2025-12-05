@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
-from models.models import Teacher, User, Course
+from models.models import Teacher, User, Course, Student
 
 class TeacherRepository:
     @staticmethod
@@ -22,11 +22,28 @@ class TeacherRepository:
         ).first()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100, department: str = None) -> List[Teacher]:
-        query = db.query(Teacher).options(joinedload(Teacher.user))
+    def get_all(db: Session, skip: int = 0, limit: int = 100, 
+                department: str = None, status: str = None, 
+                search: str = None) -> List[Teacher]:
+        query = db.query(Teacher).join(User).options(joinedload(Teacher.user))
         
         if department:
             query = query.filter(Teacher.department == department)
+            
+        if status:
+            if status == "active":
+                query = query.filter(User.is_active == True)
+            elif status == "inactive":
+                query = query.filter(User.is_active == False)
+        
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (User.full_name.ilike(search_pattern)) |
+                (User.email.ilike(search_pattern)) |
+                (Teacher.employee_id.ilike(search_pattern)) |
+                (Teacher.department.ilike(search_pattern))
+            )
         
         return query.offset(skip).limit(limit).all()
     
@@ -62,6 +79,30 @@ class TeacherRepository:
         return db.query(Teacher).join(User).filter(
             (User.full_name.ilike(search_pattern)) |
             (User.email.ilike(search_pattern)) |
-            (Teacher.employee_id.ilike(search_pattern)) |
             (Teacher.department.ilike(search_pattern))
         ).limit(50).all()
+    
+    @staticmethod
+    def get_my_students(db: Session, teacher_id: int, 
+                        grade: str = None, section: str = None, 
+                        search: str = None) -> List[Student]:
+        from models.models import CourseEnrollment
+        
+        query = db.query(Student).join(CourseEnrollment).join(Course).filter(
+            Course.teacher_id == teacher_id
+        ).join(User).options(joinedload(Student.user))
+        
+        if grade:
+            query = query.filter(Student.grade_level == grade)
+        if section:
+            query = query.filter(Student.section == section)
+            
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (User.full_name.ilike(search_pattern)) |
+                (User.email.ilike(search_pattern)) |
+                (Student.student_id.ilike(search_pattern))
+            )
+            
+        return query.distinct().all()

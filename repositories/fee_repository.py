@@ -1,10 +1,20 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 from typing import List, Optional, Dict
 from datetime import date, datetime
-from models.models import FeeRecord
+from models.models import FeeRecord, Student
 
 class FeeRepository:
+    @staticmethod
+    def search(db: Session, query: str) -> List[FeeRecord]:
+        return db.query(FeeRecord).join(Student).filter(
+            or_(
+                Student.full_name.ilike(f"%{query}%"),
+                Student.student_id.ilike(f"%{query}%"),
+                Student.parent_name.ilike(f"%{query}%")
+            )
+        ).all()
+
     @staticmethod
     def get_by_id(db: Session, fee_id: int) -> Optional[FeeRecord]:
         return db.query(FeeRecord).filter(FeeRecord.id == fee_id).first()

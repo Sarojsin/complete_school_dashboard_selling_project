@@ -179,6 +179,15 @@
                     <a href="/student/notices" class="btn btn-outline-secondary text-start">
                         <i class="bi bi-megaphone me-2"></i>Notices
                     </a>
+                    <a href="/student/messages" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-envelope me-2"></i>Messages
+                        {% if unread_count > 0 %}
+                        <span class="badge bg-danger rounded-pill">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="/student/teachers" class="btn btn-outline-success text-start">
+                        <i class="bi bi-person-badge me-2"></i>Contact Teachers
+                    </a>
                     <a href="/student/fees" class="btn btn-outline-dark text-start">
                         <i class="bi bi-cash-coin me-2"></i>Fee Records
                     </a>

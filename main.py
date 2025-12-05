@@ -160,11 +160,17 @@ async def register_parent_page(request: Request):
 
 # ------------------ STUDENT PAGES ------------------
 @app.get("/student/dashboard")
-async def student_dashboard(request: Request, current_user: User = Depends(get_current_user)):
+async def student_dashboard(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.message_repository import MessageRepository
+    
+    # Get unread message count
+    unread_count = MessageRepository.get_unread_count(db, current_user.id)
+    
     return templates.TemplateResponse("student/dashboard.html", {
         "request": request,
         "current_user": current_user,
         "student": current_user,
+        "unread_count": unread_count,
         "assignments": [],
         "recent_grades": []
     })
@@ -340,9 +346,86 @@ async def student_forum(request: Request, current_user: User = Depends(get_curre
         "posts": []
     })
 
+@app.get("/student/messages")
+async def student_messages(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.message_repository import MessageRepository
+    
+    # Get all messages for this user
+    messages = MessageRepository.get_inbox(db, current_user.id)
+    unread_count = MessageRepository.get_unread_count(db, current_user.id)
+    
+    return templates.TemplateResponse("student/messages.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": current_user,
+        "messages": messages,
+        "unread_count": unread_count
+    })
+
+@app.post("/student/messages/{message_id}/read")
+async def mark_message_read(message_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from repositories.message_repository import MessageRepository
+    
+    message = MessageRepository.mark_as_read(db, message_id)
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    return {"success": True}
+
+@app.get("/student/teachers")
+async def student_teachers(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.teacher_repository import TeacherRepository
+    
+    # Get all teachers (showing all teachers like authority view)
+    teachers = TeacherRepository.get_all(db)
+    
+    return templates.TemplateResponse("student/teachers.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": current_user,
+        "teachers": teachers
+    })
+
+@app.post("/student/teachers/{teacher_id}/contact")
+async def student_contact_teacher(
+    teacher_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.message_repository import MessageRepository
+    from repositories.teacher_repository import TeacherRepository
+    
+    # Get form data
+    form_data = await request.form()
+    subject =form_data.get("subject")
+    message_body = form_data.get("message")
+    
+    # Get teacher's user_id
+    teacher = TeacherRepository.get_by_id(db, teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    
+    # Create message
+    MessageRepository.create(
+        db=db,
+        sender_id=current_user.id,
+        recipient_id=teacher.user_id,
+        subject=subject,
+        body=message_body
+    )
+    
+    return {"message": "Message sent successfully"}
+
 # ------------------ TEACHER PAGES ------------------
 @app.get("/teacher/dashboard")
-async def teacher_dashboard(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_dashboard(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.message_repository import MessageRepository
+    
+    # Get unread message count and recent messages
+    unread_count = MessageRepository.get_unread_count(db, current_user.id)
+    recent_messages = MessageRepository.get_inbox(db, current_user.id, limit=5)
+    
     return templates.TemplateResponse("teacher/dashboard.html", {
         "request": request,
         "current_user": current_user,
@@ -350,26 +433,169 @@ async def teacher_dashboard(request: Request, current_user: User = Depends(get_c
         "students": [],
         "courses": [],
         "assignments": [],
-        "stats": {}
+        "stats": {},
+        "unread_count": unread_count,
+        "recent_messages": recent_messages
     })
 
 @app.get("/teacher/students")
-async def teacher_students(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_students(
+    request: Request, 
+    grade: str = None,
+    section: str = None,
+    search: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.student_repository import StudentRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        # Fallback if not a teacher profile yet
+        return templates.TemplateResponse("teacher/students.html", {
+            "request": request,
+            "current_user": current_user,
+            "teacher": current_user,
+            "students": [],
+            "search_query": search,
+            "filters": {"grade": grade, "section": section}
+        })
+        
+    # Use StudentRepository to allow searching all students (directory view)
+    # This solves the issue where teachers see no students if enrollments aren't set up.
+    students = StudentRepository.get_all(
+        db, 
+        grade_level=grade, 
+        section=section, 
+        search=search
+    )
+    
+    # Format students for template
+    formatted_students = []
+    for s in students:
+        # Calculate stats (mocked or simplified for now)
+        attendance_pct = 92 # Mock
+        avg_grade = 85 # Mock
+        pending = 0 # Mock
+        
+        formatted_students.append({
+            "id": s.id,
+            "name": s.user.full_name,
+            "email": s.user.email,
+            "grade": s.grade_level,
+            "section": s.section,
+            "attendance": attendance_pct,
+            "average_grade": avg_grade,
+            "pending_assignments": pending,
+            "avatar": f"https://ui-avatars.com/api/?name={s.user.full_name.replace(' ', '+')}&background=random"
+        })
+
     return templates.TemplateResponse("teacher/students.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "students": []
+        "students": formatted_students,
+        "search_query": search,
+        "filters": {
+            "grade": grade,
+            "section": section
+        }
     })
 
 @app.get("/teacher/students/{student_id}")
-async def teacher_student_detail(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
+async def teacher_student_detail(request: Request, student_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.student_repository import StudentRepository
+    student = StudentRepository.get_by_id(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
     return templates.TemplateResponse("teacher/student_detail.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
+        "student": student, # Pass actual student object
         "student_id": student_id
     })
+
+@app.get("/teacher/students/{student_id}/grades")
+async def teacher_student_grades(request: Request, student_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.student_repository import StudentRepository
+    student = StudentRepository.get_by_id(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    # Mock grades for now
+    mock_grades = [
+        {"subject": "Mathematics", "assessment_name": "Midterm Exam", "date": "2023-10-15", "score": 85, "max_score": 100, "percentage": 85, "letter_grade": "B", "remarks": "Good job"},
+        {"subject": "Science", "assessment_name": "Lab Report", "date": "2023-10-20", "score": 92, "max_score": 100, "percentage": 92, "letter_grade": "A", "remarks": "Excellent work"},
+        {"subject": "English", "assessment_name": "Essay", "date": "2023-11-05", "score": 78, "max_score": 100, "percentage": 78, "letter_grade": "C+", "remarks": "Needs improvement on structure"}
+    ]
+
+    return templates.TemplateResponse("teacher/student_grades.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "student": student,
+        "grades": mock_grades
+    })
+
+@app.post("/teacher/students/{student_id}/contact")
+async def teacher_contact_student(
+    student_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.message_repository import MessageRepository
+    from repositories.student_repository import StudentRepository
+    
+    # Get form data
+    form_data = await request.form()
+    subject = form_data.get("subject")
+    message_body = form_data.get("message")
+    
+    # Get student's user_id
+    student = StudentRepository.get_by_id(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Create message
+    MessageRepository.create(
+        db=db,
+        sender_id=current_user.id,
+        recipient_id=student.user_id,
+        subject=subject,
+        body=message_body
+    )
+    
+    return {"message": "Message sent successfully"}
+
+@app.get("/teacher/messages")
+async def teacher_messages(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.message_repository import MessageRepository
+    
+    # Get all messages for this teacher
+    messages = MessageRepository.get_inbox(db, current_user.id)
+    unread_count = MessageRepository.get_unread_count(db, current_user.id)
+    
+    return templates.TemplateResponse("teacher/messages.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "messages": messages,
+        "unread_count": unread_count
+    })
+
+@app.post("/teacher/messages/{message_id}/read")
+async def teacher_mark_message_read(message_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from repositories.message_repository import MessageRepository
+    
+    message = MessageRepository.mark_as_read(db, message_id)
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    return {"success": True}
 
 @app.get("/teacher/courses")
 async def teacher_courses(request: Request, current_user: User = Depends(get_current_user)):
@@ -837,16 +1063,23 @@ async def authority_dashboard(request: Request, current_user: User = Depends(get
 @app.get("/authority/students")
 async def authority_students(
     request: Request,
+    grade: str = None,
+    section: str = None,
+    status: str = None,
     search: str = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     from repositories.student_repository import StudentRepository
     
-    if search:
-        students_data = StudentRepository.search(db, search)
-    else:
-        students_data = StudentRepository.get_all(db)
+    # Use get_all with filters
+    students_data = StudentRepository.get_all(
+        db, 
+        grade_level=grade, 
+        section=section, 
+        status=status, 
+        search=search
+    )
     
     # Format students for template
     formatted_students = []
@@ -873,7 +1106,12 @@ async def authority_students(
         "current_user": current_user,
         "authority": current_user,
         "students": formatted_students,
-        "search_query": search
+        "search_query": search,
+        "filters": {
+            "grade": grade,
+            "section": section,
+            "status": status
+        }
     })
 
 
@@ -886,27 +1124,122 @@ async def authority_add_student(request: Request, current_user: User = Depends(g
     })
 
 @app.get("/authority/students/{student_id}/edit")
-async def authority_edit_student(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
+async def authority_edit_student(
+    request: Request, 
+    student_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    
+    student = StudentRepository.get_by_id(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # map student model to template context
+    student_data = {
+        "id": student.id,
+        "name": student.user.full_name if student.user else student.full_name,
+        "email": student.user.email if student.user else "",
+        "phone": student.phone,
+        "dob": student.date_of_birth,
+        "address": student.address,
+        "grade": student.grade_level,
+        "section": student.section,
+        "roll_number": student.student_id,
+        "admission_date": student.enrollment_date,
+        "status": "active" if student.user and student.user.is_active else "inactive",
+        "father_name": student.parent_name, # Map parent_name to father_name as fallback
+        "mother_name": "", # Not in model
+        "parent_phone": student.parent_phone,
+        "parent_email": "", # Not in model
+        "emergency_contact": "", # Not in model
+        "profile_pic": f"https://ui-avatars.com/api/?name={student.user.full_name.replace(' ', '+') if student.user else 'User'}&background=random"
+    }
+
     return templates.TemplateResponse("authority/edit_student.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "student_id": student_id
+        "student": student_data,
+        "grades": ["9", "10", "11", "12"],
+        "sections": ["A", "B", "C"]
     })
+
+@app.get("/authority/students/{student_id}")
+async def authority_view_student(
+    request: Request, 
+    student_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    
+    student = StudentRepository.get_by_id(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # map student model to template context
+    student_data = {
+        "id": student.id,
+        "name": student.user.full_name if student.user else student.full_name,
+        "email": student.user.email if student.user else "",
+        "phone": student.phone,
+        "dob": student.date_of_birth,
+        "address": student.address,
+        "grade": student.grade_level,
+        "section": student.section,
+        "roll_number": student.student_id,
+        "admission_date": student.enrollment_date,
+        "status": "active" if student.user and student.user.is_active else "inactive",
+        "father_name": student.parent_name,
+        "parent_phone": student.parent_phone,
+        "attendance": 0, # Placeholder
+        "profile_pic": f"https://ui-avatars.com/api/?name={student.user.full_name.replace(' ', '+') if student.user else 'User'}&background=random"
+    }
+
+    return templates.TemplateResponse("authority/student_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "authority": current_user,
+        "student": student_data
+    })
+
+@app.post("/authority/students/{id}/delete", name="authority_delete_student")
+async def authority_delete_student(
+    request: Request,
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    
+    student = StudentRepository.get_by_id(db, id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    StudentRepository.delete(db, student)
+    
+    return RedirectResponse(url="/authority/students?success=Student+deleted+successfully", status_code=303)
 
 @app.get("/authority/teachers")
 async def authority_teachers(
     request: Request,
+    department: str = None,
+    status: str = None,
     search: str = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     from repositories.teacher_repository import TeacherRepository
     
-    if search:
-        teachers_data = TeacherRepository.search(db, search)
-    else:
-        teachers_data = TeacherRepository.get_all(db)
+    # Use get_all with filters
+    teachers_data = TeacherRepository.get_all(
+        db,
+        department=department,
+        status=status,
+        search=search
+    )
     
     # Format teachers for template
     formatted_teachers = []
@@ -932,7 +1265,11 @@ async def authority_teachers(
         "current_user": current_user,
         "authority": current_user,
         "teachers": formatted_teachers,
-        "search_query": search
+        "search_query": search,
+        "filters": {
+            "department": department,
+            "status": status
+        }
     })
 
 
@@ -945,13 +1282,97 @@ async def authority_add_teacher(request: Request, current_user: User = Depends(g
     })
 
 @app.get("/authority/teachers/{teacher_id}/edit")
-async def authority_edit_teacher(request: Request, teacher_id: int, current_user: User = Depends(get_current_user)):
+async def authority_edit_teacher(
+    request: Request, 
+    teacher_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    
+    teacher = TeacherRepository.get_by_id(db, teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+
+    teacher_data = {
+        "id": teacher.id,
+        "name": teacher.user.full_name if teacher.user else teacher.full_name,
+        "email": teacher.user.email if teacher.user else "",
+        "phone": teacher.phone,
+        "dob": "", # Add field to model if needed, currently missing
+        "address": "", # Add field to model if needed
+        "joining_date": teacher.joining_date,
+        "qualification": teacher.qualification,
+        "specialization": teacher.specialization,
+        "department": teacher.department,
+        "employee_id": teacher.employee_id,
+        "status": "active" if teacher.user and teacher.user.is_active else "inactive",
+        "profile_pic": f"https://ui-avatars.com/api/?name={teacher.user.full_name.replace(' ', '+') if teacher.user else 'User'}&background=random",
+        "role": teacher.user.role if teacher.user else "teacher",
+        "is_active": teacher.user.is_active if teacher.user else False,
+        "subjects": [], # Placeholder
+        "experience": 0 # Placeholder
+    }
+
     return templates.TemplateResponse("authority/edit_teacher.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "teacher_id": teacher_id
+        "teacher": teacher_data,
+        "departments": ["Mathematics", "Science", "English", "History", "Arts", "Computer Science"],
+        "subjects": ["Math", "Physics", "Chemistry", "Biology", "English", "History", "Geography"]
     })
+
+@app.get("/authority/teachers/{teacher_id}")
+async def authority_view_teacher(
+    request: Request, 
+    teacher_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    
+    teacher = TeacherRepository.get_by_id(db, teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+
+    teacher_data = {
+        "id": teacher.id,
+        "name": teacher.user.full_name if teacher.user else teacher.full_name,
+        "email": teacher.user.email if teacher.user else "",
+        "phone": teacher.phone,
+        "joining_date": teacher.joining_date,
+        "qualification": teacher.qualification,
+        "specialization": teacher.specialization,
+        "department": teacher.department,
+        "employee_id": teacher.employee_id,
+        "status": "active" if teacher.user and teacher.user.is_active else "inactive",
+        "profile_pic": f"https://ui-avatars.com/api/?name={teacher.user.full_name.replace(' ', '+') if teacher.user else 'User'}&background=random"
+    }
+
+    return templates.TemplateResponse("authority/teacher_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "authority": current_user,
+        "teacher": teacher_data
+    })
+
+@app.post("/authority/teachers/{id}/delete", name="authority_delete_teacher")
+async def authority_delete_teacher(
+    request: Request,
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    
+    teacher = TeacherRepository.get_by_id(db, id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+        
+    TeacherRepository.delete(db, teacher)
+    
+    return RedirectResponse(url="/authority/teachers?success=Teacher+deleted+successfully", status_code=303)
 
 @app.get("/authority/courses")
 async def authority_courses(
@@ -1006,23 +1427,205 @@ async def authority_add_course(request: Request, current_user: User = Depends(ge
         "authority": current_user
     })
 
+@app.get("/authority/courses/{course_id}")
+async def authority_view_course(
+    request: Request, 
+    course_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.course_repository import CourseRepository
+    
+    course = CourseRepository.get_by_id(db, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    course_data = {
+        "id": course.id,
+        "code": course.course_code,
+        "name": course.course_name,
+        "description": course.description,
+        "credits": course.credits,
+        "grade_level": course.grade_level,
+        "semester": course.semester,
+        "course_type": "core", # Placeholder
+        "department": "Science", # Placeholder
+        "department_color": "primary",
+        "instructor": course.teacher.user.full_name if course.teacher and course.teacher.user else "Unassigned",
+        "instructor_avatar": f"https://ui-avatars.com/api/?name={course.teacher.user.full_name if course.teacher and course.teacher.user else 'Unassigned'}&background=random",
+        "teacher_id": course.teacher_id,
+        "student_count": 0,
+        "status": "active",
+        "schedule": [] # Placeholder
+    }
+
+    return templates.TemplateResponse("authority/course_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "authority": current_user,
+        "course": course_data
+    })
+
 @app.get("/authority/courses/{course_id}/edit")
-async def authority_edit_course(request: Request, course_id: int, current_user: User = Depends(get_current_user)):
+async def authority_edit_course(
+    request: Request, 
+    course_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.course_repository import CourseRepository
+    from repositories.teacher_repository import TeacherRepository
+    
+    course = CourseRepository.get_by_id(db, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    teachers = TeacherRepository.get_all(db)
+    formatted_teachers = []
+    for t in teachers:
+        formatted_teachers.append({
+            "id": t.id,
+            "name": t.user.full_name if t.user else "Unknown",
+            "department": t.department or "General"
+        })
+
+    course_data = {
+        "id": course.id,
+        "code": course.course_code,
+        "name": course.course_name,
+        "description": course.description,
+        "credits": course.credits,
+        "grade_level": course.grade_level,
+        "semester": course.semester,
+        "course_type": "core", # Placeholder since not in model yet
+        "department": "Science", # Placeholder
+        "teacher_id": course.teacher_id,
+        "start_date": "2023-01-01", # Placeholder
+        "end_date": "2023-06-01", # Placeholder
+        "max_students": 40,
+        "is_active": True,
+        "stats": {
+            "enrolled_students": 0,
+            "completion_rate": 0,
+            "avg_grade": 0,
+            "assignments": 0
+        },
+        "schedule": [],
+        "prerequisites": []
+    }
+
     return templates.TemplateResponse("authority/edit_course.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "course_id": course_id
+        "course": course_data,
+        "teachers": formatted_teachers,
+        "departments": ["Mathematics", "Science", "English", "History", "Arts", "Computer Science"],
+        "grades": ["9", "10", "11", "12"],
+        "all_courses": [] # Would need another fetch if we want real prereqs
     })
 
+@app.post("/authority/courses/{course_id}/edit")
+async def authority_update_course(
+    request: Request, 
+    course_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.course_repository import CourseRepository
+    
+    course = CourseRepository.get_by_id(db, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    form = await request.form()
+    
+    # Update course fields
+    course.course_code = form.get("code")
+    course.course_name = form.get("name")
+    course.description = form.get("description")
+    course.credits = int(form.get("credits", 0))
+    course.grade_level = form.get("grade_level")
+    course.teacher_id = int(form.get("teacher_id")) if form.get("teacher_id") else None
+    course.semester = 1 # Placeholder or add to form
+    
+    # Save changes
+    db.commit()
+    
+    return RedirectResponse(url="/authority/courses?success=Course+updated+successfully", status_code=303)
+
+@app.post("/authority/courses/{id}/delete", name="authority_delete_course")
+async def authority_delete_course(
+    request: Request,
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.course_repository import CourseRepository
+    
+    course = CourseRepository.get_by_id(db, id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    CourseRepository.delete(db, course)
+    
+    return RedirectResponse(url="/authority/courses?success=Course+deleted+successfully", status_code=303)
+
 @app.get("/authority/fees")
-async def authority_fees(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_fees(
+    request: Request, 
+    search: str = None, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.fee_repository import FeeRepository
+    from models.models import FeeRecord
+    
+    if search:
+        fees = FeeRepository.search(db, search)
+    else:
+        fees = db.query(FeeRecord).order_by(FeeRecord.due_date.desc()).all()
+        
+    fee_records = []
+    total_pending = 0
+    
+    for f in fees:
+        student_name = f.student.full_name if f.student else "Unknown Student"
+        student_id = f.student.student_id if f.student else "N/A"
+        grade = f.student.grade_level if f.student else ""
+        section = f.student.section if f.student else ""
+        
+        # Calculate pending
+        if f.status in ['pending', 'partial', 'overdue']:
+            balance = f.amount - f.paid_amount
+            total_pending += balance
+            
+        fee_records.append({
+            "id": f.id,
+            "student_name": student_name,
+            "student_avatar": f"https://ui-avatars.com/api/?name={student_name.replace(' ', '+')}&background=random",
+            "student_id": student_id,
+            "grade": grade,
+            "section": section,
+            "fee_type": f.fee_type,
+            "quarter": "Q1", # Placeholder
+            "total_amount": f.amount,
+            "paid_amount": f.paid_amount,
+            "balance": f.amount - f.paid_amount,
+            "due_date": f.due_date,
+            "payment_date": f.payment_date,
+            "payment_method": f.payment_method,
+            "status": f.status,
+            "is_overdue": f.status == 'overdue' or (f.status != 'paid' and f.due_date < date.today())
+        })
+
     return templates.TemplateResponse("authority/fees.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "fees": [],
-        "pending_amount": 0
+        "fee_records": fee_records,
+        "pending_amount": total_pending,
+        "search_query": search
     })
 
 @app.get("/authority/fees/structure")
@@ -1080,7 +1683,44 @@ async def authority_create_fee_structure(request: Request, current_user: User = 
     
     FeeStructureRepository.create(db, structure_data)
     
-    return RedirectResponse(url="/authority/fees/structure", status_code=303)
+    # Auto-assign fees to students in the grade
+    from repositories.student_repository import StudentRepository
+    from repositories.fee_repository import FeeRepository
+    
+    grade_level = form.get("grade_level")
+    # Fetch all students in the grade (set high limit or implement un-paginated get_all)
+    students = StudentRepository.get_all(db, grade_level=grade_level, limit=1000)
+    
+    fee_components = [
+        ("Tuition", tuition_fee),
+        ("Registration", registration_fee),
+        ("Library", library_fee),
+        ("Sports", sports_fee),
+        ("Lab", lab_fee),
+        ("Activity", activity_fee),
+        ("Other", other_charges)
+    ]
+    
+    due_date = structure_data["due_date"]
+    academic_year = structure_data["academic_year"]
+    
+    for student in students:
+        for fee_type, amount in fee_components:
+            if amount > 0:
+                fee_data = {
+                    "student_id": student.id,
+                    "fee_type": fee_type,
+                    "amount": amount,
+                    "due_date": due_date,
+                    "status": "pending",
+                    "paid_amount": 0,
+                    "description": f"{fee_type} Fee for {academic_year}",
+                    "quarter": "Term 1" # Default to Term 1
+                }
+                # Create fee record
+                FeeRepository.create(db, fee_data)
+    
+    return RedirectResponse(url="/authority/fees/structure?success=Fee+structure+created+and+applied", status_code=303)
 
 
 @app.get("/authority/fees/add")
@@ -1183,11 +1823,60 @@ async def authority_create_notice(
 
 
 @app.get("/authority/notices/{id}/edit", name="authority_edit_notice")
-async def authority_edit_notice(request: Request, id: int):
+async def authority_edit_notice(
+    request: Request, 
+    id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.notice_repository import NoticeRepository
+    
+    notice = NoticeRepository.get_by_id(db, id)
+    if not notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+        
     return templates.TemplateResponse("authority/edit_notice.html", {
         "request": request,
-        "notice_id": id
+        "current_user": current_user,
+        "authority": current_user,
+        "notice": notice,
+        "grades": ["9", "10", "11", "12"],
+        "classes": []
     })
+
+@app.post("/authority/notices/{id}/edit")
+async def authority_update_notice(
+    request: Request, 
+    id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.notice_repository import NoticeRepository
+    from datetime import datetime
+    
+    notice = NoticeRepository.get_by_id(db, id)
+    if not notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+        
+    form = await request.form()
+    
+    # Update fields
+    notice.title = form.get("title")
+    notice.content = form.get("content")
+    notice.priority = form.get("priority")
+    notice.target_role = form.get("audience")
+    
+    if form.get("expiry_date"):
+        notice.expires_at = datetime.fromisoformat(form.get("expiry_date"))
+    else:
+        notice.expires_at = None
+        
+    if form.get("publish_date"):
+        notice.published_date = datetime.fromisoformat(form.get("publish_date"))
+        
+    db.commit()
+    
+    return RedirectResponse(url="/authority/notices?success=Notice+updated", status_code=303)
 
 @app.delete("/authority/notices/delete/{id}")
 async def authority_delete_notice(
@@ -1226,8 +1915,99 @@ async def authority_view_notice(
     })
 
 @app.get("/authority/analytics")
-async def authority_analytics(request: Request):
-    return templates.TemplateResponse("authority/analytics.html", {"request": request})
+async def authority_analytics(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy import func, case, extract
+    from models.models import Student, Grade, Course, Teacher, Attendance
+
+    # 1. Grade Distribution
+    grades = db.query(Grade).all()
+    grade_counts = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
+    for g in grades:
+        if g.max_score > 0:
+            pct = (g.score / g.max_score) * 100
+            if pct >= 90: grade_counts["A"] += 1
+            elif pct >= 80: grade_counts["B"] += 1
+            elif pct >= 70: grade_counts["C"] += 1
+            elif pct >= 60: grade_counts["D"] += 1
+            else: grade_counts["F"] += 1
+    grade_dist_data = [grade_counts["A"], grade_counts["B"], grade_counts["C"], grade_counts["D"], grade_counts["F"]]
+
+    # 2. Attendance by Grade
+    att_stats = db.query(
+        Student.grade_level,
+        func.count(Attendance.id).label('total'),
+        func.sum(case((Attendance.status == 'present', 1), else_=0)).label('present')
+    ).join(Attendance).group_by(Student.grade_level).all()
+    
+    att_labels = [s.grade_level for s in att_stats] if att_stats else ["Data Pending"]
+    att_data = [round(s.present / s.total * 100, 1) if s.total else 0 for s in att_stats] if att_stats else [0]
+    
+    # 3. Department Performance
+    dept_stats = db.query(
+        Teacher.department,
+        func.avg(Grade.score / Grade.max_score * 100).label('avg_score')
+    ).join(Course, Course.teacher_id == Teacher.id)\
+     .join(Grade, Grade.course_id == Course.id)\
+     .group_by(Teacher.department).all()
+     
+    dept_labels = [d.department or "General" for d in dept_stats] if dept_stats else ["No Data"]
+    dept_data = [round(d.avg_score, 1) for d in dept_stats] if dept_stats else [0]
+
+    # 4. Monthly Trend (Simple approximation)
+    trend_stats = db.query(
+        extract('month', Grade.date).label('month'),
+        func.avg(Grade.score / Grade.max_score * 100).label('avg_score')
+    ).group_by('month').all()
+    
+    trend_map = {i: 0 for i in range(1, 13)}
+    for t in trend_stats:
+        if t.month:
+            trend_map[int(t.month)] = round(t.avg_score, 1)
+            
+    trend_data = list(trend_map.values())
+    trend_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    # 5. Teacher Performance
+    teachers = db.query(Teacher).all()
+    teacher_perf = []
+    for t in teachers:
+        avg = db.query(func.avg(Grade.score / Grade.max_score * 100)).\
+              join(Course).filter(Course.teacher_id == t.id).scalar() or 0
+        teacher_perf.append({
+            "name": t.full_name,
+            "department": t.department,
+            "avg_grade": round(avg, 1),
+            "performance": round(avg, 1),
+            "avatar": f"https://ui-avatars.com/api/?name={t.full_name}&background=random"
+        })
+    teacher_perf.sort(key=lambda x: x['performance'], reverse=True)
+    
+    # 6. Top Classes (Mock/Dynamic mix)
+    top_classes = [
+        {"name": "10-A", "teacher": "John Doe", "avg_grade": 88, "attendance": 95, "trend": "up"},
+        {"name": "11-B", "teacher": "Jane Smith", "avg_grade": 85, "attendance": 92, "trend": "up"},
+        {"name": "9-C", "teacher": "Bob Wilson", "avg_grade": 82, "attendance": 89, "trend": "down"},
+    ]
+
+    return templates.TemplateResponse("authority/analytics_v2.html", {
+        "request": request,
+        "current_user": current_user,
+        "authority": current_user,
+        "grade_dist_data": grade_dist_data,
+        "att_labels": att_labels,
+        "att_data": att_data,
+        "dept_labels": dept_labels,
+        "dept_data": dept_data,
+        "trend_labels": trend_labels,
+        "trend_data": trend_data,
+        "teacher_performance": teacher_perf[:5],
+        "top_classes": top_classes,
+        "demographics_data": [55, 45] # Mock gender dist
+    })
 
 # ------------------ FAVICON ------------------
 @app.get("/favicon.ico")

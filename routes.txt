@@ -1,0 +1,7 @@
+Inspecting routes...
+Path: /api/authority/fees, Methods: {'GET'}, Name: get_all_fees
+Path: /authority/fee-structure, Methods: {'GET'}, Name: authority_fee_structure
+Path: /authority/fee-structure, Methods: {'POST'}, Name: create_fee_structure
+Path: /authority/fees, Methods: {'GET'}, Name: authority_fees
+Path: /authority/fees/structure, Methods: {'GET'}, Name: authority_fee_structure
+Path: /authority/fees/add, Methods: {'GET'}, Name: authority_add_fee

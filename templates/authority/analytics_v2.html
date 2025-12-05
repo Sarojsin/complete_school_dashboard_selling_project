@@ -34,7 +34,9 @@
         <li><a class="dropdown-item" href="?period=30">Last 30 Days</a></li>
         <li><a class="dropdown-item" href="?period=90">Last 90 Days</a></li>
         <li><a class="dropdown-item" href="?period=365">Last Year</a></li>
-        <li><hr class="dropdown-divider"></li>
+        <li>
+            <hr class="dropdown-divider">
+        </li>
         <li><a class="dropdown-item" href="?period=custom">Custom Range</a></li>
     </ul>
 </div>
@@ -273,7 +275,8 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ teacher.avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ teacher.name }}">
+                                        <img src="{{ teacher.avatar }}" class="rounded-circle me-2" width="24"
+                                            height="24" alt="{{ teacher.name }}">
                                         {{ teacher.name }}
                                     </div>
                                 </td>
@@ -282,8 +285,8 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="progress flex-grow-1 me-2" style="height: 6px; width: 60px;">
-                                            <div class="progress-bar bg-{{ 'success' if teacher.performance >= 90 else 'warning' if teacher.performance >= 80 else 'danger' }}" 
-                                                 style="width: {{ teacher.performance }}%"></div>
+                                            <div class="progress-bar bg-{{ 'success' if teacher.performance >= 90 else 'warning' if teacher.performance >= 80 else 'danger' }}"
+                                                style="width: {{ teacher.performance }}%"></div>
                                         </div>
                                         <small>{{ teacher.performance }}%</small>
                                     </div>
@@ -397,7 +400,8 @@
                                             <small class="text-muted">{{ class.teacher }}</small>
                                         </td>
                                         <td>
-                                            <span class="badge bg-{{ 'success' if class.avg_grade >= 85 else 'warning' if class.avg_grade >= 75 else 'danger' }}">
+                                            <span
+                                                class="badge bg-{{ 'success' if class.avg_grade >= 85 else 'warning' if class.avg_grade >= 75 else 'danger' }}">
                                                 {{ class.avg_grade }}%
                                             </span>
                                         </td>
@@ -455,161 +459,152 @@
 
 {% block extra_js %}
 <script>
-    // Performance Trend Chart
+    // Performance Trend Chart - Line Chart
     const trendCtx = document.getElementById('performanceTrendChart').getContext('2d');
     const trendChart = new Chart(trendCtx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            datasets: [
-                {
-                    label: 'Average Grades',
-                    data: [78, 82, 80, 85, 83, 87, 85, 88, 86, 89, 87, 90],
-                    borderColor: 'rgb(78, 115, 223)',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Attendance Rate',
-                    data: [88, 90, 89, 92, 91, 94, 92, 95, 93, 96, 94, 97],
-                    borderColor: 'rgb(28, 200, 138)',
-                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
-                    tension: 0.4,
-                    fill: true
+            labels: {{ trend_labels | tojson }},
+    datasets: [
+        {
+            label: 'Average Grades',
+            data: {{ trend_data | tojson }},
+        borderColor: 'rgb(78, 115, 223)',
+        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+        tension: 0.4,
+        fill: true
                 }
-            ]
+    ]
         },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    min: 70,
-                    max: 100
-                }
+    options: {
+        scales: {
+            y: {
+                beginAtZero: false,
+                    min: 0,
+                        max: 100
             }
         }
+    }
     });
 
-    // Grade Distribution Chart
+    // Grade Distribution Chart - Pie Chart (Requested)
     const gradeCtx = document.getElementById('gradeDistributionChart').getContext('2d');
     const gradeChart = new Chart(gradeCtx, {
-        type: 'doughnut',
+        type: 'pie',
         data: {
             labels: ['A (90-100%)', 'B (80-89%)', 'C (70-79%)', 'D (60-69%)', 'F (<60%)'],
             datasets: [{
-                data: [25, 35, 20, 15, 5],
-                backgroundColor: [
-                    '#1cc88a',
-                    '#36b9cc',
-                    '#4e73df',
-                    '#f6c23e',
-                    '#e74a3b'
-                ],
-                borderWidth: 2,
-                borderColor: '#fff'
+                data: {{ grade_dist_data | tojson }}
+    },
+        backgroundColor: [
+        '#1cc88a',
+        '#36b9cc',
+        '#4e73df',
+        '#f6c23e',
+        '#e74a3b'
+    ],
+        borderWidth: 2,
+        borderColor: '#fff'
             }]
         },
-        options: {
-            cutout: '60%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
+    options: {
+        plugins: {
+            legend: {
+                position: 'bottom',
                     labels: {
-                        padding: 20,
+                    padding: 20,
                         usePointStyle: true
-                    }
                 }
             }
         }
+    }
     });
 
-    // Attendance Chart
+    // Attendance Chart - Bar Chart
     const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
     const attendanceChart = new Chart(attendanceCtx, {
         type: 'bar',
         data: {
-            labels: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'],
-            datasets: [{
-                label: 'Attendance Rate',
-                data: [92, 94, 95, 96],
-                backgroundColor: [
-                    'rgba(78, 115, 223, 0.8)',
-                    'rgba(28, 200, 138, 0.8)',
-                    'rgba(54, 185, 204, 0.8)',
-                    'rgba(246, 194, 62, 0.8)'
-                ],
-                borderColor: [
-                    'rgb(78, 115, 223)',
-                    'rgb(28, 200, 138)',
-                    'rgb(54, 185, 204)',
-                    'rgb(246, 194, 62)'
-                ],
-                borderWidth: 1
+            labels: {{ att_labels | tojson }},
+    datasets: [{
+        label: 'Attendance Rate',
+        data: {{ att_data | tojson }},
+        backgroundColor: [
+        'rgba(78, 115, 223, 0.8)',
+        'rgba(28, 200, 138, 0.8)',
+        'rgba(54, 185, 204, 0.8)',
+        'rgba(246, 194, 62, 0.8)'
+    ],
+        borderColor: [
+        'rgb(78, 115, 223)',
+        'rgb(28, 200, 138)',
+        'rgb(54, 185, 204)',
+        'rgb(246, 194, 62)'
+    ],
+        borderWidth: 1
             }]
         },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    min: 85,
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
                     max: 100
-                }
             }
         }
+    }
     });
 
-    // Department Performance Chart
+    // Department Performance Chart - Radar/Web Chart
     const deptCtx = document.getElementById('departmentChart').getContext('2d');
     const deptChart = new Chart(deptCtx, {
         type: 'radar',
         data: {
-            labels: ['Mathematics', 'Science', 'English', 'History', 'Arts', 'Sports'],
-            datasets: [{
-                label: 'Average Grades',
-                data: [85, 88, 82, 79, 84, 90],
-                backgroundColor: 'rgba(78, 115, 223, 0.2)',
-                borderColor: 'rgb(78, 115, 223)',
-                pointBackgroundColor: 'rgb(78, 115, 223)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgb(78, 115, 223)'
+            labels: {{ dept_labels | tojson }},
+    datasets: [{
+        label: 'Average Grades',
+        data: {{ dept_data | tojson }},
+        backgroundColor: 'rgba(78, 115, 223, 0.2)',
+        borderColor: 'rgb(78, 115, 223)',
+        pointBackgroundColor: 'rgb(78, 115, 223)',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgb(78, 115, 223)'
             }]
         },
-        options: {
-            scales: {
-                r: {
-                    beginAtZero: false,
-                    min: 70,
+    options: {
+        scales: {
+            r: {
+                beginAtZero: true,
                     max: 100
-                }
             }
         }
+    }
     });
 
-    // Demographics Chart
+    // Demographics Chart - Polar Area (Web-like)
     const demoCtx = document.getElementById('demographicsChart').getContext('2d');
     const demoChart = new Chart(demoCtx, {
         type: 'polarArea',
         data: {
             labels: ['Male', 'Female'],
             datasets: [{
-                data: [680, 567],
-                backgroundColor: [
-                    'rgba(54, 185, 204, 0.8)',
-                    'rgba(246, 194, 62, 0.8)'
-                ],
-                borderWidth: 2,
-                borderColor: '#fff'
+                data: {{ demographics_data | tojson }}
+    },
+        backgroundColor: [
+        'rgba(54, 185, 204, 0.8)',
+        'rgba(246, 194, 62, 0.8)'
+    ],
+        borderWidth: 2,
+        borderColor: '#fff'
             }]
         },
-        options: {
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+    options: {
+        plugins: {
+            legend: {
+                position: 'bottom'
             }
         }
+    }
     });
 
     // Comparison Chart
@@ -641,11 +636,5 @@
             }
         }
     });
-
-    // Auto-refresh data every 5 minutes
-    setInterval(() => {
-        console.log('Refreshing analytics data...');
-        // Implement data refresh logic here
-    }, 300000);
 </script>
 {% endblock %}

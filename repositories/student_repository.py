@@ -23,11 +23,30 @@ class StudentRepository:
         ).first()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100, grade_level: str = None) -> List[Student]:
-        query = db.query(Student).options(joinedload(Student.user))
+    def get_all(db: Session, skip: int = 0, limit: int = 100, 
+                grade_level: str = None, section: str = None, 
+                status: str = None, search: str = None) -> List[Student]:
+        query = db.query(Student).join(User).options(joinedload(Student.user))
         
         if grade_level:
             query = query.filter(Student.grade_level == grade_level)
+            
+        if section:
+            query = query.filter(Student.section == section)
+            
+        if status:
+            if status == "active":
+                query = query.filter(User.is_active == True)
+            elif status == "inactive":
+                query = query.filter(User.is_active == False)
+                
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (User.full_name.ilike(search_pattern)) |
+                (User.email.ilike(search_pattern)) |
+                (Student.student_id.ilike(search_pattern))
+            )
         
         return query.offset(skip).limit(limit).all()
     

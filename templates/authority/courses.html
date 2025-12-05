@@ -231,7 +231,7 @@
                                     <a href="/authority/courses/{{ course.id }}" class="btn btn-outline-primary btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="/authority/edit-course/{{ course.id }}"
+                                    <a href="/authority/courses/{{ course.id }}/edit"
                                         class="btn btn-outline-success btn-sm">
                                         <i class="bi bi-pencil"></i>
                                     </a>
@@ -256,10 +256,50 @@
                                             </li>
                                             <li><a class="dropdown-item text-warning" href="#"><i
                                                         class="bi bi-pause-circle me-2"></i>Suspend</a></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i
-                                                        class="bi bi-trash me-2"></i>Delete</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal{{ course.id }}">
+                                                    <i class="bi bi-trash me-2"></i>Delete</a></li>
                                         </ul>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Modals (Inside loop) -->
+                    <!-- Assign Modal -->
+                    <div class="modal fade" id="assignModal{{ course.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Assign Student - {{ course.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Assign student functionality coming soon.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ course.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Delete Course</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete <strong>{{ course.name }}</strong>?</p>
+                                    <p class="text-danger small">This action cannot be undone.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <form method="POST" action="{{ url_for('authority_delete_course', id=course.id) }}">
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -330,7 +370,7 @@
                                         <a href="/authority/courses/{{ course.id }}" class="btn btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="/authority/edit-course/{{ course.id }}"
+                                        <a href="/authority/courses/{{ course.id }}/edit"
                                             class="btn btn-outline-success">
                                             <i class="bi bi-pencil"></i>
                                         </a>

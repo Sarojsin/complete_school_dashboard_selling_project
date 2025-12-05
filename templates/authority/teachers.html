@@ -99,49 +99,57 @@
 <!-- Filters and Search -->
 <div class="card mb-4">
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">Department</label>
-                <select class="form-select" id="departmentFilter">
-                    <option value="">All Departments</option>
-                    <option value="mathematics">Mathematics</option>
-                    <option value="science">Science</option>
-                    <option value="english">English</option>
-                    <option value="history">History</option>
-                    <option value="arts">Arts</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Status</label>
-                <select class="form-select" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="on_leave">On Leave</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Employment Type</label>
-                <select class="form-select" id="employmentFilter">
-                    <option value="">All Types</option>
-                    <option value="full_time">Full Time</option>
-                    <option value="part_time">Part Time</option>
-                    <option value="contract">Contract</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Years of Service</label>
-                <select class="form-select" id="experienceFilter">
-                    <option value="">All Experience</option>
-                    <option value="0-5">0-5 Years</option>
-                    <option value="5-10">5-10 Years</option>
-                    <option value="10-20">10-20 Years</option>
-                    <option value="20+">20+ Years</option>
-                </select>
-            </div>
-            <div class="col-md-8">
-                <label class="form-label">Search Teachers</label>
-                <form action="/authority/teachers" method="GET">
+        <form action="/authority/teachers" method="GET" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Department</label>
+                    <select class="form-select" name="department" onchange="this.form.submit()">
+                        <option value="">All Departments</option>
+                        <option value="Mathematics" {% if filters.department=='Mathematics' %}selected{% endif %}>
+                            Mathematics</option>
+                        <option value="Science" {% if filters.department=='Science' %}selected{% endif %}>Science
+                        </option>
+                        <option value="English" {% if filters.department=='English' %}selected{% endif %}>English
+                        </option>
+                        <option value="History" {% if filters.department=='History' %}selected{% endif %}>History
+                        </option>
+                        <option value="Arts" {% if filters.department=='Arts' %}selected{% endif %}>Arts</option>
+                        <option value="Computer Science" {% if filters.department=='Computer Science' %}selected{% endif
+                            %}>Computer Science</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status" onchange="this.form.submit()">
+                        <option value="">All Status</option>
+                        <option value="active" {% if filters.status=='active' %}selected{% endif %}>Active</option>
+                        <option value="on_leave" {% if filters.status=='on_leave' %}selected{% endif %}>On Leave
+                        </option>
+                        <option value="inactive" {% if filters.status=='inactive' %}selected{% endif %}>Inactive
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Employment Type</label>
+                    <select class="form-select" name="employment_type">
+                        <option value="">All Types</option>
+                        <option value="full_time">Full Time</option>
+                        <option value="part_time">Part Time</option>
+                        <option value="contract">Contract</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Years of Service</label>
+                    <select class="form-select" name="experience">
+                        <option value="">All Experience</option>
+                        <option value="0-5">0-5 Years</option>
+                        <option value="5-10">5-10 Years</option>
+                        <option value="10-20">10-20 Years</option>
+                        <option value="20+">20+ Years</option>
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Search Teachers</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" name="search" class="form-control"
@@ -149,17 +157,17 @@
                             value="{{ search_query if search_query else '' }}">
                         <button type="submit" class="btn btn-primary">Search</button>
                     </div>
-                </form>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-grid">
-                    <button class="btn btn-outline-secondary" id="resetFilters">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
-                    </button>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <a href="/authority/teachers" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
@@ -258,7 +266,7 @@
                                     title="View">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="/authority/edit-teacher/{{ teacher.id }}" class="btn btn-outline-success"
+                                <a href="/authority/teachers/{{ teacher.id }}/edit" class="btn btn-outline-success"
                                     title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
@@ -283,13 +291,54 @@
                                         </li>
                                         <li><a class="dropdown-item text-warning" href="#"><i
                                                     class="bi bi-person-dash me-2"></i>Mark Leave</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#"><i
-                                                    class="bi bi-person-x me-2"></i>Deactivate</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal{{ teacher.id }}">
+                                                <i class="bi bi-person-x me-2"></i>Delete</a></li>
                                     </ul>
                                 </div>
                             </div>
                         </td>
                     </tr>
+
+                    <!-- Teacher Modals (Inside loop) -->
+                    <!-- Schedule Modal -->
+                    <div class="modal fade" id="scheduleModal{{ teacher.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Schedule - {{ teacher.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Schedule management functionality coming soon.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ teacher.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Delete Teacher</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete <strong>{{ teacher.name }}</strong>?</p>
+                                    <p class="text-danger small">This action cannot be undone.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <form method="POST"
+                                        action="{{ url_for('authority_delete_teacher', id=teacher.id) }}">
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% endfor %}
                 </tbody>
             </table>
