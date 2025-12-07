@@ -417,6 +417,25 @@ async def student_contact_teacher(
     
     return {"message": "Message sent successfully"}
 
+@app.get("/student/assignments")
+async def student_assignments(request: Request, current_user: User = Depends(get_current_user)):
+    # Mock assignments for now - in future, fetch from database filtered by student's grade
+    mock_assignments = [
+        {"id": 1, "title": "Math Homework - Chapter 5", "subject": "Mathematics", "teacher": "Mr. Johnson", 
+         "due_date": "2025-12-10", "status": "pending", "description": "Complete exercises 1-10"},
+        {"id": 2, "title": "Science Project", "subject": "Science", "teacher": "Ms. Smith",
+         "due_date": "2025-12-15", "status": "pending", "description": "Create a model of the solar system"},
+        {"id": 3, "title": "English Essay", "subject": "English", "teacher": "Mrs. Brown",
+         "due_date": "2025-12-08", "status": "urgent", "description": "Write 500 words on Shakespeare"}
+    ]
+    
+    return templates.TemplateResponse("student/assignments.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": current_user,
+        "assignments": mock_assignments
+    })
+
 # ------------------ TEACHER PAGES ------------------
 @app.get("/teacher/dashboard")
 async def teacher_dashboard(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -596,6 +615,63 @@ async def teacher_mark_message_read(message_id: int, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="Message not found")
     
     return {"success": True}
+
+@app.get("/teacher/assignments")
+async def teacher_assignments(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/assignments.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "assignments": []
+    })
+
+@app.get("/teacher/assignments/create")
+async def teacher_create_assignment(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/create_assignment.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user
+    })
+
+@app.post("/teacher/assignments/create")
+async def teacher_create_assignment_post(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    # For now, just return success - full implementation would save to database
+    return {"message": "Assignment created successfully", "success": True}
+
+@app.get("/teacher/grades")
+async def teacher_grades_list(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/grades.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "grades": []
+    })
+
+@app.get("/teacher/attendance")
+async def teacher_attendance_page(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/attendance.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user
+    })
+
+@app.get("/teacher/tests")
+async def teacher_tests_page(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/tests.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "tests": []
+    })
+
+@app.get("/teacher/timetable")
+async def teacher_timetable_page(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/timetable.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user
+    })
 
 @app.get("/teacher/courses")
 async def teacher_courses(request: Request, current_user: User = Depends(get_current_user)):
