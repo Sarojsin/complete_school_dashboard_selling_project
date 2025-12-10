@@ -39,6 +39,11 @@
             <i class="bi bi-graph-up me-2"></i>Analytics
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/groups">
+            <i class="bi bi-people-fill me-2"></i>Groups
+        </a>
+    </li>
 </ul>
 {% endblock %}
 
@@ -232,6 +237,26 @@
                                 <div class="d-grid gap-2">
                                     <a href="/authority/analytics" class="btn btn-sm btn-secondary">
                                         <i class="bi bi-bar-chart-line me-1"></i> View Analytics
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Groups Management -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-primary h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-people-fill fs-1 text-primary me-3"></i>
+                                    <h5 class="mb-0">Groups</h5>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="/groups" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-list-ul me-1"></i> View All Groups
+                                    </a>
+                                    <a href="/groups/create" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-plus-circle me-1"></i> Create New Group
                                     </a>
                                 </div>
                             </div>

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Posts - {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/groups">My Groups</a></li>
+            <li class="breadcrumb-item"><a href="/groups/{{ group.id }}">{{ group.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Posts</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3 mb-4">
+            <div class="d-grid gap-2 mb-4">
+                {% if is_teacher %}
+                <a href="/groups/{{ group.id }}/posts/create" class="btn btn-primary">
+                    <i class="bi bi-pencil-square me-2"></i>Create New Post
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Filter Posts</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="/groups/{{ group.id }}/posts"
+                        class="list-group-item list-group-item-action {{ 'active' if not post_type else '' }}">
+                        <i class="bi bi-grid me-2"></i>All Posts
+                    </a>
+                    <a href="/groups/{{ group.id }}/posts?post_type=notice"
+                        class="list-group-item list-group-item-action {{ 'active' if post_type == 'notice' else '' }}">
+                        <i class="bi bi-megaphone me-2"></i>Notices
+                    </a>
+                    <a href="/groups/{{ group.id }}/posts?post_type=note"
+                        class="list-group-item list-group-item-action {{ 'active' if post_type == 'note' else '' }}">
+                        <i class="bi bi-journal-text me-2"></i>Notes
+                    </a>
+                    <a href="/groups/{{ group.id }}/posts?post_type=link"
+                        class="list-group-item list-group-item-action {{ 'active' if post_type == 'link' else '' }}">
+                        <i class="bi bi-link-45deg me-2"></i>Links
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts Feed -->
+        <div class="col-lg-9">
+            {% if request.session.get('message') %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ request.session.pop('message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+
+            {% if posts %}
+            {% for post in posts %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span
+                            class="badge {{ 'bg-warning text-dark' if post.post_type == 'notice' else 'bg-info' if post.post_type == 'note' else 'bg-secondary' }} text-uppercase"
+                            style="font-size: 0.7rem;">
+                            {{ post.post_type }}
+                        </span>
+                        <small class="text-muted">{{ post.created_at.strftime('%b %d, %Y %I:%M %p') }}</small>
+                    </div>
+
+                    <h4 class="card-title text-primary"><a href="/groups/{{ group.id }}/posts/{{ post.id }}"
+                            class="text-decoration-none">{{ post.title }}</a></h4>
+
+                    {% if post.post_type == 'link' %}
+                    <div class="p-3 bg-light rounded mt-3">
+                        <a href="{{ post.link_url }}" target="_blank" class="d-flex align-items-center text-break">
+                            <i class="bi bi-link-45deg fs-4 me-2"></i>{{ post.link_url }}
+                        </a>
+                        {% if post.link_description %}
+                        <p class="text-muted small mt-2 mb-0">{{ post.link_description }}</p>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="card-text mt-3">
+                        {{ post.content[:200] }}
+                        {% if post.content|length > 200 %}...{% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar small me-2 bg-secondary"
+                                style="width: 24px; height: 24px; font-size: 10px;">
+                                {{ post.author_name[0]|upper }}
+                            </div>
+                            <span class="text-muted small">Posted by <strong>{{ post.author_name }}</strong></span>
+                        </div>
+                        <a href="/groups/{{ group.id }}/posts/{{ post.id }}" class="btn btn-sm btn-outline-primary">Read
+                            More</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if has_more %}
+            <div class="d-grid mt-4">
+                <a href="?page={{ page + 1 }}{% if post_type %}&post_type={{ post_type }}{% endif %}"
+                    class="btn btn-outline-secondary">Load More Posts</a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5 bg-white rounded shadow-sm">
+                <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+                <h5 class="text-muted">No posts yet</h5>
+                {% if is_teacher %}
+                <p class="mb-3">Be the first to post something!</p>
+                <a href="/groups/{{ group.id }}/posts/create" class="btn btn-primary">Create Post</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

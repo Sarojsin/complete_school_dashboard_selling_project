@@ -1,8 +1,12 @@
+# CRITICAL: Import bcrypt compatibility fix FIRST before anything else
+import utils.bcrypt_compat  # noqa: F401
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
 import os
@@ -15,11 +19,13 @@ from sqlalchemy.orm import Session
 from routes import auth, students, teachers, authority, tests, websocket_chat, parents
 from routes import courses, assignments, attendance, grades, fees
 from routes import notices, notes, videos, chat
+from routes import groups, group_posts
 
 # Import services
 from services.chat_cleanup_service import cleanup_expired_messages
 from dependencies import get_current_user
 from models.models import User
+from models import group_models # Register group models
 from fastapi import Depends
 
 # Create upload directories
@@ -70,6 +76,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add session middleware for flash messages and session support
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    max_age=3600  # 1 hour session timeout
+)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
@@ -78,6 +91,9 @@ templates = Jinja2Templates(directory="templates")
 
 # Add dummy csrf_token function to globals
 templates.env.globals['csrf_token'] = lambda: "dummy-csrf-token"
+
+# Add templates to app state so routes can access them
+app.state.templates = templates
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
@@ -96,11 +112,95 @@ app.include_router(videos.router, prefix="/api/videos", tags=["Videos"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(tests.router, prefix="/api/tests", tags=["Tests"])
 app.include_router(websocket_chat.router, tags=["WebSocket"])
+app.include_router(groups.router)
+app.include_router(group_posts.router)
 
 # Root endpoint
 @app.get("/", response_class=HTMLResponse)
 async def home_page(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+# Role-specific group routes with dedicated templates
+@app.get("/authority/groups", response_class=HTMLResponse)
+async def authority_groups(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Authority groups page with full management"""
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.lower() not in ["authority", "admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    from repositories.group_repository import GroupRepository
+    from services.group_service import GroupService
+    
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    groups = group_service.get_user_groups(current_user.id, current_user.role)
+    
+    return templates.TemplateResponse(
+        "authority/groups.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "groups": groups
+        }
+    )
+
+@app.get("/teacher/groups", response_class=HTMLResponse)
+async def teacher_groups(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Teacher groups page with posting capabilities"""
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.lower() not in ["teacher"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    from repositories.group_repository import GroupRepository
+    from services.group_service import GroupService
+    
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    groups = group_service.get_user_groups(current_user.id, current_user.role)
+    
+    return templates.TemplateResponse(
+        "teacher/groups.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "groups": groups
+        }
+    )
+
+@app.get("/student/groups", response_class=HTMLResponse)
+async def student_groups(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Student groups page with read-only view"""
+    role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role.lower() not in ["student"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    from repositories.group_repository import GroupRepository
+    from services.group_service import GroupService
+    
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    groups = group_service.get_user_groups(current_user.id, current_user.role)
+    
+    return templates.TemplateResponse(
+        "student/groups.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "groups": groups
+        }
+    )
 
 # Health check
 @app.get("/health")
@@ -157,6 +257,9 @@ async def register_teacher_page(request: Request):
 @app.get("/register/parent", response_class=HTMLResponse)
 async def register_parent_page(request: Request):
     return templates.TemplateResponse("auth/signup_parent.html", {"request": request})
+
+
+
 
 # ------------------ STUDENT PAGES ------------------
 @app.get("/student/dashboard")

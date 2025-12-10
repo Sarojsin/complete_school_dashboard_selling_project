@@ -1,36 +1,40 @@
 from sqlalchemy.orm import Session
 from typing import Optional
 from models.models import User, UserRole
-from passlib.context import CryptContext
+import bcrypt
 import logging
 
 # Configure logger
 logger = logging.getLogger("uvicorn.error")
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 class UserRepository:
     @staticmethod
     def get_password_hash(password: str) -> str:
+        """Hash a password using bcrypt."""
         # Bcrypt has a 72-byte password limit. Truncate if necessary.
-        # Convert to bytes to properly handle multibyte characters
         password_bytes = password.encode('utf-8')
         if len(password_bytes) > 72:
-            password = password_bytes[:72].decode('utf-8', errors='ignore')
-            
-        return pwd_context.hash(password)
+            password_bytes = password_bytes[:72]
+        
+        # Generate salt and hash the password
+        salt = bcrypt.gensalt(rounds=12)
+        hashed = bcrypt.hashpw(password_bytes, salt)
+        return hashed.decode('utf-8')
     
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        # Bcrypt has a 72-byte password limit. Truncate if necessary.
-        password_bytes = plain_password.encode('utf-8')
-        if len(password_bytes) > 72:
-            plain_password = password_bytes[:72].decode('utf-8', errors='ignore')
-            
+        """Verify a password against its hash."""
         try:
-            return pwd_context.verify(plain_password, hashed_password)
-        except ValueError:
-            # Handle any other bcrypt errors
+            # Bcrypt has a 72-byte password limit. Truncate if necessary.
+            password_bytes = plain_password.encode('utf-8')
+            if len(password_bytes) > 72:
+                password_bytes = password_bytes[:72]
+            
+            # bcrypt.checkpw expects bytes for both arguments
+            hashed_bytes = hashed_password.encode('utf-8')
+            return bcrypt.checkpw(password_bytes, hashed_bytes)
+        except Exception as e:
+            logger.error(f"Password verification error: {e}")
             return False
     
     @staticmethod

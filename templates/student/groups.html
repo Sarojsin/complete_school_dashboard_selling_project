@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}My Groups - Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-people-fill me-2"></i>My Groups</h2>
+            <p class="text-muted mb-0">View group content and resources</p>
+        </div>
+    </div>
+
+    <!-- Groups Grid -->
+    {% if groups %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for group in groups %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title text-primary">{{ group.name }}</h5>
+                        <span class="badge bg-secondary">Student</span>
+                    </div>
+                    <p class="card-text text-muted mb-3">{{ group.description or 'No description available.' }}</p>
+
+                    <div class="d-flex justify-content-between text-small text-muted mb-3">
+                        <span title="Members"><i class="bi bi-people me-1"></i>{{ group.member_count }}</span>
+                        <span title="Group Code"><i class="bi bi-key me-1"></i>{{ group.code }}</span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="/groups/{{ group.id }}" class="btn btn-outline-primary btn-sm">View Details</a>
+                        <a href="/groups/{{ group.id }}/posts" class="btn btn-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>View Content
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0 text-muted small">
+                    Created {{ group.created_at.strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="bi bi-people display-1 text-muted"></i>
+        </div>
+        <h4 class="text-muted">Not in any groups yet</h4>
+        <p class="text-muted mb-4">Contact your teacher or administration to join groups</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

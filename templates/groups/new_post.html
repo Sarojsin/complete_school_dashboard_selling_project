@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post - {{ group_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">Create New Post</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% if request.session.get('error') %}
+                    <div class="alert alert-danger">
+                        {{ request.session.pop('error') }}
+                    </div>
+                    {% endif %}
+
+                    <form action="/groups/{{ group_id }}/posts/create" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Post Type</label>
+                            <div class="btn-group w-100" role="group">
+                                {% for type in post_types %}
+                                <input type="radio" class="btn-check" name="post_type" id="type_{{ type }}"
+                                    value="{{ type }}" {{ 'checked' if loop.first else '' }} autocomplete="off"
+                                    onchange="toggleFields()">
+                                <label class="btn btn-outline-primary text-capitalize" for="type_{{ type }}">{{ type
+                                    }}</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+
+                        <div id="content_field" class="mb-3">
+                            <label for="content" class="form-label">Content</label>
+                            <textarea class="form-control" id="content" name="content" rows="6"></textarea>
+                        </div>
+
+                        <div id="link_fields" class="d-none">
+                            <div class="mb-3">
+                                <label for="link_url" class="form-label">Link URL</label>
+                                <input type="url" class="form-control" id="link_url" name="link_url"
+                                    placeholder="https://example.com">
+                            </div>
+                            <div class="mb-3">
+                                <label for="link_description" class="form-label">Link Description (Optional)</label>
+                                <textarea class="form-control" id="link_description" name="link_description"
+                                    rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="/groups/{{ group_id }}/posts" class="btn btn-light">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Publish Post</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleFields() {
+        const postType = document.querySelector('input[name="post_type"]:checked').value;
+        const contentField = document.getElementById('content_field');
+        const linkFields = document.getElementById('link_fields');
+        const contentInput = document.getElementById('content');
+        const linkInput = document.getElementById('link_url');
+
+        if (postType === 'link') {
+            contentField.classList.add('d-none');
+            linkFields.classList.remove('d-none');
+            linkInput.required = true;
+        } else {
+            contentField.classList.remove('d-none');
+            linkFields.classList.add('d-none');
+            linkInput.required = false;
+
+            if (postType === 'note') {
+                contentInput.placeholder = "Write your note here...";
+                contentInput.rows = 8;
+            } else {
+                contentInput.placeholder = "Write your announcement here...";
+                contentInput.rows = 6;
+            }
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', toggleFields);
+</script>
+{% endblock %}

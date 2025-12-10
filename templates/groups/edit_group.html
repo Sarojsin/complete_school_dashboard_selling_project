@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Group - {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="bi bi-pencil-square me-2"></i>Edit Group</h2>
+                    <p class="text-muted mb-0">Update group information</p>
+                </div>
+                <a href="/groups/{{ group.id }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Group
+                </a>
+            </div>
+
+            <!-- Edit Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post" action="/groups/{{ group.id }}/edit">
+                        <!-- Group Name -->
+                        <div class="mb-4">
+                            <label for="name" class="form-label fw-bold">
+                                Group Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="name" name="name"
+                                value="{{ group.name }}" required placeholder="Enter group name">
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Choose a clear, descriptive name for your group
+                            </div>
+                        </div>
+
+                        <!-- Group Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-bold">
+                                Description
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="4"
+                                placeholder="Enter group description (optional)">{{ group.description }}</textarea>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Provide details about the group's purpose and
+                                objectives
+                            </div>
+                        </div>
+
+                        <!-- Group Code (Read-only) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Group Code</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control bg-light" value="{{ group.code }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyCode()">
+                                    <i class="bi bi-clipboard"></i> Copy
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-lock me-1"></i>Group code cannot be changed
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2 pt-3 border-top">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-circle me-1"></i>Save Changes
+                            </button>
+                            <a href="/groups/{{ group.id }}" class="btn btn-outline-secondary px-4">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card border-info mt-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-info-circle text-info me-2"></i>Note</h6>
+                    <p class="card-text small mb-0">
+                        Only the group creator and teachers can edit group details.
+                        Members and group code cannot be changed from this page.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyCode() {
+        const codeInput = document.querySelector('input[readonly]');
+        codeInput.select();
+        document.execCommand('copy');
+
+        // Show feedback
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+        }, 2000);
+    }
+</script>
+{% endblock %}
