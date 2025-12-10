@@ -183,6 +183,49 @@ async def student_profile(request: Request, current_user: User = Depends(get_cur
         "student": current_user
     })
 
+@app.post("/student/profile")
+async def student_update_profile(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    
+    form_data = await request.form()
+    
+    # Update User fields (email, full_name)
+    if "email" in form_data:
+        current_user.email = form_data["email"]
+    if "full_name" in form_data:
+        current_user.full_name = form_data["full_name"]
+        
+    # Update Student fields
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if student:
+        if "full_name" in form_data:
+            student.full_name = form_data["full_name"]
+        if "phone" in form_data: 
+            student.phone = form_data["phone"]
+        if "address" in form_data:
+            student.address = form_data["address"]
+        if "parent_name" in form_data:
+            student.parent_name = form_data["parent_name"]
+        if "parent_phone" in form_data:
+            student.parent_phone = form_data["parent_phone"]
+            
+        db.add(student)
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    return templates.TemplateResponse("student/profile.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": current_user,
+        "success_message": "Profile updated successfully"
+    })
+
 @app.get("/student/courses")
 async def student_courses(request: Request, current_user: User = Depends(get_current_user)):
     return templates.TemplateResponse("student/courses.html", {

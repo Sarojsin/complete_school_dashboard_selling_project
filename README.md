@@ -31,7 +31,7 @@ SECRET_KEY=your-secret-key-change-this-in-production
 ### 3. Setup Database
 
 ```bash
-python setup_database.py
+python -m scripts.setup.setup_database
 ```
 
 This creates default users:
@@ -64,39 +64,57 @@ Once running, visit:
 ```
 claud/
 ├── routes/                  # API route handlers
-│   ├── auth.py              # Authentication routes
-│   ├── chat.py              # Chat REST endpoints
-│   ├── parents.py           # Parent portal routes
-│   ├── students.py          # Student portal routes
-│   ├── teachers.py          # Teacher portal routes
-│   ├── websocket_chat.py    # WebSocket handlers
-│   └── ... (assignments, attendance, courses, fees, grades, notes, notices, tests, videos)
+│   ├── assignments.py       # Assignment management
+│   ├── attendance.py        # Attendance tracking
+│   ├── auth.py              # Authentication
+│   ├── authority.py         # Admin/Authority endpoints
+│   ├── chat.py              # Chat functionality
+│   ├── courses.py           # Course management
+│   ├── fees.py              # Fee processing
+│   ├── grades.py            # Grading system
+│   ├── notes.py             # Study notes
+│   ├── notices.py           # Notice board
+│   ├── parents.py           # Parent portal
+│   ├── students.py          # Student portal
+│   ├── teachers.py          # Teacher portal
+│   ├── tests.py             # Online testing system
+│   ├── videos.py            # Video content
+│   └── websocket_chat.py    # Real-time chat (WebSocket)
 ├── models/                  # Database models
-│   ├── models.py            # Core models (User, Student, Teacher, Parent)
-│   ├── chat_models.py       # ChatMessage model
-│   └── test_models.py       # Test/Quiz models
+│   ├── models.py            # Core models (Users, Profiles)
+│   ├── chat_models.py       # Chat-specific models
+│   └── test_models.py       # Assessment models
 ├── repositories/            # Data access layer
-│   ├── chat_repository.py   # Chat database operations
-│   ├── parent_repository.py # Parent database operations
+│   ├── assignment_repository.py
+│   ├── attendance_repository.py
+│   ├── chat_repository.py
+│   ├── course_repository.py
+│   ├── fee_repository.py
+│   ├── grade_repository.py
+│   ├── message_repository.py
+│   ├── notes_repository.py
+│   ├── notice_repository.py
+│   ├── parent_repository.py
 │   ├── student_repository.py
 │   ├── teacher_repository.py
-│   ├── user_repository.py
-│   └── ... (assignment, attendance, course, fee, grade, note, notice, test, video)
+│   ├── test_repository.py
+│   └── user_repository.py
 ├── templates/               # HTML templates
+│   ├── auth/                # Login/Signup pages
+│   ├── authority/           # Admin dashboard & pages
+│   ├── parent/              # Parent portal pages
+│   ├── student/             # Student portal pages
+│   ├── teacher/             # Teacher portal pages
 │   ├── base.html            # Base layout
-│   ├── index.html           # Landing page
-│   ├── parent/              # Parent portal templates
-│   │   ├── chat.html        # Parent-Teacher chat
-│   │   ├── dashboard.html   # Parent dashboard
-│   │   └── ... (attendance, grades, homework, notices, profile)
-│   ├── student/             # Student portal templates
-│   └── teacher/             # Teacher portal templates
-│       ├── chat.html        # Teacher-Parent chat
-│       └── dashboard.html   # Teacher dashboard
-├── static/                  # Static files (CSS, JS, images)
-├── config/                  # Configuration files
+│   └── index.html           # Landing page
+├── static/                  # Static assets
+│   ├── css/                 # Stylesheets
+│   └── js/                  # JavaScript files
+├── services/                # Business logic services
+├── utils/                   # Utility functions
+├── config/                  # Configuration
 ├── database/                # Database connection
-├── dependencies.py          # Authentication dependencies
+├── dependencies.py          # Dependency injection
 ├── main.py                  # Application entry point
 └── run.py                   # Server runner
 ```
@@ -147,7 +165,7 @@ claud/
 Run the endpoint verification script:
 
 ```bash
-python verify_endpoints.py
+python -m scripts.verify.verify_endpoints
 ```
 
 ## Documentation
