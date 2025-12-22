@@ -1,39 +1,144 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}View Submissions - Teacher{% endblock %}
+{% block title %}Assignment Submissions - {{ assignment.title }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Assignment Submissions</h2>
-        <a href="{{ url_for('teacher_assignments') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i>Back to Assignments
-        </a>
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('teacher_assignments') }}">Assignments</a></li>
+            <li class="breadcrumb-item active">Submissions</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{{ assignment.title }}</h4>
+            <small>{{ assignment.course.course_name }} | Due: {{ assignment.due_date }}</small>
+        </div>
+        <div class="card-body">
+            <h5>Instructions</h5>
+            <p>{{ assignment.description }}</p>
+        </div>
     </div>
 
-    <div class="card">
-        <div class="card-header bg-white py-3">
-            <h5 class="card-title mb-0">Submissions for Assignment ID: {{ assignment_id }}</h5>
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Student Submissions</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
-                    <thead class="table-light">
+                    <thead>
                         <tr>
                             <th>Student</th>
-                            <th>Submitted Date</th>
-                            <th>Status</th>
+                            <th>Submitted At</th>
+                            <th>Submission</th>
                             <th>Score</th>
-                            <th>Actions</th>
+                            <th>Feedback</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Submissions will be listed here -->
+                        {% if submissions %}
+                        {% for s in submissions %}
                         <tr>
-                            <td colspan="5" class="text-center py-4">
-                                <p class="text-muted mb-0">No submissions found for this assignment yet.</p>
+                            <td>
+                                <strong>{{ s.student.user.full_name }}</strong><br>
+                                <small class="text-muted">Grade: {{ s.student.grade_level }} | Section: {{
+                                    s.student.section }}</small>
+                            </td>
+                            <td>{{ s.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if s.file_path %}
+                                <a href="{{ s.file_path }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file-download me-1"></i> View File
+                                </a>
+                                {% endif %}
+                                {% if s.submission_text %}
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                    data-bs-target="#textModal{{ s.id }}">
+                                    View Text
+                                </button>
+                                <!-- Modal for Text Submission -->
+                                <div class="modal fade" id="textModal{{ s.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Submission Text: {{ s.student.user.full_name }}
+                                                </h5>
+                                                <button type="button" class="btn-close"
+                                                    data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                {{ s.submission_text }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if s.score is not none %}
+                                <span class="badge bg-success">{{ s.score }} / {{ assignment.max_score }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Not Graded</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ s.feedback|truncate(50) if s.feedback else 'No feedback'
+                                    }}</small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#gradeModal{{ s.id }}">
+                                    Grade
+                                </button>
+
+                                <!-- Grade Modal -->
+                                <div class="modal fade" id="gradeModal{{ s.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form action="/teacher/assignments/submissions/{{ s.id }}/grade"
+                                                method="POST">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Grade Submission: {{
+                                                        s.student.user.full_name }}</h5>
+                                                    <button type="button" class="btn-close"
+                                                        data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Score (Max: {{ assignment.max_score
+                                                            }})</label>
+                                                        <input type="number" step="0.5" name="score"
+                                                            class="form-control"
+                                                            value="{{ s.score if s.score else '' }}" required
+                                                            max="{{ assignment.max_score }}">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Feedback</label>
+                                                        <textarea name="feedback" class="form-control"
+                                                            rows="4">{{ s.feedback if s.feedback else '' }}</textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-success">Save Grade</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">No submissions yet.</td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>

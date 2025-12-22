@@ -790,6 +790,7 @@ async def teacher_dashboard(
     from repositories.course_repository import CourseRepository
     from repositories.assignment_repository import AssignmentRepository
     from repositories.message_repository import MessageRepository
+    from models.models import AssignmentSubmission
     
     # Get teacher profile
     teacher = TeacherRepository.get_by_user_id(db, current_user.id)
@@ -819,6 +820,9 @@ async def teacher_dashboard(
     course_count = len(courses)
     assignment_count = db.query(Assignment).filter(Assignment.teacher_id == teacher.id).count()
     
+    # Count submissions for teacher's assignments
+    submission_count = db.query(AssignmentSubmission).join(Assignment).filter(Assignment.teacher_id == teacher.id).count()
+    
     # Get unread message count and recent messages
     unread_count = MessageRepository.get_unread_count(db, current_user.id)
     recent_messages = MessageRepository.get_inbox(db, current_user.id, limit=5)
@@ -834,7 +838,7 @@ async def teacher_dashboard(
             "student_count": student_count, 
             "course_count": course_count, 
             "assignment_count": assignment_count,
-            "submission_count": 0 # Placeholder for now
+            "submission_count": submission_count
         },
         "unread_count": unread_count,
         "recent_messages": recent_messages
@@ -1099,10 +1103,18 @@ async def teacher_assignments(request: Request, current_user: User = Depends(get
     }
     
     if teacher:
-        assignments = AssignmentRepository.get_all(db, teacher_id=teacher.id)  # Fixed: use get_all with teacher_id
+        from models.models import AssignmentSubmission
+        assignments = AssignmentRepository.get_all(db, teacher_id=teacher.id)
+        
+        # Add submission count for each assignment
+        for a in assignments:
+            a.submitted = db.query(AssignmentSubmission).filter(AssignmentSubmission.assignment_id == a.id).count()
+            # We can also add total expected students if we want
+            # For now, let's just show raw submission count
+            
         stats["total_assignments"] = len(assignments)
-        stats["submitted"] = sum(1 for a in assignments if getattr(a, 'is_completed', False))
-        stats["pending"] = stats["total_assignments"] - stats["submitted"]
+        stats["submitted"] = db.query(AssignmentSubmission).join(Assignment).filter(Assignment.teacher_id == teacher.id).count()
+        stats["pending"] = 0 # This would need student count per course to be accurate
     
     return templates.TemplateResponse("teacher/assignments.html", {
         "request": request,
@@ -2718,17 +2730,53 @@ async def teacher_course_students(request: Request, id: int, current_user: User 
     })
 
 @app.get("/teacher/assignments/{id}/submissions")
-async def teacher_view_submissions(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/assignments.html", {
+async def teacher_view_submissions(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.assignment_repository import AssignmentRepository
+    from models.models import AssignmentSubmission, Student
+    
+    assignment = AssignmentRepository.get_by_id(db, id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+        
+    # Check if this teacher owns the assignment
+    from repositories.teacher_repository import TeacherRepository
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher or assignment.teacher_id != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    submissions = db.query(AssignmentSubmission).filter(
+        AssignmentSubmission.assignment_id == id
+    ).join(Student).all()
+    
+    return templates.TemplateResponse("teacher/view_submissions.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "assignments": [],
-        "stats": {},
-        "subjects": [],
-        "classes": [],
-        "upcoming_deadlines": []
+        "assignment": assignment,
+        "submissions": submissions
     })
+
+@app.post("/teacher/assignments/submissions/{submission_id}/grade")
+async def teacher_grade_submission(
+    submission_id: int, 
+    request: Request, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    from models.models import AssignmentSubmission
+    form_data = await request.form()
+    
+    submission = db.query(AssignmentSubmission).get(submission_id)
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+        
+    submission.score = float(form_data.get("score"))
+    submission.feedback = form_data.get("feedback")
+    submission.graded_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return RedirectResponse(url=f"/teacher/assignments/{submission.assignment_id}/submissions?success=Grade+updated", status_code=303)
 
 @app.get("/teacher/assignments/{id}/edit")
 async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
