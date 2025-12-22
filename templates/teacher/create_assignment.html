@@ -53,12 +53,11 @@
                                 placeholder="Enter assignment title">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
+                            <label for="course" class="form-label">Subject <span class="text-danger">*</span></label>
                             <select class="form-select" id="course" name="course_id" required>
                                 <option value="">Select Subject</option>
                                 {% for course in courses %}
-                                <option value="{{ course.id }}">{{ course.course_name }} ({{ course.course_code }})
-                                </option>
+                                <option value="{{ course.id }}">{{ course.course_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

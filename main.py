@@ -1,7 +1,7 @@
 # CRITICAL: Import bcrypt compatibility fix FIRST before anything else
 import utils.bcrypt_compat  # noqa: F401
 
-from fastapi import FastAPI, Request, File, UploadFile
+from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -27,7 +27,7 @@ from routes import groups, group_posts
 # Import services
 from services.chat_cleanup_service import cleanup_expired_messages
 from dependencies import get_current_user
-from models.models import User
+from models.models import User, Assignment
 from models import group_models # Register group models
 from fastapi import Depends
 
@@ -394,20 +394,56 @@ async def student_courses(request: Request, current_user: User = Depends(get_cur
         "courses": []
     })
 
-@app.get("/student/assignments")
-async def student_assignments(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("student/assignments.html", {
-        "request": request,
-        "current_user": current_user,
-        "student": current_user,
-        "assignments": []
-    })
+
 
 @app.get("/student/assignments/{assignment_id}")
-async def student_assignment_detail(request: Request, assignment_id: int):
+async def student_assignment_detail(
+    request: Request, 
+    assignment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    from repositories.assignment_repository import AssignmentRepository
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+        
+    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+        
+    # Check submission status
+    submission = AssignmentRepository.get_submission_by_student(db, assignment_id, student.id)
+    
+    status = "pending"
+    if submission:
+        if submission.score is not None:
+            status = "graded"
+        else:
+            status = "submitted"
+    elif assignment.due_date < datetime.utcnow():
+        status = "overdue"
+            
+    # Enrich assignment object for template (or create a wrapper dict)
+    assignment_data = {
+        "id": assignment.id,
+        "title": assignment.title,
+        "description": assignment.description,
+        "course": assignment.course.course_name if assignment.course else "Unknown Course",
+        "teacher": assignment.teacher.full_name if assignment.teacher else "Unknown Teacher",
+        "due_date": assignment.due_date,
+        "max_score": assignment.max_score,
+        "status": status,
+        "submission": submission,
+        "is_overdue": status == "overdue"
+    }
+
     return templates.TemplateResponse("student/assignments_detail.html", {
         "request": request,
-        "assignment_id": assignment_id
+        "current_user": current_user,
+        "assignment": assignment_data
     })
 
 @app.get("/student/grades")
@@ -620,28 +656,168 @@ async def student_contact_teacher(
     return {"message": "Message sent successfully"}
 
 @app.get("/student/assignments")
-async def student_assignments(request: Request, current_user: User = Depends(get_current_user)):
-    # Mock assignments for now - in future, fetch from database filtered by student's grade
-    mock_assignments = [
-        {"id": 1, "title": "Math Homework - Chapter 5", "subject": "Mathematics", "teacher": "Mr. Johnson", 
-         "due_date": "2025-12-10", "status": "pending", "description": "Complete exercises 1-10"},
-        {"id": 2, "title": "Science Project", "subject": "Science", "teacher": "Ms. Smith",
-         "due_date": "2025-12-15", "status": "pending", "description": "Create a model of the solar system"},
-        {"id": 3, "title": "English Essay", "subject": "English", "teacher": "Mrs. Brown",
-         "due_date": "2025-12-08", "status": "urgent", "description": "Write 500 words on Shakespeare"}
-    ]
+async def student_assignments(
+    request: Request, 
+    status: str = "all",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    from repositories.course_repository import CourseRepository
+    from repositories.assignment_repository import AssignmentRepository
     
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        # Fallback if student profile not created yet
+        return templates.TemplateResponse("student/assignments.html", {
+            "request": request,
+            "current_user": current_user,
+            "student": current_user,
+            "assignments": [],
+            "stats": {"total": 0, "pending": 0, "submitted": 0, "overdue": 0}
+        })
+    
+    # Get relevant courses
+    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    
+    # Fallback: if no explicit enrollments, get all courses for student's grade
+    if not courses and student.grade_level:
+        courses = CourseRepository.get_all(db, grade_level=student.grade_level)
+    
+    course_ids = [c.id for c in courses]
+    
+    # Get assignments with status
+    # Pass student grade and section to allow matching targeted assignments
+    all_assignments = AssignmentRepository.get_student_assignments(
+        db, 
+        student.id, 
+        course_ids, 
+        student_grade=student.grade_level,
+        student_section=student.section
+    )
+    
+    # Calculate stats
+    stats = {
+        "total": len(all_assignments),
+        "pending": sum(1 for a in all_assignments if a["status"] == "pending"),
+        "submitted": sum(1 for a in all_assignments if a["status"] == "submitted"),
+        "graded": sum(1 for a in all_assignments if a["status"] == "graded"),
+        "overdue": sum(1 for a in all_assignments if a["status"] == "overdue")
+    }
+    
+    # Filter by status if requested
+    if status != "all":
+        filtered_assignments = [a for a in all_assignments if a["status"] == status]
+    else:
+        filtered_assignments = all_assignments
+
     return templates.TemplateResponse("student/assignments.html", {
         "request": request,
         "current_user": current_user,
         "student": current_user,
-        "assignments": mock_assignments
+        "assignments": filtered_assignments,
+        "stats": stats,
+        "current_filter": status
     })
+
+@app.post("/student/assignments/{assignment_id}/submit")
+async def student_assignment_submit(
+    assignment_id: int,
+    request: Request,
+    file: UploadFile = File(None),
+    submission_text: str = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    from repositories.assignment_repository import AssignmentRepository
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        raise HTTPException(status_code=400, detail="Student profile not found")
+        
+    # Check if assignment exists (and is for a valid course)
+    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+        
+    # Handle file upload if present
+    file_path = None
+    if file and file.filename:
+        ext = os.path.splitext(file.filename)[1]
+        filename = f"{uuid.uuid4()}{ext}"
+        file_path = f"/static/uploads/assignments/{filename}"
+        
+        save_path = f"app{file_path}"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        
+        with open(save_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+    # Check if already submitted (update vs create)
+    existing_submission = AssignmentRepository.get_submission_by_student(db, assignment_id, student.id)
+    
+    if existing_submission:
+        update_data = {
+            "submission_text": submission_text if submission_text else existing_submission.submission_text,
+            "submitted_at": datetime.utcnow()
+        }
+        if file_path:
+            update_data["file_path"] = file_path
+            
+        AssignmentRepository.update_submission(db, existing_submission, **update_data)
+    else:
+        submission_data = {
+            "assignment_id": assignment_id,
+            "student_id": student.id,
+            "submission_text": submission_text,
+            "file_path": file_path,
+            "submitted_at": datetime.utcnow()
+        }
+        AssignmentRepository.create_submission(db, submission_data)
+        
+    # Redirect back to assignment detail or list
+    return RedirectResponse(url=f"/student/assignments", status_code=303)
 
 # ------------------ TEACHER PAGES ------------------
 @app.get("/teacher/dashboard")
-async def teacher_dashboard(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def teacher_dashboard(
+    request: Request, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.course_repository import CourseRepository
+    from repositories.assignment_repository import AssignmentRepository
     from repositories.message_repository import MessageRepository
+    
+    # Get teacher profile
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+         # Handle case where user has teacher role but no profile
+         return templates.TemplateResponse("teacher/dashboard.html", {
+            "request": request,
+            "current_user": current_user,
+            "teacher": current_user,
+            "students": [],
+            "courses": [],
+            "assignments": [],
+            "stats": {"student_count": 0, "course_count": 0, "assignment_count": 0, "submission_count": 0},
+            "unread_count": MessageRepository.get_unread_count(db, current_user.id),
+            "recent_messages": []
+         })
+
+    # Get teacher's courses
+    courses = CourseRepository.get_all(db, teacher_id=teacher.id)
+    
+    # Get assignments for these courses
+    # Assuming AssignmentRepository has a method to get by teacher or courses, otherwise adding filter here
+    assignments = db.query(Assignment).filter(Assignment.teacher_id == teacher.id).order_by(Assignment.due_date.desc()).limit(5).all()
+    
+    # Calculate basic stats
+    student_count = sum(len(c.enrollments) for c in courses)
+    course_count = len(courses)
+    assignment_count = db.query(Assignment).filter(Assignment.teacher_id == teacher.id).count()
     
     # Get unread message count and recent messages
     unread_count = MessageRepository.get_unread_count(db, current_user.id)
@@ -650,11 +826,16 @@ async def teacher_dashboard(request: Request, current_user: User = Depends(get_c
     return templates.TemplateResponse("teacher/dashboard.html", {
         "request": request,
         "current_user": current_user,
-        "teacher": current_user,
-        "students": [],
-        "courses": [],
-        "assignments": [],
-        "stats": {},
+        "teacher": teacher,
+        "students": [], # We might want to list recent students or similar, focusing on stats for now
+        "courses": courses,
+        "assignments": assignments,
+        "stats": {
+            "student_count": student_count, 
+            "course_count": course_count, 
+            "assignment_count": assignment_count,
+            "submission_count": 0 # Placeholder for now
+        },
         "unread_count": unread_count,
         "recent_messages": recent_messages
     })
@@ -952,17 +1133,25 @@ async def teacher_create_assignment_post(request: Request, current_user: User = 
     form_data = await request.form()
     teacher = TeacherRepository.get_by_user_id(db, current_user.id)
     
+    if not teacher:
+        raise HTTPException(status_code=403, detail="Only teachers can create assignments")
+    
+    course_id = form_data.get("course_id")
+    if not course_id:
+        raise HTTPException(status_code=400, detail="Subject is required")
+
     assignment_data = {
         "title": form_data.get("title"),
         "description": form_data.get("description"),
-        "course_id": int(form_data.get("course_id", 1)),
-        "teacher_id": teacher.id if teacher else 1,
+        "course_id": int(course_id),
+        "teacher_id": teacher.id,
         "due_date": datetime.fromisoformat(form_data.get("due_date", datetime.utcnow().isoformat())),
-        "max_score": float(form_data.get("max_score", 100))
+        "max_score": float(form_data.get("max_score", 100)),
+        "target_classes": ",".join(form_data.getlist("classes[]")) if form_data.getlist("classes[]") else None
     }
     
     AssignmentRepository.create(db, assignment_data)
-    return RedirectResponse(url="/teacher/assignments?success=Assignment+created", status_code=303)
+    return RedirectResponse(url="/teacher/dashboard?success=Assignment+created", status_code=303)
 
 @app.get("/teacher/grades")
 async def teacher_grades_list(request: Request, current_user: User = Depends(get_current_user)):
@@ -996,6 +1185,71 @@ async def teacher_timetable_page(request: Request, current_user: User = Depends(
         "request": request,
         "current_user": current_user,
         "teacher": current_user
+    })
+
+# ===== STUDENT ROUTES =====
+
+@app.get("/student/assignments")
+async def student_assignments(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.assignment_repository import AssignmentRepository
+    from repositories.student_repository import StudentRepository
+    from models.models import CourseEnrollment
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    assignments = []
+    stats = {
+        "total": 0,
+        "pending": 0,
+        "submitted": 0,
+        "graded": 0,
+        "overdue": 0
+    }
+    
+    if student:
+        # Get all courses the student is enrolled in
+        enrollments = db.query(CourseEnrollment).filter(
+            CourseEnrollment.student_id == student.id
+        ).all()
+        
+        course_ids = [e.course_id for e in enrollments]
+        
+        # Get all assignments for those courses
+        if course_ids:
+            for course_id in course_ids:
+                course_assignments = AssignmentRepository.get_all(db, course_id=course_id)
+                assignments.extend(course_assignments)
+        
+        stats["total"] = len(assignments)
+        # Calculate other stats (simplified for now)
+        stats["pending"] = len([a for a in assignments if not getattr(a, 'is_submitted', False)])
+        stats["submitted"] = stats["total"] - stats["pending"]
+    
+    return templates.TemplateResponse("student/assignments.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": current_user,
+        "assignments": assignments,
+        "stats": stats
+    })
+
+@app.get("/student/assignments/{assignment_id}")
+async def student_assignment_detail(
+    request: Request,
+    assignment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.assignment_repository import AssignmentRepository
+    
+    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    return templates.TemplateResponse("student/assignment_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": current_user,
+        "assignment": assignment
     })
 
 @app.get("/teacher/courses")
@@ -2334,7 +2588,7 @@ async def authority_analytics(
     db: Session = Depends(get_db)
 ):
     from sqlalchemy import func, case, extract
-    from models.models import Student, Grade, Course, Teacher, Attendance
+    from models.models import User, Student, Teacher, Course, Assignment, AssignmentSubmission, UserRolendance
 
     # 1. Grade Distribution
     grades = db.query(Grade).all()
@@ -2564,6 +2818,71 @@ async def teacher_delete_video(request: Request, id: int, current_user: User = D
 # ------------------ SCHEDULER ------------------
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.chat_cleanup_service import cleanup_expired_messages
+
+# ------------------ DEBUGGING ------------------
+@app.get("/debug/check_user")
+def debug_check_user(email: str = "student@test.com", db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        # If user not found, return list of all users to help debugging
+        all_users = db.query(User).all()
+        users_list = [
+            {"id": u.id, "email": u.email, "role": str(u.role), "is_student": bool(u.student_profile)} 
+            for u in all_users
+        ]
+        return {
+            "error": "User not found", 
+            "requested_email": email, 
+            "available_users": users_list
+        }
+    
+    result = {
+        "user_id": user.id,
+        "email": user.email,
+        "role": str(user.role),
+        "student_profile": None,
+        "enrollments": [],
+        "assignments": []
+    }
+    
+    if user.student_profile:
+        student = user.student_profile
+        result["student_profile"] = {
+            "id": student.id,
+            "grade_level": student.grade_level,
+            "section": student.section
+        }
+        
+        # Check enrollments
+        for enrollment in student.enrollments:
+            result["enrollments"].append({
+                "course_id": enrollment.course_id,
+                "course_name": enrollment.course.course_name,
+                "grade_level": enrollment.course.grade_level
+            })
+            
+        # Check assignments logic
+        course_ids = [e.course_id for e in student.enrollments]
+        
+        # Fallback
+        if not course_ids and student.grade_level:
+            fallback_courses = db.query(Course).filter(Course.grade_level == student.grade_level).all()
+            result["fallback_courses_found"] = len(fallback_courses)
+            course_ids = [c.id for c in fallback_courses]
+        
+        result["effective_course_ids"] = course_ids
+        
+        from repositories.assignment_repository import AssignmentRepository
+        assignments = AssignmentRepository.get_student_assignments(db, student.id, course_ids)
+        for a in assignments:
+            result["assignments"].append({
+                "id": a['id'],
+                "title": a['title'],
+                "status": a['status'],
+                "course": a['course'].course_name if a['course'] else 'N/A'
+            })
+            
+    return result
 
 @app.on_event("startup")
 async def startup_event():

@@ -154,6 +154,7 @@ class Assignment(Base):
     due_date = Column(DateTime, nullable=False)
     max_score = Column(Float, default=100.0)
     file_path = Column(String(500))
+    target_classes = Column(String(255)) # Comma-separated list of classes (e.g., "9A,9B")
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships

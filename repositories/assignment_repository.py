@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from datetime import datetime
-from models.models import Assignment, AssignmentSubmission
+from models.models import Assignment, AssignmentSubmission, Teacher
 
 class AssignmentRepository:
     @staticmethod
@@ -110,3 +110,82 @@ class AssignmentRepository:
             Assignment.due_date < datetime.utcnow(),
             ~Assignment.id.in_(submitted_ids)
         ).all()
+
+    @staticmethod
+    def get_student_assignments(db: Session, student_id: int, course_ids: List[int], student_grade: str = None, student_section: str = None) -> List[dict]:
+        """
+        Get all assignments for the given courses OR directly targeted to the student's class,
+        annotated with the student's submission status.
+        """
+        from sqlalchemy import or_
+        
+        query = db.query(Assignment).options(
+            joinedload(Assignment.teacher).joinedload(Teacher.user),
+            joinedload(Assignment.course)
+        )
+        
+        conditions = []
+        if course_ids:
+            conditions.append(Assignment.course_id.in_(course_ids))
+            
+        if student_grade:
+            # Check if target_classes matches the student's class (e.g. "9A") or just grade ("9")
+            # This is a simple contains check. A more robust way might be needed if "10" matches "110" etc.
+            # But for now, assuming standard class names like "9A", "10B", "Grade 9".
+            
+            # Construct possible target strings
+            target_str = student_grade
+            if student_section:
+                target_str += student_section # e.g. "9A"
+                # Also check just grade
+                conditions.append(Assignment.target_classes.contains(target_str))
+                
+            # Also include generic grade match if section specific fails or isn't only thing
+            # conditions.append(Assignment.target_classes.contains(student_grade)) 
+            # Doing a simple OR
+            
+            if student_section:
+                 conditions.append(Assignment.target_classes.like(f"%{student_grade}{student_section}%"))
+            
+            conditions.append(Assignment.target_classes.like(f"%{student_grade}%"))
+
+        if conditions:
+            # Use distinct to avoid duplicates if matches both course and target
+            assignments = query.filter(or_(*conditions)).order_by(Assignment.due_date.desc()).all()
+        else:
+            assignments = []
+    
+        result = []
+        for assignment in assignments:
+            # Check for submission
+            submission = db.query(AssignmentSubmission).filter(
+                AssignmentSubmission.assignment_id == assignment.id,
+                AssignmentSubmission.student_id == student_id
+            ).first()
+            
+            # Determine status
+            status = "pending"
+            if submission:
+                if submission.score is not None:
+                    status = "graded"
+                else:
+                    status = "submitted"
+            elif assignment.due_date < datetime.utcnow():
+                status = "overdue"
+            
+            # Add extended info
+            assignment_dict = {
+                "id": assignment.id,
+                "title": assignment.title,
+                "description": assignment.description,
+                "subject": assignment.course.course_name if assignment.course else "General",
+                "teacher_name": assignment.teacher.user.full_name if assignment.teacher and assignment.teacher.user else "Unknown Teacher",
+                "due_date": assignment.due_date,
+                "status": status,
+                "max_score": assignment.max_score,
+                "course": assignment.course,
+                "submission": submission
+            }
+            result.append(assignment_dict)
+            
+        return result
