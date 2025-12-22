@@ -47,17 +47,19 @@
                     <!-- Basic Information -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="title" class="form-label">Assignment Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" required placeholder="Enter assignment title">
+                            <label for="title" class="form-label">Assignment Title <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                placeholder="Enter assignment title">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
                             <select class="form-select" id="course" name="course_id" required>
-                                <option value="">Select Course</option>
-                                <option value="math101">Mathematics 101</option>
-                                <option value="sci201">Science 201</option>
-                                <option value="eng101">English 101</option>
-                                <option value="hist301">History 301</option>
+                                <option value="">Select Subject</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.course_name }} ({{ course.course_code }})
+                                </option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -65,8 +67,10 @@
                     <!-- Description -->
                     <div class="mb-3">
                         <label for="description" class="form-label">Assignment Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Provide detailed instructions for the assignment..."></textarea>
-                        <div class="form-text">You can include formatting, submission guidelines, and evaluation criteria.</div>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                            placeholder="Provide detailed instructions for the assignment..."></textarea>
+                        <div class="form-text">You can include formatting, submission guidelines, and evaluation
+                            criteria.</div>
                     </div>
 
                     <!-- Due Date and Points -->
@@ -77,7 +81,8 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="total_points" class="form-label">Total Points</label>
-                            <input type="number" class="form-control" id="total_points" name="total_points" value="100" min="1" max="1000">
+                            <input type="number" class="form-control" id="total_points" name="total_points" value="100"
+                                min="1" max="1000">
                         </div>
                     </div>
 
@@ -96,7 +101,8 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="weight" class="form-label">Weight in Final Grade (%)</label>
-                            <input type="number" class="form-control" id="weight" name="weight" value="10" min="1" max="100">
+                            <input type="number" class="form-control" id="weight" name="weight" value="10" min="1"
+                                max="100">
                         </div>
                     </div>
 
@@ -106,37 +112,43 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="class_9a" name="classes[]" value="9A">
+                                    <input class="form-check-input" type="checkbox" id="class_9a" name="classes[]"
+                                        value="9A">
                                     <label class="form-check-label" for="class_9a">Grade 9A</label>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="class_9b" name="classes[]" value="9B">
+                                    <input class="form-check-input" type="checkbox" id="class_9b" name="classes[]"
+                                        value="9B">
                                     <label class="form-check-label" for="class_9b">Grade 9B</label>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="class_10a" name="classes[]" value="10A">
+                                    <input class="form-check-input" type="checkbox" id="class_10a" name="classes[]"
+                                        value="10A">
                                     <label class="form-check-label" for="class_10a">Grade 10A</label>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="class_10b" name="classes[]" value="10B">
+                                    <input class="form-check-input" type="checkbox" id="class_10b" name="classes[]"
+                                        value="10B">
                                     <label class="form-check-label" for="class_10b">Grade 10B</label>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="class_11a" name="classes[]" value="11A">
+                                    <input class="form-check-input" type="checkbox" id="class_11a" name="classes[]"
+                                        value="11A">
                                     <label class="form-check-label" for="class_11a">Grade 11A</label>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="class_11b" name="classes[]" value="11B">
+                                    <input class="form-check-input" type="checkbox" id="class_11b" name="classes[]"
+                                        value="11B">
                                     <label class="form-check-label" for="class_11b">Grade 11B</label>
                                 </div>
                             </div>
@@ -158,11 +170,13 @@
                             <label class="form-check-label" for="allow_late">Allow late submissions</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="online_submission" name="online_submission" checked>
+                            <input class="form-check-input" type="checkbox" id="online_submission"
+                                name="online_submission" checked>
                             <label class="form-check-label" for="online_submission">Enable online submission</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="notify_students" name="notify_students" checked>
+                            <input class="form-check-input" type="checkbox" id="notify_students" name="notify_students"
+                                checked>
                             <label class="form-check-label" for="notify_students">Notify students via email</label>
                         </div>
                     </div>

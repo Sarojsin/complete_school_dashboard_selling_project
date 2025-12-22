@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 import os
 import shutil
 import uuid
+from datetime import datetime
 
 from config.config import settings
 from database.database import engine, Base, get_db
@@ -903,27 +904,65 @@ async def teacher_mark_message_read(message_id: int, db: Session = Depends(get_d
     return {"success": True}
 
 @app.get("/teacher/assignments")
-async def teacher_assignments(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_assignments(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.assignment_repository import AssignmentRepository
+    from repositories.teacher_repository import TeacherRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    assignments = []
+    stats = {
+        "total_assignments": 0,
+        "submitted": 0,
+        "pending": 0,
+        "overdue": 0
+    }
+    
+    if teacher:
+        assignments = AssignmentRepository.get_all(db, teacher_id=teacher.id)  # Fixed: use get_all with teacher_id
+        stats["total_assignments"] = len(assignments)
+        stats["submitted"] = sum(1 for a in assignments if getattr(a, 'is_completed', False))
+        stats["pending"] = stats["total_assignments"] - stats["submitted"]
+    
     return templates.TemplateResponse("teacher/assignments.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "assignments": []
+        "assignments": assignments,
+        "stats": stats,
+        "subjects": ["Mathematics", "Science", "English", "History"],
+        "classes": ["10-A", "10-B", "11-A", "12-C"]
     })
 
 @app.get("/teacher/assignments/create")
-async def teacher_create_assignment(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_create_assignment(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from models.models import Course
+    courses = db.query(Course).all()
     return templates.TemplateResponse("teacher/create_assignment.html", {
         "request": request,
         "current_user": current_user,
-        "teacher": current_user
+        "teacher": current_user,
+        "courses": courses
     })
 
 @app.post("/teacher/assignments/create")
 async def teacher_create_assignment_post(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.assignment_repository import AssignmentRepository
+    from repositories.teacher_repository import TeacherRepository
+    
     form_data = await request.form()
-    # For now, just return success - full implementation would save to database
-    return {"message": "Assignment created successfully", "success": True}
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    
+    assignment_data = {
+        "title": form_data.get("title"),
+        "description": form_data.get("description"),
+        "course_id": int(form_data.get("course_id", 1)),
+        "teacher_id": teacher.id if teacher else 1,
+        "due_date": datetime.fromisoformat(form_data.get("due_date", datetime.utcnow().isoformat())),
+        "max_score": float(form_data.get("max_score", 100))
+    }
+    
+    AssignmentRepository.create(db, assignment_data)
+    return RedirectResponse(url="/teacher/assignments?success=Assignment+created", status_code=303)
 
 @app.get("/teacher/grades")
 async def teacher_grades_list(request: Request, current_user: User = Depends(get_current_user)):
@@ -1007,74 +1046,20 @@ async def teacher_courses(request: Request, current_user: User = Depends(get_cur
         ]
     })
 
-@app.get("/teacher/assignments")
-async def teacher_assignments(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/assignments.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "stats": {
-            "total_assignments": 12,
-            "submitted": 450,
-            "pending": 30,
-            "overdue": 15
-        },
-        "subjects": ["Mathematics", "Physics", "Chemistry", "Biology", "English"],
-        "classes": ["10-A", "10-B", "11-A", "11-B"],
-        "assignments": [
-            {
-                "id": 1,
-                "title": "Algebra Problem Set 1",
-                "description": "Complete exercises 1-10 from Chapter 2",
-                "subject": "Mathematics",
-                "class": "10-A",
-                "due_date": "2023-10-15",
-                "due_in": "2 days",
-                "is_overdue": False,
-                "is_urgent": True,
-                "submission_rate": 80,
-                "submitted": 24,
-                "total_students": 30,
-                "status": "active",
-                "status_color": "success"
-            },
-            {
-                "id": 2,
-                "title": "Physics Lab Report",
-                "description": "Write a report on the pendulum experiment",
-                "subject": "Physics",
-                "class": "11-B",
-                "due_date": "2023-10-20",
-                "due_in": "1 week",
-                "is_overdue": False,
-                "is_urgent": False,
-                "submission_rate": 40,
-                "submitted": 10,
-                "total_students": 25,
-                "status": "active",
-                "status_color": "primary"
-            }
-        ],
-        "upcoming_deadlines": [
-            {"title": "Algebra Problem Set 1", "class": "10-A", "subject": "Mathematics", "due_in": "2 days", "submitted": 24, "total": 30}
-        ]
-    })
 
-@app.get("/teacher/assignments/create")
-async def teacher_create_assignment(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/create_assignment.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user
-    })
+
+
 
 # Alias route for create-assignment
 @app.get("/teacher/create-assignment")
-async def teacher_create_assignment_alias(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_create_assignment_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from models.models import Course
+    courses = db.query(Course).all()
     return templates.TemplateResponse("teacher/create_assignment.html", {
         "request": request,
         "current_user": current_user,
-        "teacher": current_user
+        "teacher": current_user,
+        "courses": courses
     })
 
 @app.get("/teacher/assignments/{assignment_id}/edit")
@@ -1782,12 +1767,78 @@ async def authority_courses(
 
 
 @app.get("/authority/courses/add")
-async def authority_add_course(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_add_course(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.teacher_repository import TeacherRepository
+    
+    # Fetch teachers for dropdown
+    teachers_raw = TeacherRepository.get_all(db)
+    teachers = []
+    for t in teachers_raw:
+        teachers.append({
+            "id": t.id,
+            "name": t.user.full_name if t.user else "Unknown",
+            "department": t.department or "General"
+        })
+    
+    # Define departments and grades (these could also come from DB in future)
+    departments = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Computer Science"]
+    grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+    
     return templates.TemplateResponse("authority/add_course.html", {
         "request": request,
         "current_user": current_user,
-        "authority": current_user
+        "authority": current_user,
+        "teachers": teachers,
+        "departments": departments,
+        "grades": grades
     })
+
+# Alias route for add-course
+@app.get("/authority/add-course")
+async def authority_add_course_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.teacher_repository import TeacherRepository
+    
+    teachers_raw = TeacherRepository.get_all(db)
+    teachers = []
+    for t in teachers_raw:
+        teachers.append({
+            "id": t.id,
+            "name": t.user.full_name if t.user else "Unknown",
+            "department": t.department or "General"
+        })
+    
+    departments = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Computer Science"]
+    grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+    
+    return templates.TemplateResponse("authority/add_course.html", {
+        "request": request,
+        "current_user": current_user,
+        "authority": current_user,
+        "teachers": teachers,
+        "departments": departments,
+        "grades": grades
+    })
+
+# POST handler for creating course
+@app.post("/authority/courses/add")
+@app.post("/authority/add-course")
+async def authority_create_course_post(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.course_repository import CourseRepository
+    
+    form_data = await request.form()
+    
+    course_data = {
+        "course_code": form_data.get("code"),
+        "course_name": form_data.get("name"),  # Changed from subject_name to course_name
+        "description": form_data.get("description"),
+        "credits": int(form_data.get("credits", 3)),
+        "teacher_id": int(form_data.get("teacher_id")) if form_data.get("teacher_id") else None,
+        "grade_level": form_data.get("grade_level"),
+        "semester": form_data.get("semester", "Fall")
+    }
+    
+    CourseRepository.create(db, course_data)
+    return RedirectResponse(url="/authority/courses?success=Course+created", status_code=303)
 
 @app.get("/authority/courses/{course_id}")
 async def authority_view_course(
