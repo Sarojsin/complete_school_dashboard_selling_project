@@ -9,6 +9,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {% if request.path == '/teacher/profile' %}active{% endif %}"
+                    href="/teacher/profile">
+                    <i class="bi bi-person me-2"></i>Profile
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {% if '/teacher/students' in request.path %}active{% endif %}"
                     href="/teacher/students">
                     <i class="bi bi-people me-2"></i>Students

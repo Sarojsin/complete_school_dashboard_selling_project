@@ -1,7 +1,7 @@
 # CRITICAL: Import bcrypt compatibility fix FIRST before anything else
 import utils.bcrypt_compat  # noqa: F401
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -10,6 +10,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
 import os
+import shutil
+import uuid
 
 from config.config import settings
 from database.database import engine, Base, get_db
@@ -89,8 +91,9 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Templates
 templates = Jinja2Templates(directory="templates")
 
-# Add dummy csrf_token function to globals
+# Add dummy csrf_token and built-in functions to globals
 templates.env.globals['csrf_token'] = lambda: "dummy-csrf-token"
+templates.env.globals['hasattr'] = hasattr
 
 # Add templates to app state so routes can access them
 app.state.templates = templates
@@ -279,11 +282,29 @@ async def student_dashboard(request: Request, current_user: User = Depends(get_c
     })
 
 @app.get("/student/profile")
-async def student_profile(request: Request, current_user: User = Depends(get_current_user)):
+async def student_profile(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.student_repository import StudentRepository
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    
+    # Map data for template
+    student_data = {
+        "name": current_user.full_name,
+        "id": student.student_id if student else "N/A",
+        "grade": student.grade_level if student else "N/A",
+        "section": student.section if student else "N/A",
+        "email": current_user.email,
+        "phone": student.phone if student else "N/A",
+        "dob": student.date_of_birth.strftime('%Y-%m-%d') if student and student.date_of_birth else "",
+        "address": student.address if student else "",
+        "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png",
+        "roll_number": student.student_id if student else "N/A",
+        "admission_date": student.enrollment_date.strftime('%Y-%m-%d') if student and student.enrollment_date else "N/A"
+    }
+    
     return templates.TemplateResponse("student/profile.html", {
         "request": request,
         "current_user": current_user,
-        "student": current_user
+        "student": student_data
     })
 
 @app.post("/student/profile")
@@ -295,6 +316,22 @@ async def student_update_profile(
     from repositories.student_repository import StudentRepository
     
     form_data = await request.form()
+    
+    # Handle profile picture upload
+    if "profile_pic" in form_data and form_data["profile_pic"].filename:
+        profile_pic = form_data["profile_pic"]
+        
+        # Create unique filename
+        ext = os.path.splitext(profile_pic.filename)[1]
+        filename = f"{uuid.uuid4()}{ext}"
+        filepath = os.path.join("app/static/uploads/avatars", filename)
+        
+        # Save file
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(profile_pic.file, buffer)
+            
+        # Update user profile picture path
+        current_user.profile_picture = f"/static/uploads/avatars/{filename}"
     
     # Update User fields (email, full_name)
     if "email" in form_data:
@@ -311,10 +348,12 @@ async def student_update_profile(
             student.phone = form_data["phone"]
         if "address" in form_data:
             student.address = form_data["address"]
-        if "parent_name" in form_data:
-            student.parent_name = form_data["parent_name"]
-        if "parent_phone" in form_data:
-            student.parent_phone = form_data["parent_phone"]
+        if "dob" in form_data and form_data["dob"]:
+            try:
+                from datetime import datetime
+                student.date_of_birth = datetime.strptime(form_data["dob"], '%Y-%m-%d').date()
+            except ValueError:
+                pass
             
         db.add(student)
     
@@ -322,10 +361,26 @@ async def student_update_profile(
     db.commit()
     db.refresh(current_user)
     
+    # Fetch updated data for mapping
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student_data = {
+        "name": current_user.full_name,
+        "id": student.student_id if student else "N/A",
+        "grade": student.grade_level if student else "N/A",
+        "section": student.section if student else "N/A",
+        "email": current_user.email,
+        "phone": student.phone if student else "N/A",
+        "dob": student.date_of_birth.strftime('%Y-%m-%d') if student and student.date_of_birth else "",
+        "address": student.address if student else "",
+        "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png",
+        "roll_number": student.student_id if student else "N/A",
+        "admission_date": student.enrollment_date.strftime('%Y-%m-%d') if student and student.enrollment_date else "N/A"
+    }
+    
     return templates.TemplateResponse("student/profile.html", {
         "request": request,
         "current_user": current_user,
-        "student": current_user,
+        "student": student_data,
         "success_message": "Profile updated successfully"
     })
 
@@ -601,6 +656,91 @@ async def teacher_dashboard(request: Request, current_user: User = Depends(get_c
         "stats": {},
         "unread_count": unread_count,
         "recent_messages": recent_messages
+    })
+
+@app.get("/teacher/profile")
+async def teacher_profile(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.teacher_repository import TeacherRepository
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    
+    teacher_data = {
+        "name": current_user.full_name,
+        "email": current_user.email,
+        "id": teacher.employee_id if teacher else "N/A",
+        "department": teacher.department if teacher else "N/A",
+        "designation": "Teacher", # Placeholder designations could be added to model later
+        "phone": teacher.phone if teacher else "N/A",
+        "qualification": teacher.qualification if teacher else "N/A",
+        "specialization": teacher.specialization if teacher else "N/A",
+        "joining_date": teacher.joining_date.strftime('%Y-%m-%d') if teacher and teacher.joining_date else "N/A",
+        "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png"
+    }
+    
+    return templates.TemplateResponse("teacher/profile.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher_data": teacher_data
+    })
+
+@app.post("/teacher/profile")
+async def teacher_update_profile(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    
+    form_data = await request.form()
+    
+    # Handle profile picture upload
+    if "profile_pic" in form_data and form_data["profile_pic"].filename:
+        profile_pic = form_data["profile_pic"]
+        ext = os.path.splitext(profile_pic.filename)[1]
+        filename = f"{uuid.uuid4()}{ext}"
+        filepath = os.path.join("app/static/uploads/avatars", filename)
+        
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(profile_pic.file, buffer)
+            
+        current_user.profile_picture = f"/static/uploads/avatars/{filename}"
+    
+    # Update User fields
+    if "full_name" in form_data:
+        current_user.full_name = form_data["full_name"]
+    
+    # Update Teacher fields
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if teacher:
+        if "full_name" in form_data:
+            teacher.full_name = form_data["full_name"]
+        if "phone" in form_data: 
+            teacher.phone = form_data["phone"]
+        db.add(teacher)
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    # Fetch updated data for mapping
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher_data = {
+        "name": current_user.full_name,
+        "email": current_user.email,
+        "id": teacher.employee_id if teacher else "N/A",
+        "department": teacher.department if teacher else "N/A",
+        "designation": "Teacher",
+        "phone": teacher.phone if teacher else "N/A",
+        "qualification": teacher.qualification if teacher else "N/A",
+        "specialization": teacher.specialization if teacher else "N/A",
+        "joining_date": teacher.joining_date.strftime('%Y-%m-%d') if teacher and teacher.joining_date else "N/A",
+        "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png"
+    }
+    
+    return templates.TemplateResponse("teacher/profile.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher_data": teacher_data,
+        "success_message": "Profile updated successfully"
     })
 
 @app.get("/teacher/students")
