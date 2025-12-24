@@ -22,6 +22,28 @@ from models import group_models
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def ensure_columns_exist():
+    """Manually check and add missing columns for critical tables"""
+    logger.info("Checking for missing columns...")
+    
+    # 1. Check 'assignments' table for 'target_classes'
+    with engine.connect() as conn:
+        try:
+            # PostgreSQL check
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='assignments' AND column_name='target_classes';"
+            ))
+            if not result.first():
+                logger.info("Adding 'target_classes' column to 'assignments' table...")
+                conn.execute(text("ALTER TABLE assignments ADD COLUMN target_classes VARCHAR(255);"))
+                conn.commit()
+                logger.info("Added 'target_classes' column successfully.")
+            else:
+                logger.info("'target_classes' column already exists in 'assignments'.")
+        except Exception as e:
+            logger.warning(f"Failed to check/add 'target_classes' column: {e}")
+
 def setup_database():
     """Ensure tables exist and run migrations"""
     try:
@@ -32,7 +54,10 @@ def setup_database():
         Base.metadata.create_all(bind=engine)
         logger.info("Tables created successfully (or already exist).")
         
-        # 2. Run custom migrations if they exist
+        # 2. Sync schema (add missing columns to existing tables)
+        ensure_columns_exist()
+        
+        # 3. Run custom migrations if they exist
         migrations_dir = os.path.join(os.path.dirname(__file__), "migrations")
         if os.path.exists(migrations_dir):
             import subprocess
