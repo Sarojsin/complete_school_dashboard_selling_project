@@ -42,4 +42,10 @@ class Settings(BaseSettings):
     def allowed_extensions_list(self) -> List[str]:
         return [ext.strip() for ext in self.ALLOWED_EXTENSIONS.split(",")]
 
+    @property
+    def DATABASE_URL_FIXED(self) -> str:
+        if self.DATABASE_URL.startswith("postgres://"):
+            return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        return self.DATABASE_URL
+
 settings = Settings()

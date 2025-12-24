@@ -4,15 +4,15 @@ from sqlalchemy.orm import sessionmaker
 from config.config import settings
 
 # Create database engine
-if settings.DATABASE_URL.startswith("sqlite"):
+if settings.DATABASE_URL_FIXED.startswith("sqlite"):
     engine = create_engine(
-        settings.DATABASE_URL,
+        settings.DATABASE_URL_FIXED,
         connect_args={"check_same_thread": False},
         echo=settings.DEBUG
     )
 else:
     engine = create_engine(
-        settings.DATABASE_URL,
+        settings.DATABASE_URL_FIXED,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=20,
