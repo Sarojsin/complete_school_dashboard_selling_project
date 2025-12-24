@@ -12,7 +12,11 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from database.database import engine, Base
 # Import all models to ensure they are registered with Base.metadata
-from models.models import User, Student, Teacher, Parent, Course, Assignment, AssignmentSubmission, Grade, Attendance, Fee, Notice, Note, Video, Message
+from models.models import (
+    User, Student, Teacher, Parent, Authority, 
+    Course, CourseEnrollment, Assignment, AssignmentSubmission, 
+    Grade, Attendance, FeeRecord, Notice, Note, Video, Message, Schedule
+)
 from models import group_models
 
 logging.basicConfig(level=logging.INFO)
