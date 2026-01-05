@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -30,19 +30,31 @@ async def login(
             detail="Account is inactive"
         )
     
-    access_token = AuthService.create_token_for_user(user)
+    tokens = AuthService.create_token_for_user(user)
     
     response = JSONResponse(content={
-        "access_token": access_token,
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
         "token_type": "bearer",
         "user": UserResponse.from_orm(user).model_dump(mode='json')
     })
+    
+    # Set as session cookies (no max_age/expires means delete on browser close)
     response.set_cookie(
         key="access_token",
-        value=f"Bearer {access_token}",
+        value=f"Bearer {tokens['access_token']}",
         httponly=True,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        samesite="lax",
+        secure=not settings.DEBUG,
+        path="/"
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        samesite="lax",
+        secure=not settings.DEBUG,
+        path="/"
     )
     return response
 
@@ -64,13 +76,63 @@ async def login_json(
             detail="Account is inactive"
         )
     
-    access_token = AuthService.create_token_for_user(user)
+    tokens = AuthService.create_token_for_user(user)
     
     return Token(
-        access_token=access_token,
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
         token_type="bearer",
         user=UserResponse.from_orm(user)
     )
+
+@router.post("/refresh")
+async def refresh_token(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        # Check header if not in cookie
+        authorization: str = request.headers.get("Authorization")
+        if authorization and authorization.startswith("Bearer "):
+            refresh_token = authorization.split(" ")[1]
+
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
+
+    user_id = AuthService.verify_refresh_token(refresh_token)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    user = UserRepository.get_by_id(db, user_id)
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found or inactive")
+
+    tokens = AuthService.create_token_for_user(user)
+    
+    response = JSONResponse(content={
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
+        "token_type": "bearer"
+    })
+    
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {tokens['access_token']}",
+        httponly=True,
+        samesite="lax",
+        secure=not settings.DEBUG,
+        path="/"
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        samesite="lax",
+        secure=not settings.DEBUG,
+        path="/"
+    )
+    return response
 
 @router.post("/signup/student")
 async def signup_student(
@@ -277,5 +339,6 @@ async def signup_parent(
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token")
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
     return {"message": "Logged out successfully"}

@@ -18,10 +18,32 @@ class AuthService:
         return encoded_jwt
     
     @staticmethod
-    def create_token_for_user(user: User) -> str:
+    def create_token_for_user(user: User) -> dict:
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        
         access_token = AuthService.create_access_token(
-            data={"sub": str(user.id), "role": user.role.value},
+            data={"sub": str(user.id), "role": user.role.value, "type": "access"},
             expires_delta=access_token_expires
         )
-        return access_token
+        refresh_token = AuthService.create_access_token(
+            data={"sub": str(user.id), "type": "refresh"},
+            expires_delta=refresh_token_expires
+        )
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+
+    @staticmethod
+    def verify_refresh_token(token: str) -> Optional[int]:
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            if payload.get("type") != "refresh":
+                return None
+            user_id: str = payload.get("sub")
+            if user_id is None:
+                return None
+            return int(user_id)
+        except Exception:
+            return None
