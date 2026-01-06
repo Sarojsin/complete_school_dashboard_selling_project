@@ -15,6 +15,8 @@ async def get_user_from_token(token: str, db: Session) -> User:
     """Authenticate user from WebSocket token"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "access":
+            return None
         user_id = payload.get("sub")
         if not user_id:
             return None

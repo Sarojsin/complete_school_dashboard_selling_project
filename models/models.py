@@ -193,6 +193,25 @@ class Attendance(Base):
     student = relationship("Student", back_populates="attendance_records")
     course = relationship("Course", back_populates="attendance_records")
 
+class FeeStructure(Base):
+    __tablename__ = "fee_structures"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    grade_level = Column(String(20), nullable=False)
+    academic_year = Column(String(20), nullable=False)
+    tuition_fee = Column(Float, default=0.0)
+    registration_fee = Column(Float, default=0.0)
+    library_fee = Column(Float, default=0.0)
+    sports_fee = Column(Float, default=0.0)
+    lab_fee = Column(Float, default=0.0)
+    activity_fee = Column(Float, default=0.0)
+    other_charges = Column(Float, default=0.0)
+    total_amount = Column(Float, default=0.0)
+    status = Column(String(20), default="active")
+    description = Column(Text)
+    due_date = Column(Date)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class Grade(Base):
     __tablename__ = "grades"
     

@@ -3,13 +3,59 @@
 
 {% block title %}Fee Structure Management{% endblock %}
 
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/teachers">
+            <i class="bi bi-person-badge me-2"></i>Teachers
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/authority/fees">
+            <i class="bi bi-cash-coin me-2"></i>Fee Management
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/authority/fees/structure">
+            <i class="bi bi-receipt me-2"></i>Fee Structure
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Fee Structure Management</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeeStructureModal">
-            <i class="fas fa-plus me-2"></i> Add Fee Structure
-        </button>
+        <div class="d-flex gap-2">
+            <form method="GET" class="d-flex">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Search structures..."
+                        value="{{ search_query or '' }}">
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeeStructureModal">
+                <i class="fas fa-plus me-2"></i> Add Fee Structure
+            </button>
+        </div>
     </div>
 
     <!-- Fee Statistics -->
@@ -73,8 +119,7 @@
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Fee Structures</h5>
             <div class="dropdown">
-                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" 
-                        data-bs-toggle="dropdown">
+                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
                 <ul class="dropdown-menu">
@@ -118,16 +163,14 @@
                             <td>{{ structure.student_count }}</td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary view-structure" 
-                                            data-id="{{ structure.id }}">
+                                    <button class="btn btn-outline-primary view-structure" data-id="{{ structure.id }}">
                                         <i class="fas fa-eye"></i>
                                     </button>
-                                    <button class="btn btn-outline-info edit-structure" 
-                                            data-id="{{ structure.id }}">
+                                    <button class="btn btn-outline-info edit-structure" data-id="{{ structure.id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-outline-danger delete-structure" 
-                                            data-id="{{ structure.id }}">
+                                    <button class="btn btn-outline-danger delete-structure"
+                                        data-id="{{ structure.id }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -214,22 +257,22 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Academic Year *</label>
-                                <input type="text" class="form-control" name="academic_year" 
-                                       value="{{ current_year }}-{{ current_year + 1 }}" required>
+                                <input type="text" class="form-control" name="academic_year"
+                                    value="{{ current_year }}-{{ current_year + 1 }}" required>
                             </div>
                         </div>
                     </div>
 
                     <h6 class="mb-3">Fee Components</h6>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Tuition Fee *</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" name="tuition_fee" 
-                                           min="0" step="0.01" required>
+                                    <input type="number" class="form-control" name="tuition_fee" min="0" step="0.01"
+                                        required>
                                 </div>
                             </div>
                         </div>
@@ -238,8 +281,8 @@
                                 <label class="form-label">Registration Fee</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" name="registration_fee" 
-                                           min="0" step="0.01" value="0">
+                                    <input type="number" class="form-control" name="registration_fee" min="0"
+                                        step="0.01" value="0">
                                 </div>
                             </div>
                         </div>
@@ -251,8 +294,8 @@
                                 <label class="form-label">Library Fee</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" name="library_fee" 
-                                           min="0" step="0.01" value="0">
+                                    <input type="number" class="form-control" name="library_fee" min="0" step="0.01"
+                                        value="0">
                                 </div>
                             </div>
                         </div>
@@ -261,8 +304,8 @@
                                 <label class="form-label">Sports Fee</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" name="sports_fee" 
-                                           min="0" step="0.01" value="0">
+                                    <input type="number" class="form-control" name="sports_fee" min="0" step="0.01"
+                                        value="0">
                                 </div>
                             </div>
                         </div>
@@ -274,8 +317,8 @@
                                 <label class="form-label">Lab Fee</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" name="lab_fee" 
-                                           min="0" step="0.01" value="0">
+                                    <input type="number" class="form-control" name="lab_fee" min="0" step="0.01"
+                                        value="0">
                                 </div>
                             </div>
                         </div>
@@ -284,8 +327,8 @@
                                 <label class="form-label">Activity Fee</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" name="activity_fee" 
-                                           min="0" step="0.01" value="0">
+                                    <input type="number" class="form-control" name="activity_fee" min="0" step="0.01"
+                                        value="0">
                                 </div>
                             </div>
                         </div>
@@ -295,8 +338,8 @@
                         <label class="form-label">Other Charges</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" name="other_charges" 
-                                   min="0" step="0.01" value="0">
+                            <input type="number" class="form-control" name="other_charges" min="0" step="0.01"
+                                value="0">
                         </div>
                     </div>
 
@@ -334,43 +377,41 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // View fee structure details
-    document.querySelectorAll('.view-structure').forEach(button => {
-        button.addEventListener('click', function() {
-            const structureId = this.getAttribute('data-id');
-            // Implement view functionality
-            window.location.href = `/authority/fee-structure/${structureId}`;
+    document.addEventListener('DOMContentLoaded', function () {
+        // View fee structure details
+        document.querySelectorAll('.view-structure').forEach(button => {
+            button.addEventListener('click', function () {
+                const structureId = this.getAttribute('data-id');
+                window.location.href = `/authority/fees/structure/${structureId}`;
+            });
         });
-    });
 
-    // Edit fee structure
-    document.querySelectorAll('.edit-structure').forEach(button => {
-        button.addEventListener('click', function() {
-            const structureId = this.getAttribute('data-id');
-            // Implement edit functionality
-            window.location.href = `/authority/fee-structure/${structureId}/edit`;
+        // Edit fee structure
+        document.querySelectorAll('.edit-structure').forEach(button => {
+            button.addEventListener('click', function () {
+                const structureId = this.getAttribute('data-id');
+                window.location.href = `/authority/fees/structure/${structureId}/edit`;
+            });
         });
-    });
 
-    // Delete fee structure
-    document.querySelectorAll('.delete-structure').forEach(button => {
-        button.addEventListener('click', function() {
-            const structureId = this.getAttribute('data-id');
-            if (confirm('Are you sure you want to delete this fee structure?')) {
-                fetch(`/authority/fee-structure/${structureId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    }
-                });
-            }
+        // Delete fee structure
+        document.querySelectorAll('.delete-structure').forEach(button => {
+            button.addEventListener('click', function () {
+                const structureId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this fee structure?')) {
+                    fetch(`/authority/fees/structure/${structureId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        }
+                    });
+                }
+            });
         });
     });
-});
 </script>
 {% endblock %}

@@ -82,11 +82,12 @@
                             <tbody>
                                 {% for fee in fee_structure %}
                                 <tr>
-                                    <td>{{ fee.type }}</td>
+                                    <td>{{ fee.fee_type }}</td>
                                     <td>${{ fee.amount }}</td>
                                     <td>{{ fee.due_date }}</td>
                                     <td>
-                                        <span class="badge bg-{% if fee.status == 'paid' %}success{% else %}warning{% endif %}">
+                                        <span
+                                            class="badge bg-{% if fee.status == 'paid' %}success{% else %}warning{% endif %}">
                                             {{ fee.status|title }}
                                         </span>
                                     </td>
@@ -125,12 +126,14 @@
                                     <td>{{ payment.method }}</td>
                                     <td>{{ payment.transaction_id }}</td>
                                     <td>
-                                        <span class="badge bg-{% if payment.status == 'completed' %}success{% else %}warning{% endif %}">
+                                        <span
+                                            class="badge bg-{% if payment.status == 'completed' %}success{% else %}warning{% endif %}">
                                             {{ payment.status|title }}
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="{{ payment.receipt_url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <a href="{{ payment.receipt_url }}" class="btn btn-sm btn-outline-primary"
+                                            target="_blank">
                                             <i class="fas fa-download"></i>
                                         </a>
                                     </td>
@@ -169,7 +172,7 @@
                 <div class="alert alert-info">
                     <strong>Pending Amount:</strong> ${{ pending_amount }}
                 </div>
-                
+
                 <form method="POST">
                     <div class="mb-3">
                         <label class="form-label">Payment Method</label>
@@ -181,20 +184,20 @@
                             <option value="upi">UPI</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Amount to Pay ($)</label>
-                        <input type="number" class="form-control" name="amount" 
-                               min="1" max="{{ pending_amount }}" value="{{ pending_amount }}" required>
+                        <input type="number" class="form-control" name="amount" min="1" max="{{ pending_amount }}"
+                            value="{{ pending_amount }}" required>
                     </div>
-                    
+
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" id="termsCheck" required>
                         <label class="form-check-label" for="termsCheck">
                             I agree to the terms and conditions
                         </label>
                     </div>
-                    
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-lock me-2"></i> Proceed to Pay

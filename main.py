@@ -466,13 +466,45 @@ async def student_attendance(request: Request, current_user: User = Depends(get_
     })
 
 @app.get("/student/fees")
-async def student_fees(request: Request, current_user: User = Depends(get_current_user)):
+async def student_fees(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.student_repository import StudentRepository
+    from repositories.fee_repository import FeeRepository
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+        
+    # Get all fees
+    fees = FeeRepository.get_student_fees(db, student.id)
+    
+    # Calculate stats
+    summary = FeeRepository.get_fee_summary(db, student.id)
+    
+    # Get payment history (fees with paid_amount > 0)
+    payment_history = FeeRepository.get_payment_history(db, student.id)
+    
+    # Format payment history for template (mocking missing fields)
+    formatted_history = []
+    for p in payment_history:
+        formatted_history.append({
+            "date": p.payment_date,
+            "amount": p.paid_amount,
+            "method": "Online", # Placeholder until model update
+            "transaction_id": f"TXN-{p.id}-{int(p.paid_amount)}",
+            "status": "completed",
+            "receipt_url": "#"
+        })
+
     return templates.TemplateResponse("student/fees.html", {
         "request": request,
         "current_user": current_user,
         "student": current_user,
-        "fees": [],
-        "pending_amount": 0
+        "fee_structure": fees, # Template iterates over this
+        "payment_history": formatted_history,
+        "total_fees": summary['total_amount'],
+        "paid_amount": summary['total_paid'],
+        "pending_amount": summary['total_pending'],
+        "fee_status": "paid" if summary['total_pending'] == 0 else "pending"
     })
 
 @app.get("/student/tests")
@@ -2259,6 +2291,7 @@ async def authority_fees(
 ):
     from repositories.fee_repository import FeeRepository
     from models.models import FeeRecord
+    from datetime import date
     
     if search:
         fees = FeeRepository.search(db, search)
@@ -2293,37 +2326,74 @@ async def authority_fees(
             "balance": f.amount - f.paid_amount,
             "due_date": f.due_date,
             "payment_date": f.payment_date,
-            "payment_method": f.payment_method,
+            "payment_method": f.remarks.split("Method: ")[1].split(",")[0] if f.remarks and "Method: " in f.remarks else "N/A",
             "status": f.status,
             "is_overdue": f.status == 'overdue' or (f.status != 'paid' and f.due_date < date.today())
         })
 
+    # Get global fee summary for stats
+    summary = FeeRepository.get_all_fees_summary(db)
+    pending_amount = summary['total_pending']
+    
     return templates.TemplateResponse("authority/fees.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
         "fee_records": fee_records,
-        "pending_amount": total_pending,
+        "pending_amount": "{:,.0f}".format(pending_amount),
         "search_query": search
     })
 
 @app.get("/authority/fees/structure")
-async def authority_fee_structure(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_fee_structure(
+    request: Request, 
+    search: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.fee_structure_repository import FeeStructureRepository
+    from repositories.fee_repository import FeeRepository
+    
+    if search:
+        fee_structures = FeeStructureRepository.search(db, search)
+    else:
+        fee_structures = FeeStructureRepository.get_all(db)
+        
+    # Get global fee summary for stats
+    summary = FeeRepository.get_all_fees_summary(db)
+    
+    stats = {
+        "total_structures": len(fee_structures),
+        "active_structures": len([s for s in fee_structures if s.status == 'active']),
+        "total_revenue": summary['total_paid'],
+        "pending_fees": summary['total_pending']
+    }
+    
+    # Format for template
+    formatted_structures = []
+    for s in fee_structures:
+        formatted_structures.append({
+            "id": s.id,
+            "grade_level": s.grade_level,
+            "academic_year": s.academic_year,
+            "tuition_fee": s.tuition_fee,
+            "other_fees": s.total_amount - s.tuition_fee,
+            "total_amount": s.total_amount,
+            "status": s.status,
+            "student_count": 0 # This would need a join with Enrollment if we wanted it
+        })
+
     return templates.TemplateResponse("authority/fee_structure.html", {
         "request": request,
         "current_user": current_user,
         "authority": current_user,
-        "stats": {
-            "total_structures": 6,
-            "active_structures": 5,
-            "total_revenue": 125000,
-            "pending_fees": 15000
-        },
-        "fee_structures": [],
-        "fee_breakdown": [],
+        "stats": stats,
+        "fee_structures": formatted_structures,
+        "fee_breakdown": formatted_structures, # Re-using for simplicity or specialized if needed
         "grades": ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", 
                    "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"],
-        "current_year": 2023
+        "current_year": datetime.utcnow().year,
+        "search_query": search
     })
 
 @app.post("/authority/fees/structure")
@@ -2403,12 +2473,73 @@ async def authority_create_fee_structure(request: Request, current_user: User = 
 
 
 @app.get("/authority/fees/add")
-async def authority_add_fee(request: Request, current_user: User = Depends(get_current_user)):
+async def authority_add_fee(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.student_repository import StudentRepository
+    from repositories.fee_structure_repository import FeeStructureRepository
+    
+    students = StudentRepository.get_all(db)
+    fee_structures = FeeStructureRepository.get_all(db)
+    
+    # Format students for dropdown (passing grade for JS filtering)
+    formatted_students = []
+    for s in students:
+        formatted_students.append({
+            "id": s.id,
+            "name": s.user.full_name if s.user else "Unknown",
+            "grade": s.grade_level
+        })
+        
     return templates.TemplateResponse("authority/add_fee.html", {
         "request": request,
         "current_user": current_user,
-        "authority": current_user
+        "authority": current_user,
+        "students": formatted_students,
+        "fee_structures": fee_structures,
+        "today": datetime.utcnow().strftime('%Y-%m-%d')
     })
+
+@app.post("/authority/fees/add")
+async def authority_create_fee_payment(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.fee_repository import FeeRepository
+    from repositories.fee_structure_repository import FeeStructureRepository
+    
+    form = await request.form()
+    
+    student_id = int(form.get("student_id"))
+    fee_structure_id = int(form.get("fee_structure_id"))
+    amount_paid = float(form.get("amount_paid", 0))
+    payment_date = datetime.strptime(form.get("payment_date"), '%Y-%m-%d').date()
+    status = form.get("status", "pending")
+    payment_method = form.get("payment_method")
+    transaction_id = form.get("transaction_id")
+    notes = form.get("notes")
+    
+    # Get structure details for total amount and type
+    structure = FeeStructureRepository.get_by_id(db, fee_structure_id)
+    if not structure:
+        raise HTTPException(status_code=404, detail="Fee structure not found")
+        
+    # Create Fee Record
+    # Note: This creates a consolidated record. 
+    # In a more complex system, this might distribute payment across existing fee components.
+    fee_data = {
+        "student_id": student_id,
+        "fee_type": f"Tuition & Fees ({structure.academic_year})",
+        "amount": structure.total_amount,
+        "paid_amount": amount_paid,
+        "due_date": structure.due_date or payment_date,
+        "status": status,
+        "payment_date": payment_date,
+        "remarks": f"Method: {payment_method}, TXN: {transaction_id}. {notes or ''}"
+    }
+    
+    FeeRepository.create(db, fee_data)
+    
+    return RedirectResponse(url="/authority/fees?success=Fee+payment+recorded", status_code=303)
 
 @app.get("/authority/notices")
 async def authority_notices(

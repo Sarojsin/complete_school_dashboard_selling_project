@@ -20,7 +20,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="/authority/fee-structure">
+        <a class="nav-link" href="/authority/fees/structure">
             <i class="bi bi-receipt me-2"></i>Fee Structure
         </a>
     </li>
@@ -31,7 +31,7 @@
 
 {% block page_actions %}
 <div class="d-flex gap-2">
-    <a href="/authority/add-fee" class="btn btn-sm btn-primary">
+    <a href="/authority/fees/add" class="btn btn-sm btn-primary">
         <i class="bi bi-plus-circle me-1"></i>Add Fee
     </a>
     <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#bulkActionModal">
@@ -94,10 +94,10 @@
                 <div class="row align-items-center">
                     <div class="col">
                         <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending Fees</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">₹17,500</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">₹{{ pending_amount or 0 }}</div>
                         <div class="mt-2">
                             <span class="text-danger small fw-bold">
-                                <i class="bi bi-arrow-down me-1"></i>8.2%
+                                <i class="bi bi-arrow-down me-1"></i>0%
                             </span>
                             <span class="text-muted small">reduction</span>
                         </div>
@@ -176,12 +176,16 @@
                 </select>
             </div>
             <div class="col-md-8">
-                <label class="form-label">Search Students</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search by student name, ID, or parent name...">
-                    <button class="btn btn-primary">Search</button>
-                </div>
+                <form method="GET">
+                    <label class="form-label">Search Students</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control"
+                            placeholder="Search by student name, ID, or parent name..."
+                            value="{{ search_query or '' }}">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </form>
             </div>
             <div class="col-md-4">
                 <label class="form-label">&nbsp;</label>
@@ -228,12 +232,14 @@
                             <tr>
                                 <td>
                                     <div class="form-check">
-                                        <input class="form-check-input fee-checkbox" type="checkbox" value="{{ fee.id }}">
+                                        <input class="form-check-input fee-checkbox" type="checkbox"
+                                            value="{{ fee.id }}">
                                     </div>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ fee.student_avatar }}" class="rounded-circle me-3" width="40" height="40" alt="{{ fee.student_name }}">
+                                        <img src="{{ fee.student_avatar }}" class="rounded-circle me-3" width="40"
+                                            height="40" alt="{{ fee.student_name }}">
                                         <div>
                                             <h6 class="mb-1">{{ fee.student_name }}</h6>
                                             <small class="text-muted">ID: {{ fee.student_id }}</small><br>
@@ -274,7 +280,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if fee.status == 'paid' else 'warning' if fee.status == 'pending' else 'danger' if fee.status == 'overdue' else 'info' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if fee.status == 'paid' else 'warning' if fee.status == 'pending' else 'danger' if fee.status == 'overdue' else 'info' }}">
                                         {{ fee.status|title }}
                                     </span>
                                     {% if fee.payment_method %}
@@ -292,27 +299,39 @@
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         {% if fee.status != 'paid' %}
-                                        <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#recordPaymentModal{{ fee.id }}">
+                                        <button class="btn btn-outline-success" data-bs-toggle="modal"
+                                            data-bs-target="#recordPaymentModal{{ fee.id }}">
                                             <i class="bi bi-currency-rupee"></i>
                                         </button>
                                         {% endif %}
                                         <a href="/authority/fees/{{ fee.id }}" class="btn btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#sendReminderModal{{ fee.id }}">
+                                        <button class="btn btn-outline-info" data-bs-toggle="modal"
+                                            data-bs-target="#sendReminderModal{{ fee.id }}">
                                             <i class="bi bi-envelope"></i>
                                         </button>
                                         <div class="dropdown">
-                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                                data-bs-toggle="dropdown">
                                                 <i class="bi bi-three-dots"></i>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#"><i class="bi bi-receipt me-2"></i>View Receipt</a></li>
-                                                <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Edit Record</a></li>
-                                                <li><a class="dropdown-item" href="#"><i class="bi bi-clock-history me-2"></i>Payment History</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item text-warning" href="#"><i class="bi bi-calendar-plus me-2"></i>Extend Due Date</a></li>
-                                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Delete Record</a></li>
+                                                <li><a class="dropdown-item" href="#"><i
+                                                            class="bi bi-receipt me-2"></i>View Receipt</a></li>
+                                                <li><a class="dropdown-item" href="#"><i
+                                                            class="bi bi-pencil me-2"></i>Edit Record</a></li>
+                                                <li><a class="dropdown-item" href="#"><i
+                                                            class="bi bi-clock-history me-2"></i>Payment History</a>
+                                                </li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-warning" href="#"><i
+                                                            class="bi bi-calendar-plus me-2"></i>Extend Due Date</a>
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"><i
+                                                            class="bi bi-trash me-2"></i>Delete Record</a></li>
                                             </ul>
                                         </div>
                                     </div>
@@ -327,16 +346,24 @@
                 <div class="row mt-3">
                     <div class="col-md-6">
                         <div class="btn-group">
-                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="bulkActionsBtn" disabled>
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" id="bulkActionsBtn" disabled>
                                 Bulk Actions
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" id="bulkExport"><i class="bi bi-download me-2"></i>Export Selected</a></li>
-                                <li><a class="dropdown-item" href="#" id="bulkReminder"><i class="bi bi-envelope me-2"></i>Send Reminders</a></li>
-                                <li><a class="dropdown-item" href="#" id="bulkReceipt"><i class="bi bi-receipt me-2"></i>Generate Receipts</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-warning" href="#" id="bulkExtend"><i class="bi bi-calendar-plus me-2"></i>Extend Due Dates</a></li>
-                                <li><a class="dropdown-item text-danger" href="#" id="bulkDelete"><i class="bi bi-trash me-2"></i>Delete Selected</a></li>
+                                <li><a class="dropdown-item" href="#" id="bulkExport"><i
+                                            class="bi bi-download me-2"></i>Export Selected</a></li>
+                                <li><a class="dropdown-item" href="#" id="bulkReminder"><i
+                                            class="bi bi-envelope me-2"></i>Send Reminders</a></li>
+                                <li><a class="dropdown-item" href="#" id="bulkReceipt"><i
+                                            class="bi bi-receipt me-2"></i>Generate Receipts</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item text-warning" href="#" id="bulkExtend"><i
+                                            class="bi bi-calendar-plus me-2"></i>Extend Due Dates</a></li>
+                                <li><a class="dropdown-item text-danger" href="#" id="bulkDelete"><i
+                                            class="bi bi-trash me-2"></i>Delete Selected</a></li>
                             </ul>
                         </div>
                         <span class="ms-2 text-muted small" id="selectedCount">0 records selected</span>
@@ -430,7 +457,8 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ transaction.avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ transaction.student }}">
+                                        <img src="{{ transaction.avatar }}" class="rounded-circle me-2" width="24"
+                                            height="24" alt="{{ transaction.student }}">
                                         <small>{{ transaction.student }}</small>
                                     </div>
                                 </td>
@@ -478,11 +506,11 @@
                         <option value="waive_fees">Waive Partial Fees</option>
                     </select>
                 </div>
-                
+
                 <div id="bulkActionOptions" style="display: none;">
                     <!-- Options will be shown based on selected action -->
                 </div>
-                
+
                 <div class="alert alert-info mt-3">
                     <i class="bi bi-info-circle me-2"></i>
                     This action will be applied to all filtered records (1,247 students).
@@ -557,7 +585,7 @@
 {% block extra_js %}
 <script>
     // Bulk selection functionality
-    document.getElementById('selectAll').addEventListener('change', function() {
+    document.getElementById('selectAll').addEventListener('change', function () {
         const checkboxes = document.querySelectorAll('.fee-checkbox');
         checkboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
@@ -576,7 +604,7 @@
     }
 
     // Filter functionality
-    document.getElementById('resetFilters').addEventListener('click', function() {
+    document.getElementById('resetFilters').addEventListener('click', function () {
         document.getElementById('gradeFilter').value = '';
         document.getElementById('statusFilter').value = '';
         document.getElementById('typeFilter').value = '';
@@ -584,7 +612,7 @@
     });
 
     // Bulk actions
-    document.getElementById('bulkExport').addEventListener('click', function() {
+    document.getElementById('bulkExport').addEventListener('click', function () {
         const selectedIds = Array.from(document.querySelectorAll('.fee-checkbox:checked'))
             .map(checkbox => checkbox.value);
         alert(`Exporting ${selectedIds.length} fee records...`);
@@ -619,7 +647,7 @@
                 y: {
                     beginAtZero: false,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '₹' + (value / 1000) + 'K';
                         }
                     }
@@ -656,15 +684,15 @@
     });
 
     // Bulk action modal functionality
-    document.getElementById('bulkActionSelect').addEventListener('change', function() {
+    document.getElementById('bulkActionSelect').addEventListener('change', function () {
         const optionsDiv = document.getElementById('bulkActionOptions');
         const action = this.value;
-        
+
         if (action) {
             optionsDiv.style.display = 'block';
             let optionsHtml = '';
-            
-            switch(action) {
+
+            switch (action) {
                 case 'send_reminders':
                     optionsHtml = `
                         <label class="form-label">Reminder Message</label>
@@ -702,7 +730,7 @@
                     `;
                     break;
             }
-            
+
             optionsDiv.innerHTML = optionsHtml;
         } else {
             optionsDiv.style.display = 'none';
