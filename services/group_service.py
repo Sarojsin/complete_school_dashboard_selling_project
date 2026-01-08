@@ -77,9 +77,9 @@ class GroupService:
     
     def update_group(self, group_id: int, name: Optional[str], description: Optional[str], current_user_id: int) -> dict:
         """Update group details - only creator or teachers can update"""
-        group = self.group_repo.get_by_id(group_id)
+        group = self.group_repo.get_group_by_id(group_id)
         if not group:
-            raise HTTPException(status_code=404, detail="Group not found")
+            raise NotFoundError(f"Group {group_id} not found")
         
         # Check if user is creator or teacher in the group
         is_creator = group.created_by == current_user_id
@@ -87,12 +87,16 @@ class GroupService:
         is_teacher = user_role == "teacher"
         
         if not (is_creator or is_teacher):
-            raise HTTPException(
-                status_code=403,
-                detail="Only group creator or teachers can update group details"
-            )
+            raise PermissionDeniedError("Only group creator or teachers can update group details")
         
-        updated_group = self.group_repo.update_group(group_id, name, description)
+        # Update group using the first update_group method
+        update_data = {}
+        if name:
+            update_data["name"] = name
+        if description is not None:
+            update_data["description"] = description
+        
+        updated_group = self.group_repo.update_group(group_id, update_data)
         
         return {
             "id": updated_group.id,

@@ -77,21 +77,6 @@ class GroupRepository:
         ).first()
         return member.role if member else None
     
-    def update_group(self, group_id: int, name: Optional[str] = None, description: Optional[str] = None) -> Optional[Group]:
-        """Update group details"""
-        group = self.get_by_id(group_id)
-        if not group:
-            return None
-        
-        if name:
-            group.name = name
-        if description is not None:  # Allow empty string
-            group.description = description
-        
-        self.session.commit()
-        self.session.refresh(group)
-        return group
-    
     def add_member(self, member_data: dict) -> GroupMember:
         """Add a user to a group"""
         member = GroupMember(**member_data)

@@ -38,7 +38,9 @@ class GroupMember(Base):
     is_active = Column(Boolean, default=True)
     
     # Unique constraint: user can't be in same group twice
-    __table_args__ = ({"sqlite_autoincrement": True},)
+    __table_args__ = (
+        {"sqlite_autoincrement": True},
+    )
     
     # Relationships
     group = relationship("Group", back_populates="members")

@@ -143,7 +143,7 @@ async def edit_group_page(
         group_data = group_service.get_group_details(group_id, current_user.id)
         
         # Check if user can edit (creator or teacher)
-        is_creator = group_data["creator"]["id"] == current_user.id
+        is_creator = group_data["created_by"] == current_user.id
         user_role = group_repo.get_member_role(group_id, current_user.id)
         is_teacher = user_role == "teacher"
         
@@ -175,6 +175,8 @@ async def update_group(
     db: Session = Depends(get_db)
 ):
     """Update group details"""
+    from utils.exceptions import PermissionDeniedError, NotFoundError
+    
     group_repo = GroupRepository(db)
     group_service = GroupService(group_repo)
     
@@ -182,8 +184,10 @@ async def update_group(
         group_service.update_group(group_id, name, description, current_user.id)
         request.session["message"] = f"Group '{name}' updated successfully"
         return RedirectResponse(url=f"/groups/{group_id}", status_code=303)
-    except HTTPException:
-        raise
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except PermissionDeniedError as e:
+        raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         request.session["error"] = str(e)
         return RedirectResponse(url=f"/groups/{group_id}/edit", status_code=303)
@@ -243,6 +247,8 @@ async def add_members(
     db: Session = Depends(get_db)
 ):
     """Add members to group"""
+    from utils.exceptions import PermissionDeniedError, NotFoundError
+    
     group_repo = GroupRepository(db)
     group_service = GroupService(group_repo)
     
@@ -255,6 +261,8 @@ async def add_members(
         request.session["message"] = f"Added {len(result['added'])} members"
         if result['failed']:
             request.session["warning"] = f"{len(result['failed'])} users could not be added"
+    except (NotFoundError, PermissionDeniedError) as e:
+        request.session["error"] = str(e)
     except Exception as e:
         request.session["error"] = str(e)
     
@@ -272,13 +280,16 @@ async def remove_member(
     db: Session = Depends(get_db)
 ):
     """Remove member from group"""
+    from utils.exceptions import PermissionDeniedError, NotFoundError, ValidationError
+    
     group_repo = GroupRepository(db)
-    user_repo = UserRepository(db)
-    group_service = GroupService(group_repo, user_repo)
+    group_service = GroupService(group_repo)
     
     try:
         group_service.remove_member_from_group(group_id, user_id, current_user.id)
         request.session["message"] = "Member removed successfully"
+    except (NotFoundError, PermissionDeniedError, ValidationError) as e:
+        request.session["error"] = str(e)
     except Exception as e:
         request.session["error"] = str(e)
     

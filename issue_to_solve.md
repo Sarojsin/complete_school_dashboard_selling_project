@@ -11,7 +11,7 @@ solved the issue(-)
 (*) authority/teachers/add:{"detail":"Method Not Allowed"}
 (+) authority/notices/add:Internal Server Errorfee 
 (*) authority/notices/: yeta . after (-)
-(*)group/ 
+(*)group/ .(-)
 what to solve on it ?
 ❗ High-Priority Issues (Must Fix)
 Duplicate / wrong repository method
@@ -53,5 +53,25 @@ No migration for constraints
 Add Alembic migration for:
 Unique constraint
 Enum enforcement (optional)
+## issue is solved
+Fixed Issues
+1. Repository — Removed duplicate update_group method
 
+Deleted the broken second implementation that called non-existent get_by_id()
+Kept the first update_group(group_id, update_data) method
+2. Service — Standardized exception handling
+
+Removed HTTPException usage from group_service.py
+Now uses custom exceptions (NotFoundError, PermissionDeniedError, ValidationError) consistently
+Fixed update_group to call repository with correct method signature
+3. Routes — Fixed dependency injection
+
+Removed incorrect UserRepository(db) instantiation (UserRepository uses static methods)
+Added proper exception handling for custom exceptions in all route handlers:
+update_group — catches NotFoundError, PermissionDeniedError
+add_members — catches NotFoundError, PermissionDeniedError
+remove_member — catches NotFoundError, PermissionDeniedError, ValidationError
+4. Routes — Fixed data access bug
+
+Changed group_data["creator"]["id"] → group_data["created_by"] in edit_group_page
 
