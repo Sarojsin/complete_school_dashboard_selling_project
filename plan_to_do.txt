@@ -1,0 +1,7 @@
+there should be feature a
+in which if a teacher is teaching 
+in different classes than he should be seeing the
+all the students which he is teaching .
+and
+authoirty must add the teacher to that classes.
+
