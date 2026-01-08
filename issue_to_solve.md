@@ -1,5 +1,5 @@
 ## issue_to_solve.md
-nee to solve (*)
+need to solve (*)
 not really an issue(+)
 
 (*) authority/students/1/edit :{"detail":"Method Not Allowed"}
@@ -9,3 +9,4 @@ not really an issue(+)
 (*)authority/teachers/1 : could not send the message
 (*) authority/teachers/add:{"detail":"Method Not Allowed"}
 (+) authority/notices/add:Internal Server Errorfee 
+(*) authority/notices/: yeta 

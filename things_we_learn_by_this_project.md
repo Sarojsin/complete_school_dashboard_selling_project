@@ -42,4 +42,116 @@ Here is why:
 Restarting = Rebooting: Restarting the database service on Render is just like restarting your own computer. All the data (or lack of data) that was there before will still be there when it wakes up. It does not reset or "sync" with your PC.
 It is a Separate Brain: Think of your Local DB and Render DB as two completely different hard drives. Restarting the Render hard drive won't magically copy files from your home PC to it.
 
+Here are the issues on the notice system on the authority dashboard or page and how to solve them, point-wise and short 👇
+
+1. Incorrect days_remaining calculation
+
+Issue:
+.days becomes 0 if expiry is less than 24 hours.
+
+Fix:
+
+from math import ceil
+delta = n.expires_at - datetime.utcnow()
+days_remaining = ceil(delta.total_seconds() / 86400)
+
+2. Missing role-based authorization
+
+Issue:
+Any logged-in user can add/edit/delete notices.
+
+Fix:
+
+if current_user.role != "authority":
+    raise HTTPException(status_code=403, detail="Not allowed")
+
+3. Inconsistent published_date usage
+
+Issue:
+Using created_at and published_date inconsistently.
+
+Fix:
+Use only one field (recommended: created_at)
+or ensure published_date exists in the model.
+
+4. No pagination implemented
+
+Issue:
+Loads all notices at once → slow with large data.
+
+Fix:
+Add pagination:
+
+page: int = 1
+limit: int = 10
+offset = (page - 1) * limit
+
+5. Hard delete of notices
+
+Issue:
+Deleted notices cannot be recovered.
+
+Fix:
+Use soft delete:
+
+notice.is_deleted = True
+
+
+Filter deleted notices in queries.
+
+6. Placeholder values used
+
+Issue:
+Stats like views and this_month are fake.
+
+Fix:
+
+Add views column
+
+Count notices created in current month
+
+7. No input validation for forms
+
+Issue:
+Invalid or empty data can be saved.
+
+Fix:
+Use Pydantic schema or manual validation:
+
+if not form.get("title"):
+    raise HTTPException(400, "Title required")
+
+8. DELETE route may fail in browser
+
+Issue:
+HTML forms don’t support DELETE method.
+
+Fix:
+Use POST instead:
+
+@app.post("/authority/notices/delete/{id}")
+
+9. UTC time hardcoded
+
+Issue:
+Mismatch if users are in different timezones.
+
+Fix:
+Store UTC, convert in template if needed.
+
+10. No ownership check on edit/delete
+
+Issue:
+Any authority can edit another authority’s notice.
+
+Fix:
+
+if notice.authority_id != current_user.authority_profile.id:
+    raise HTTPException(403, "Not your notice")
+
+
+✅ Fixing these makes your system secure, scalable, and production-ready.
+
+## main thing learn that on the system deleting from database is not apperopriate to do. we just want to hide the data from the user.which is best practice.
+
 ## learn render CLI 
