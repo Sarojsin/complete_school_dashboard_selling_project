@@ -88,6 +88,8 @@ app.add_middleware(
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# Serve media files at /media URL
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
 # Templates
 templates = Jinja2Templates(directory="templates")
