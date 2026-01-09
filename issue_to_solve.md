@@ -10,6 +10,13 @@ solved the issue(-)
 (*)authority/teachers/1 : could not send the message
 (*) authority/teachers/add:{"detail":"Method Not Allowed"}
 (+) authority/notices/add:Internal Server Errorfee 
+(+)student/assignments . ma grade wise assignment not comming . sabai class ko aaudai cha.
+   I need to solve this issue by using 
+   filter while student is getting his assignment from database.
+   filter by grade , which teacher is providing the assignment.
+   (-)submission  wala part thik cha it working aali glitch gudai cha .
+   
+
 (*) authority/notices/: yeta . after (-)
 (*)group/ .(-)
 what to solve on it ?
