@@ -123,7 +123,7 @@
                 <h5 class="card-title mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Upload New Material</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="/teacher/upload-notes" enctype="multipart/form-data" id="uploadForm">
+                <form method="POST" action="/teacher/notes/upload" enctype="multipart/form-data" id="uploadForm">
                     <!-- Basic Information -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -136,12 +136,14 @@
                             <select class="form-select" id="course" name="course_id" required>
                                 <option value="">Select Course</option>
                                 {% for course in courses %}
-                                <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
+                                <option value="{{ course.id }}">{{ course.course_name }} ({{ course.course_code }})
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="material_type" class="form-label">Material Type <span class="text-danger">*</span></label>
+                            <label for="material_type" class="form-label">Material Type <span
+                                    class="text-danger">*</span></label>
                             <select class="form-select" id="material_type" name="material_type" required>
                                 <option value="">Select Type</option>
                                 <option value="lecture_notes">Lecture Notes</option>
@@ -156,11 +158,13 @@
                         </div>
                         <div class="col-12 mb-3">
                             <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" required placeholder="Enter material title...">
+                            <input type="text" class="form-control" id="title" name="title" required
+                                placeholder="Enter material title...">
                         </div>
                         <div class="col-12 mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Provide a brief description of this material..."></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                placeholder="Provide a brief description of this material..."></textarea>
                         </div>
                     </div>
 
@@ -202,7 +206,8 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="chapter" class="form-label">Chapter/Topic</label>
-                            <input type="text" class="form-control" id="chapter" name="chapter" placeholder="e.g., Chapter 3: Algebra">
+                            <input type="text" class="form-control" id="chapter" name="chapter"
+                                placeholder="e.g., Chapter 3: Algebra">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="due_date" class="form-label">Due Date (if applicable)</label>
@@ -210,8 +215,10 @@
                         </div>
                         <div class="col-12 mb-3">
                             <label for="tags" class="form-label">Tags</label>
-                            <input type="text" class="form-control" id="tags" name="tags" placeholder="Enter tags separated by commas...">
-                            <div class="form-text">Help students find materials easily (e.g., midterm, important, formula)</div>
+                            <input type="text" class="form-control" id="tags" name="tags"
+                                placeholder="Enter tags separated by commas...">
+                            <div class="form-text">Help students find materials easily (e.g., midterm, important,
+                                formula)</div>
                         </div>
                     </div>
 
@@ -224,19 +231,22 @@
                         </div>
                         <div class="col-12">
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="visibility" id="visibility_public" value="public" checked>
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_public"
+                                    value="public" checked>
                                 <label class="form-check-label" for="visibility_public">
                                     <strong>Public</strong> - Visible to all students in the course
                                 </label>
                             </div>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="visibility" id="visibility_specific" value="specific">
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_specific"
+                                    value="specific">
                                 <label class="form-check-label" for="visibility_specific">
                                     <strong>Specific Classes</strong> - Choose which classes can see this material
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="visibility" id="visibility_private" value="private">
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_private"
+                                    value="private">
                                 <label class="form-check-label" for="visibility_private">
                                     <strong>Private</strong> - Only visible to you (for draft materials)
                                 </label>
@@ -250,7 +260,8 @@
                                 {% for class in classes %}
                                 <div class="col-md-4 mb-2">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="classes[]" value="{{ class.id }}" id="class{{ class.id }}">
+                                        <input class="form-check-input" type="checkbox" name="classes[]"
+                                            value="{{ class.id }}" id="class{{ class.id }}">
                                         <label class="form-check-label" for="class{{ class.id }}">
                                             {{ class.name }}
                                         </label>
@@ -270,13 +281,15 @@
                         </div>
                         <div class="col-12">
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="notify_students" name="notify_students" checked>
+                                <input class="form-check-input" type="checkbox" id="notify_students"
+                                    name="notify_students" checked>
                                 <label class="form-check-label" for="notify_students">
                                     Notify students about this new material
                                 </label>
                             </div>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="email_notification" name="email_notification">
+                                <input class="form-check-input" type="checkbox" id="email_notification"
+                                    name="email_notification">
                                 <label class="form-check-label" for="email_notification">
                                     Also send email notification to students
                                 </label>
@@ -298,7 +311,8 @@
                                     <i class="bi bi-arrow-clockwise me-1"></i>Reset Form
                                 </button>
                                 <div class="d-flex gap-2">
-                                    <button type="submit" name="action" value="save_draft" class="btn btn-outline-primary">
+                                    <button type="submit" name="action" value="save_draft"
+                                        class="btn btn-outline-primary">
                                         <i class="bi bi-file-earmark me-1"></i>Save as Draft
                                     </button>
                                     <button type="submit" name="action" value="publish" class="btn btn-primary">
@@ -419,7 +433,8 @@
                     </div>
                 </div>
                 <div class="text-center">
-                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#storageModal">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                        data-bs-target="#storageModal">
                         Manage Storage
                     </button>
                 </div>
@@ -436,21 +451,21 @@
         transition: all 0.3s ease;
         cursor: pointer;
     }
-    
+
     .file-upload-area:hover {
         border-color: #4e73df;
         background-color: #f8f9fc;
     }
-    
+
     .file-upload-area.dragover {
         border-color: #4e73df;
         background-color: #e7f1ff;
     }
-    
+
     .tip-item {
         transition: transform 0.2s;
     }
-    
+
     .tip-item:hover {
         transform: translateX(5px);
     }
@@ -518,7 +533,7 @@
 
     // Visibility options
     document.querySelectorAll('input[name="visibility"]').forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', function () {
             const classSelection = document.getElementById('classSelection');
             if (this.value === 'specific') {
                 classSelection.style.display = 'block';
@@ -529,7 +544,7 @@
     });
 
     // Form validation
-    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
         const file = fileInput.files[0];
         if (!file) {
             e.preventDefault();
@@ -553,7 +568,7 @@
             'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             'text/plain'
         ];
-        
+
         if (!allowedTypes.includes(file.type)) {
             e.preventDefault();
             alert('Please select a supported file type (PDF, DOC, DOCX, PPT, PPTX, TXT).');
@@ -574,7 +589,7 @@
     });
 
     // Auto-fill title based on file name
-    fileInput.addEventListener('change', function() {
+    fileInput.addEventListener('change', function () {
         if (this.files.length > 0 && !document.getElementById('title').value) {
             const fileName = this.files[0].name;
             // Remove extension and clean up the name

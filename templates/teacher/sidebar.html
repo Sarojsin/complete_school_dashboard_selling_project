@@ -33,6 +33,18 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {% if '/teacher/notes/upload' in request.path %}active{% endif %}"
+                    href="/teacher/notes/upload">
+                    <i class="bi bi-upload me-2"></i>Study Materials
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if '/teacher/videos/upload' in request.path %}active{% endif %}"
+                    href="/teacher/videos/upload">
+                    <i class="bi bi-camera-video me-2"></i>Videos
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {% if '/teacher/grades' in request.path %}active{% endif %}" href="/teacher/grades">
                     <i class="bi bi-graph-up me-2"></i>Grades
                 </a>
