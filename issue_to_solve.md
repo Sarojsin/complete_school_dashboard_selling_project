@@ -9,13 +9,28 @@ solved the issue(-)
 (*)authority/teachers/1/edit:{"detail":"Method Not Allowed"}
 (*)authority/teachers/1 : could not send the message
 (*) authority/teachers/add:{"detail":"Method Not Allowed"}
+(*)teacher/notes and /videos : could not send the message 
+  how to solve
+  teacher_upload_notes
+  (GET) to fetch the teacher's enrolled courses.
+  Add teacher_upload_notes_post (POST) to handle file uploads, save them to the filesystem, and create database records using 
+  NotesRepository
+  teacher_upload_videos
+  (GET) to fetch the teacher's enrolled courses.
+  Add teacher_upload_videos_post (POST) to handle video uploads and create records using 
+  VideosRepository
+  student_notes
+  (GET) to fetch notes for the student's enrolled courses.
+  student_videos
+  (GET) to fetch videos for the student's enrolled courses.
+
 (+) authority/notices/add:Internal Server Errorfee 
 (+)student/assignments . ma grade wise assignment not comming . sabai class ko aaudai cha.
    I need to solve this issue by using 
    filter while student is getting his assignment from database.
    filter by grade , which teacher is providing the assignment.
    (-)submission  wala part thik cha it working aali glitch gudai cha .
-   
+
 
 (*) authority/notices/: yeta . after (-)
 (*)group/ .(-)
