@@ -9,12 +9,15 @@ solved the issue(-)
 (*)student/tests :{"detail":"Could not validate credentials"}(-)
    some other issues are there .
 (*)/student/timetable : function define garnu baki cha .   
+(*)student/forum# :Categories working ma chaina. 
+   function define garnu baki cha .   
 (*)authority/teachers/1/edit:{"detail":"Method Not Allowed"}
 (*)authority/teachers/1 : could not send the message
 (*) authority/teachers/add:{"detail":"Method Not Allowed"}
 (*)teacher/tests/create : some issue is there .
 (*)teacher/tests/: jinja2.exceptions.TemplateNotFound: 'teacher/tests.html' not found in search path: 'templates'
 (*)/teacher/timetable: function define garnu baki cha . 
+(*)/teacher/assignments/create: Assign To Classes incomplete cha.
 (*)teacher/notes and /videos : could not send the message 
   ## how to solve
   teacher_upload_notes
