@@ -271,4 +271,27 @@ class RoleEnum(str, Enum):
     teacher = "teacher"
     student = "student"
 
+## some time Routing Fix for Notes and Videos
+I have fixed the 404 and 422 errors encountered when trying to upload notes and videos.
+
+Root Cause Analysis
+404 Error: The routes were previously renamed from /teacher/notes/upload to /teacher/upload-notes, but the old URLs were still being requested.
+422 Error: The URL /teacher/videos/upload was being incorrectly matched by a generic placeholder route @app.get("/teacher/videos/{id}"). Since "upload" cannot be converted to an integer, FastAPI returned a 422 error.
+Changes Made
+backend (main.py)
+Renamed upload routes back to the expected URLs:
+/teacher/notes/upload (GET & POST)
+/teacher/videos/upload (GET & POST)
+Moved these specific routes above the generic placeholder routes (/teacher/videos/{id}, etc.) to ensure they are matched first.
+Frontend
+Teacher Sidebar: Updated the "Study Materials" and "Videos" links to use the corrected URLs.
+upload_notes.html: Updated the form action to point to /teacher/notes/upload.
+Results
+Accessing /teacher/notes/upload now correctly renders the upload page.
+Accessing /teacher/videos/upload no longer causes a 422 error and correctly displays the video management page.
+All forms now post to the correct endpoints.
+TIP
+
+Always place specific static routes before routes with path parameters (like {id}) to avoid "shadowing" or validation errors.
+
 ## learn render CLI 
