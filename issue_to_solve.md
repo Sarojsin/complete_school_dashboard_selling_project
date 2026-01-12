@@ -6,11 +6,17 @@ solved the issue(-)
 (*) authority/students/1/edit :{"detail":"Method Not Allowed"}
 (*) authority/students/1 : could not send the message
 (*) authority/students/add:{"detail":"Method Not Allowed"} 
+(*)student/tests :{"detail":"Could not validate credentials"}(-)
+   some other issues are there .
+(*)/student/timetable : function define garnu baki cha .   
 (*)authority/teachers/1/edit:{"detail":"Method Not Allowed"}
 (*)authority/teachers/1 : could not send the message
 (*) authority/teachers/add:{"detail":"Method Not Allowed"}
+(*)teacher/tests/create : some issue is there .
+(*)teacher/tests/: jinja2.exceptions.TemplateNotFound: 'teacher/tests.html' not found in search path: 'templates'
+(*)/teacher/timetable: function define garnu baki cha . 
 (*)teacher/notes and /videos : could not send the message 
-  how to solve
+  ## how to solve
   teacher_upload_notes
   (GET) to fetch the teacher's enrolled courses.
   Add teacher_upload_notes_post (POST) to handle file uploads, save them to the filesystem, and create database records using 
