@@ -1740,6 +1740,348 @@ async def teacher_chat(request: Request, current_user: User = Depends(get_curren
     })
 
 
+# ------------------ TEACHER ACTION ROUTES ------------------
+@app.get("/teacher/courses/{id}")
+async def teacher_course_detail(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/course_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "course": {
+            "id": id,
+            "subject": "Mathematics",
+            "grade": "10-A",
+            "code": "MATH101",
+            "description": "Introduction to Algebra and Geometry",
+            "student_count": 30,
+            "schedule": "Mon, Wed, Fri 09:00 AM",
+            "progress": 45
+        }
+    })
+
+@app.get("/teacher/courses/{id}/students")
+async def teacher_course_students(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/students.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "students": []
+    })
+
+@app.get("/teacher/assignments/{id}/submissions")
+async def teacher_view_submissions(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.assignment_repository import AssignmentRepository
+    from models.models import AssignmentSubmission, Student
+    
+    assignment = AssignmentRepository.get_by_id(db, id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+        
+    # Check if this teacher owns the assignment
+    from repositories.teacher_repository import TeacherRepository
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher or assignment.teacher_id != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    submissions = db.query(AssignmentSubmission).filter(
+        AssignmentSubmission.assignment_id == id
+    ).join(Student).all()
+    
+    return templates.TemplateResponse("teacher/view_submissions.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "assignment": assignment,
+        "submissions": submissions
+    })
+
+@app.post("/teacher/assignments/submissions/{submission_id}/grade")
+async def teacher_grade_submission(
+    submission_id: int, 
+    request: Request, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    from models.models import AssignmentSubmission
+    form_data = await request.form()
+    
+    submission = db.query(AssignmentSubmission).get(submission_id)
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+        
+    submission.score = float(form_data.get("score"))
+    submission.feedback = form_data.get("feedback")
+    submission.graded_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return RedirectResponse(url=f"/teacher/assignments/{submission.assignment_id}/submissions?success=Grade+updated", status_code=303)
+
+@app.get("/teacher/assignments/{id}/edit")
+async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/edit_assignment.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "assignment": {
+            "id": id,
+            "title": "Algebra Problem Set 1",
+            "description": "Complete exercises 1-10 from Chapter 2",
+            "subject": "Mathematics",
+            "class": "10-A",
+            "due_date": "2023-10-15",
+            "points": 100
+        },
+        "classes": ["10-A", "10-B"],
+        "subjects": ["Mathematics", "Physics"]
+    })
+
+@app.get("/teacher/attendance/{id}")
+async def teacher_view_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/attendance.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "stats": {},
+        "classes": [],
+        "subjects": [],
+        "attendance_records": [],
+        "current_month": "",
+        "monthly_overview": [],
+        "monthly_stats": {}
+    })
+
+@app.get("/teacher/attendance/{id}/edit")
+async def teacher_edit_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/take_attendance.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "class_info": {},
+        "students": []
+    })
+
+@app.get("/teacher/tests/{id}/results")
+async def teacher_test_results(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/view_tests.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "tests": [],
+        "stats": {},
+        "subjects": [],
+        "classes": [],
+        "upcoming_tests": []
+    })
+
+@app.delete("/teacher/tests/delete/{id}")
+async def teacher_delete_test(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Test deleted successfully"})
+
+@app.post("/teacher/students/{student_id}/contact")
+async def teacher_contact_student(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Message sent successfully"})
+
+@app.delete("/teacher/assignments/delete/{id}")
+async def teacher_delete_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Assignment deleted successfully"})
+
+@app.get("/teacher/notes/upload")
+async def teacher_upload_notes(
+    request: Request, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.course_repository import CourseRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    courses = []
+    notes = []
+    if teacher:
+        from repositories.notes_repository import NotesRepository
+        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
+        notes = NotesRepository.get_by_teacher(db, teacher.id)
+        
+    return templates.TemplateResponse("teacher/upload_notes.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "courses": courses,
+        "recent_uploads": [
+            {
+                "title": n.title,
+                "course": n.course.course_name if n.course else "Unknown",
+                "upload_time": n.uploaded_at.strftime("%b %d, %H:%M"),
+                "status": "published"
+            } for n in notes[:5]
+        ],
+        "stats": {
+            "total_materials": len(notes),
+            "total_size": f"{sum(n.file_size or 0 for n in notes) / (1024*1024):.1f} MB",
+            "this_month": len([n for n in notes if n.uploaded_at.month == datetime.utcnow().month])
+        }
+    })
+
+@app.post("/teacher/notes/upload")
+async def teacher_upload_notes_post(
+    request: Request,
+    title: str = Form(...),
+    course_id: int = Form(...),
+    description: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.notes_repository import NotesRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        raise HTTPException(status_code=403, detail="Only teachers can upload notes")
+
+    # Handle file upload
+    ext = os.path.splitext(file.filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    file_path = f"/static/uploads/notes/{filename}"
+    
+    save_path = f"app{file_path}"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Get file size
+    file.file.seek(0, os.SEEK_END)
+    file_size = file.file.tell()
+    
+    note_data = {
+        "title": title,
+        "description": description,
+        "course_id": course_id,
+        "teacher_id": teacher.id,
+        "file_path": file_path,
+        "file_size": file_size,
+        "file_type": ext.replace('.', '')
+    }
+    
+    NotesRepository.create(db, note_data)
+    return RedirectResponse(url="/teacher/dashboard?success=Material+uploaded", status_code=303)
+
+@app.get("/teacher/videos/upload")
+async def teacher_upload_videos(
+    request: Request, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.course_repository import CourseRepository
+    from repositories.videos_repository import VideosRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    courses = []
+    videos = []
+    if teacher:
+        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
+        videos = VideosRepository.get_by_teacher(db, teacher.id)
+        
+    formatted_videos = []
+    for v in videos:
+        formatted_videos.append({
+            "id": v.id,
+            "title": v.title,
+            "thumbnail": "https://via.placeholder.com/60x40?text=Video",
+            "duration": f"{v.duration // 60}:{v.duration % 60:02d}" if v.duration else "0:00",
+            "subject": v.course.course_name if v.course else "Unknown",
+            "class": v.course.grade_level if v.course else "Unknown",
+            "upload_date": v.uploaded_at.strftime("%Y-%m-%d"),
+            "size": f"{(v.file_size or 0) / (1024*1024):.1f} MB",
+            "views": 0,
+            "status": "processed"
+        })
+
+    return templates.TemplateResponse("teacher/upload_videos.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "courses": courses,
+        "videos": formatted_videos,
+        "stats": {
+            "total_videos": len(videos),
+            "total_size": f"{sum(v.file_size or 0 for v in videos) / (1024*1024*1024):.2f}",
+            "total_views": 0,
+            "this_month": len([v for v in videos if v.uploaded_at.month == datetime.utcnow().month])
+        },
+        "storage": {
+            "used": sum(v.file_size or 0 for v in videos) / (1024*1024*1024),
+            "total": 10,
+            "percentage": min(100, (sum(v.file_size or 0 for v in videos) / (1024*1024*1024*10)) * 100)
+        },
+        "subjects": list(set(c.course_name for c in courses)) if courses else ["General"],
+        "classes": list(set(c.grade_level for c in courses)) if courses else ["All"]
+    })
+
+@app.post("/teacher/videos/upload")
+async def teacher_upload_videos_post(
+    request: Request,
+    title: str = Form(...),
+    course_id: int = Form(...),
+    description: Optional[str] = Form(None),
+    video_file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.videos_repository import VideosRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        raise HTTPException(status_code=403, detail="Only teachers can upload videos")
+
+    # Handle file upload
+    ext = os.path.splitext(video_file.filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    file_path = f"/static/uploads/videos/{filename}"
+    
+    save_path = f"app{file_path}"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(video_file.file, buffer)
+        
+    # Get file size
+    video_file.file.seek(0, os.SEEK_END)
+    file_size = video_file.file.tell()
+    
+    video_data = {
+        "title": title,
+        "description": description,
+        "course_id": course_id,
+        "teacher_id": teacher.id,
+        "file_path": file_path,
+        "file_size": file_size,
+        "duration": 0
+    }
+    
+    VideosRepository.create(db, video_data)
+    return RedirectResponse(url="/teacher/dashboard?success=Video+uploaded", status_code=303)
+
+@app.get("/teacher/attendance/delete/{id}")
+async def teacher_delete_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Attendance record deleted successfully"})
+
+@app.get("/teacher/videos/{id}")
+async def teacher_view_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Video player placeholder"})
+
+@app.get("/teacher/videos/{id}/edit")
+async def teacher_edit_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Edit video placeholder"})
+
+@app.delete("/teacher/videos/{id}")
+async def teacher_delete_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Video deleted successfully"})
+
 # ------------------ AUTHORITY/ADMIN PAGES ------------------
 @app.get("/authority/dashboard")
 async def authority_dashboard(request: Request, current_user: User = Depends(get_current_user)):
@@ -2865,7 +3207,8 @@ async def authority_analytics(
         "demographics_data": [55, 45] # Mock gender dist
     })
 
-# ------------------ FAVICON ------------------
+
+# ------------------ UTILITY & DEBUGGING ------------------
 @app.get("/favicon.ico")
 async def favicon():
     from fastapi.responses import FileResponse, Response
@@ -2878,353 +3221,10 @@ async def favicon():
         # Return 204 No Content if favicon doesn't exist
         return Response(status_code=204)
 
-# ------------------ TEACHER ACTION ROUTES ------------------
-@app.get("/teacher/courses/{id}")
-async def teacher_course_detail(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/course_detail.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "course": {
-            "id": id,
-            "subject": "Mathematics",
-            "grade": "10-A",
-            "code": "MATH101",
-            "description": "Introduction to Algebra and Geometry",
-            "student_count": 30,
-            "schedule": "Mon, Wed, Fri 09:00 AM",
-            "progress": 45
-        }
-    })
-
-@app.get("/teacher/courses/{id}/students")
-async def teacher_course_students(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/students.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "students": []
-    })
-
-@app.get("/teacher/assignments/{id}/submissions")
-async def teacher_view_submissions(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from repositories.assignment_repository import AssignmentRepository
-    from models.models import AssignmentSubmission, Student
-    
-    assignment = AssignmentRepository.get_by_id(db, id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-        
-    # Check if this teacher owns the assignment
-    from repositories.teacher_repository import TeacherRepository
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    if not teacher or assignment.teacher_id != teacher.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    submissions = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.assignment_id == id
-    ).join(Student).all()
-    
-    return templates.TemplateResponse("teacher/view_submissions.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "assignment": assignment,
-        "submissions": submissions
-    })
-
-@app.post("/teacher/assignments/submissions/{submission_id}/grade")
-async def teacher_grade_submission(
-    submission_id: int, 
-    request: Request, 
-    db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
-):
-    from models.models import AssignmentSubmission
-    form_data = await request.form()
-    
-    submission = db.query(AssignmentSubmission).get(submission_id)
-    if not submission:
-        raise HTTPException(status_code=404, detail="Submission not found")
-        
-    submission.score = float(form_data.get("score"))
-    submission.feedback = form_data.get("feedback")
-    submission.graded_at = datetime.utcnow()
-    
-    db.commit()
-    
-    return RedirectResponse(url=f"/teacher/assignments/{submission.assignment_id}/submissions?success=Grade+updated", status_code=303)
-
-@app.get("/teacher/assignments/{id}/edit")
-async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/edit_assignment.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "assignment": {
-            "id": id,
-            "title": "Algebra Problem Set 1",
-            "description": "Complete exercises 1-10 from Chapter 2",
-            "subject": "Mathematics",
-            "class": "10-A",
-            "due_date": "2023-10-15",
-            "points": 100
-        },
-        "classes": ["10-A", "10-B"],
-        "subjects": ["Mathematics", "Physics"]
-    })
-
-@app.get("/teacher/attendance/{id}")
-async def teacher_view_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/attendance.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "stats": {},
-        "classes": [],
-        "subjects": [],
-        "attendance_records": [],
-        "current_month": "",
-        "monthly_overview": [],
-        "monthly_stats": {}
-    })
-
-@app.get("/teacher/attendance/{id}/edit")
-async def teacher_edit_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/take_attendance.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "class_info": {},
-        "students": []
-    })
-
-@app.get("/teacher/tests/{id}/results")
-async def teacher_test_results(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/view_tests.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "tests": [],
-        "stats": {},
-        "subjects": [],
-        "classes": [],
-        "upcoming_tests": []
-    })
-
-@app.delete("/teacher/tests/delete/{id}")
-async def teacher_delete_test(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Test deleted successfully"})
-
-@app.post("/teacher/students/{student_id}/contact")
-async def teacher_contact_student(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Message sent successfully"})
-
-@app.delete("/teacher/assignments/delete/{id}")
-async def teacher_delete_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Assignment deleted successfully"})
-
-@app.get("/teacher/notes/upload")
-async def teacher_upload_notes(
-    request: Request, 
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.course_repository import CourseRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    courses = []
-    notes = []
-    if teacher:
-        from repositories.notes_repository import NotesRepository
-        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
-        notes = NotesRepository.get_by_teacher(db, teacher.id)
-        
-    return templates.TemplateResponse("teacher/upload_notes.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "courses": courses,
-        "recent_uploads": [
-            {
-                "title": n.title,
-                "course": n.course.course_name if n.course else "Unknown",
-                "upload_time": n.uploaded_at.strftime("%b %d, %H:%M"),
-                "status": "published"
-            } for n in notes[:5]
-        ],
-        "stats": {
-            "total_materials": len(notes),
-            "total_size": f"{sum(n.file_size or 0 for n in notes) / (1024*1024):.1f} MB",
-            "this_month": len([n for n in notes if n.uploaded_at.month == datetime.utcnow().month])
-        }
-    })
-
-@app.post("/teacher/notes/upload")
-async def teacher_upload_notes_post(
-    request: Request,
-    title: str = Form(...),
-    course_id: int = Form(...),
-    description: Optional[str] = Form(None),
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.notes_repository import NotesRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    if not teacher:
-        raise HTTPException(status_code=403, detail="Only teachers can upload notes")
-
-    # Handle file upload
-    ext = os.path.splitext(file.filename)[1]
-    filename = f"{uuid.uuid4()}{ext}"
-    file_path = f"/static/uploads/notes/{filename}"
-    
-    save_path = f"app{file_path}"
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    
-    with open(save_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
-    # Get file size
-    file.file.seek(0, os.SEEK_END)
-    file_size = file.file.tell()
-    
-    note_data = {
-        "title": title,
-        "description": description,
-        "course_id": course_id,
-        "teacher_id": teacher.id,
-        "file_path": file_path,
-        "file_size": file_size,
-        "file_type": ext.replace('.', '')
-    }
-    
-    NotesRepository.create(db, note_data)
-    return RedirectResponse(url="/teacher/dashboard?success=Material+uploaded", status_code=303)
-
-@app.get("/teacher/videos/upload")
-async def teacher_upload_videos(
-    request: Request, 
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.course_repository import CourseRepository
-    from repositories.videos_repository import VideosRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    courses = []
-    videos = []
-    if teacher:
-        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
-        videos = VideosRepository.get_by_teacher(db, teacher.id)
-        
-    formatted_videos = []
-    for v in videos:
-        formatted_videos.append({
-            "id": v.id,
-            "title": v.title,
-            "thumbnail": "https://via.placeholder.com/60x40?text=Video",
-            "duration": f"{v.duration // 60}:{v.duration % 60:02d}" if v.duration else "0:00",
-            "subject": v.course.course_name if v.course else "Unknown",
-            "class": v.course.grade_level if v.course else "Unknown",
-            "upload_date": v.uploaded_at.strftime("%Y-%m-%d"),
-            "size": f"{(v.file_size or 0) / (1024*1024):.1f} MB",
-            "views": 0,
-            "status": "processed"
-        })
-
-    return templates.TemplateResponse("teacher/upload_videos.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "courses": courses,
-        "videos": formatted_videos,
-        "stats": {
-            "total_videos": len(videos),
-            "total_size": f"{sum(v.file_size or 0 for v in videos) / (1024*1024*1024):.2f}",
-            "total_views": 0,
-            "this_month": len([v for v in videos if v.uploaded_at.month == datetime.utcnow().month])
-        },
-        "storage": {
-            "used": sum(v.file_size or 0 for v in videos) / (1024*1024*1024),
-            "total": 10,
-            "percentage": min(100, (sum(v.file_size or 0 for v in videos) / (1024*1024*1024*10)) * 100)
-        },
-        "subjects": list(set(c.course_name for c in courses)) if courses else ["General"],
-        "classes": list(set(c.grade_level for c in courses)) if courses else ["All"]
-    })
-
-@app.post("/teacher/videos/upload")
-async def teacher_upload_videos_post(
-    request: Request,
-    title: str = Form(...),
-    course_id: int = Form(...),
-    description: Optional[str] = Form(None),
-    video_file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.videos_repository import VideosRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    if not teacher:
-        raise HTTPException(status_code=403, detail="Only teachers can upload videos")
-
-    # Handle file upload
-    ext = os.path.splitext(video_file.filename)[1]
-    filename = f"{uuid.uuid4()}{ext}"
-    file_path = f"/static/uploads/videos/{filename}"
-    
-    save_path = f"app{file_path}"
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    
-    with open(save_path, "wb") as buffer:
-        shutil.copyfileobj(video_file.file, buffer)
-        
-    # Get file size
-    video_file.file.seek(0, os.SEEK_END)
-    file_size = video_file.file.tell()
-    
-    video_data = {
-        "title": title,
-        "description": description,
-        "course_id": course_id,
-        "teacher_id": teacher.id,
-        "file_path": file_path,
-        "file_size": file_size,
-        "duration": 0
-    }
-    
-    VideosRepository.create(db, video_data)
-    return RedirectResponse(url="/teacher/dashboard?success=Video+uploaded", status_code=303)
-
-@app.get("/teacher/attendance/delete/{id}")
-async def teacher_delete_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Attendance record deleted successfully"})
-
-@app.get("/teacher/videos/{id}")
-async def teacher_view_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Video player placeholder"})
-
-@app.get("/teacher/videos/{id}/edit")
-async def teacher_edit_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Edit video placeholder"})
-
-@app.delete("/teacher/videos/{id}")
-async def teacher_delete_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Video deleted successfully"})
-
 # ------------------ SCHEDULER ------------------
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.chat_cleanup_service import cleanup_expired_messages
 
-# ------------------ DEBUGGING ------------------
 @app.get("/debug/check_user")
 def debug_check_user(email: str = "student@test.com", db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
