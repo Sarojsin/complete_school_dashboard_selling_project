@@ -178,6 +178,9 @@ python -m scripts.verify.verify_endpoints
 ## License
 
 MIT License
+# Admin
+1. Saroj 
+
 ## contibuters
 1. Saroj Singh Dhami
 2. Rijan Ghimire
