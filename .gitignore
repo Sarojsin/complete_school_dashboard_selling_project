@@ -48,7 +48,6 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
-.env.example
 # Uploads
 uploads/*
 !uploads/.gitkeep
