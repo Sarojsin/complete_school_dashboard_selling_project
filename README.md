@@ -180,3 +180,4 @@ python -m scripts.verify.verify_endpoints
 MIT License
 ## contibuters
 1.Saroj Singh Dhami
+2. Rijan Ghimire
