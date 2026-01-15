@@ -15,6 +15,22 @@ GET /health - 2 times (lines 157, 176)
 POST /teacher/students/{student_id}/contact - 2 times (lines 330, 733)
 GET /teacher/assignments/{id}/edit - 2 times (lines 548, 662)
 
+## AUTHENTICATION ENDPOINTS (14 endpoints):
+GET / - 1
+GET /health - 2 ❌ DUPLICATE
+GET /logout - 1
+GET /login - 1
+GET /signup - 1
+GET /signup/student - 1
+GET /signup/teacher - 1
+GET /signup/authority - 1
+GET /signup/parent - 1
+GET /register - 1
+GET /register/student - 1
+GET /register/teacher - 1
+GET /register/parent - 1
+GET /favicon.ico - 1
+
 # authority_routes_complete
 @app.get("/authority/students")
 @app.post("/authority/students/add")
