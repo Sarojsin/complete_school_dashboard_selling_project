@@ -31,6 +31,34 @@ GET /register/teacher - 1
 GET /register/parent - 1
 GET /favicon.ico - 1
 
+## STUDENT ENDPOINTS (28 endpoints):
+GET /student/dashboard - 1
+GET /student/profile - 1
+POST /student/profile - 1
+GET /student/courses - 1
+GET /student/assignments - 3 ❌ TRIPLICATE (lines 693, 763, 1091)
+GET /student/assignments/{assignment_id} - 2 ❌ DUPLICATE (lines 219, 1097)
+POST /student/assignments/{assignment_id}/submit - 2 ❌ DUPLICATE (lines 233, 1103)
+GET /student/grades - 1
+GET /student/attendance - 1
+GET /student/fees - 1
+GET /student/tests - 1
+GET /student/tests/{test_id}/start - 1
+GET /student/tests/{test_id}/result - 1
+GET /student/notices - 1
+GET /student/timetable - 1
+GET /student/notes - 1
+GET /student/videos - 1
+GET /student/forum - 1
+GET /student/messages - 1
+POST /student/messages/{message_id}/read - 1
+GET /student/teachers - 1
+POST /student/teachers/{teacher_id}/contact - 1
+GET /student/groups - 1
+
+
+
+
 # authority_routes_complete
 @app.get("/authority/students")
 @app.post("/authority/students/add")
