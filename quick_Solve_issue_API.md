@@ -102,6 +102,41 @@ DELETE /teacher/videos/{id} - 1
 GET /teacher/groups - 1
 GET /teacher/assignments/{id}/edit - 1 (line 750 - 4th occurrence total but listed above)
 
+## AUTHORITY ENDPOINTS (36 endpoints):
+GET /authority/dashboard - 1
+GET /authority/students - 1
+GET /authority/students/add - 1
+GET /authority/students/{student_id}/edit - 1
+GET /authority/students/{student_id} - 1
+POST /authority/students/{id}/delete - 1
+GET /authority/teachers - 1
+GET /authority/teachers/add - 1
+GET /authority/teachers/{teacher_id}/edit - 1
+GET /authority/teachers/{teacher_id} - 1
+POST /authority/teachers/{id}/delete - 1
+GET /authority/courses - 1
+GET /authority/courses/add - 2 ❌ DUPLICATE (lines 1377, 1386)
+GET /authority/add-course - 1 (alias, same as above)
+POST /authority/courses/add - 2 ❌ DUPLICATE (lines 1392, 1393)
+POST /authority/add-course - 1 (alias, same as above)
+GET /authority/courses/{course_id} - 1
+GET /authority/courses/{course_id}/edit - 1
+POST /authority/courses/{course_id}/edit - 1
+POST /authority/courses/{id}/delete - 1
+GET /authority/fees - 1
+GET /authority/fees/structure - 1
+POST /authority/fees/structure - 1
+GET /authority/fees/add - 1
+POST /authority/fees/add - 1
+GET /authority/notices - 1
+GET /authority/notices/add - 1
+POST /authority/notices/add - 1
+GET /authority/notices/{id}/edit - 1
+POST /authority/notices/{id}/edit - 1
+DELETE /authority/notices/delete/{id} - 1
+GET /authority/notices/view/{id} - 1
+GET /authority/analytics - 1
+GET /authority/groups - 1
 
 # authority_routes_complete
 @app.get("/authority/students")
