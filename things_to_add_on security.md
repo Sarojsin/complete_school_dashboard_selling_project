@@ -1,3 +1,4 @@
+# things to add on security.md
 # Security Roadmap & Enhancements
 
 This document outlines critical and recommended security upgrades for the School Management System to reach enterprise-grade protection.
@@ -80,3 +81,46 @@ Optimize the existing cleanup service for better reliability:
 - **Sessions:** Purge temporary data every 6 hours.
 - **Chat:** Implement configurable retention policies based on school requirements.
 - **Tokens:** Automatically purge expired refresh tokens to keep the database lean.
+
+
+##       MIDDLEWARES 
+## SECURITY & PROTECTION (1-5)
+Security Headers Middleware - Adds comprehensive security headers
+CSP (Content Security Policy) Middleware - Controls resources browser can load
+Clickjacking Protection Middleware - Prevents page from being framed
+XSS Protection Middleware - Enables browser XSS protection
+MIME Sniffing Protection Middleware - Prevents MIME type sniffing
+## PERFORMANCE & OPTIMIZATION (6-9)
+GZip Compression Middleware - Compresses responses for speed
+Cache Control Middleware - Controls browser caching behavior
+ETag Middleware - Implements HTTP ETag for caching
+Rate Limiting Middleware - Limits requests per time window
+## RATE LIMITING & THROTTLING (10-11)
+IP-based Rate Limiting Middleware - Limits requests per IP
+Request Logging Middleware - Logs all HTTP requests
+## LOGGING & MONITORING (12-14)
+Request ID Middleware - Adds unique ID to each request
+User Agent Logging Middleware - Tracks user agent information
+JWT Token Validation Middleware - Validates JWT tokens early
+## AUTHENTICATION & AUTHORIZATION (15-16)
+Role-based Access Middleware - Enforces role-based permissions
+Input Sanitization Middleware - Sanitizes user inputs
+## DATA VALIDATION & SANITIZATION (17-18)
+SQL Injection Protection Middleware - Detects SQL injection attempts
+Session Timeout Middleware - Manages session expiration
+## SESSION & STATE MANAGEMENT (19-20)
+CSRF Protection Middleware - Protects against CSRF attacks
+Error Handling Middleware - Centralized error handling
+## ERROR HANDLING (21-22)
+404 Custom Handler Middleware - Custom 404 pages
+Maintenance Mode Middleware - Enables maintenance mode
+## MAINTENANCE & DEPLOYMENT (23-24)
+Database Connection Pooling Middleware - Manages DB connections
+Analytics Middleware - Tracks usage analytics
+## ANALYTICS & TELEMETRY (25-26)
+Performance Monitoring Middleware - Monitors request performance
+File Upload Security Middleware - Validates uploaded files
+## FILE UPLOAD & MEDIA (27)
+WebSocket Connection Limiter - Limits WebSocket connections
+## WEB SOCKET SPECIFIC (28)
+Session Middleware (Already implemented - for session support)
