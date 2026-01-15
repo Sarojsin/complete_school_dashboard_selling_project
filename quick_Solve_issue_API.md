@@ -56,7 +56,51 @@ GET /student/teachers - 1
 POST /student/teachers/{teacher_id}/contact - 1
 GET /student/groups - 1
 
-
+## TEACHER ENDPOINTS (44 endpoints):
+GET /teacher/dashboard - 1
+GET /teacher/profile - 1
+POST /teacher/profile - 1
+GET /teacher/students - 1
+GET /teacher/students/{student_id} - 1
+GET /teacher/students/{student_id}/grades - 1
+POST /teacher/students/{student_id}/contact - 2 ❌ DUPLICATE (lines 330, 733)
+GET /teacher/messages - 1
+POST /teacher/messages/{message_id}/read - 1
+GET /teacher/assignments - 2 ❌ DUPLICATE (lines 349, 456)
+GET /teacher/assignments/create - 1
+POST /teacher/assignments/create - 1
+GET /teacher/grades - 2 ❌ DUPLICATE (lines 359, 620)
+GET /teacher/attendance - 2 ❌ DUPLICATE (lines 361, 575)
+GET /teacher/tests - 2 ❌ DUPLICATE (lines 363, 588)
+GET /teacher/timetable - 2 ❌ DUPLICATE (lines 365, 613)
+GET /teacher/chat - 1
+GET /teacher/courses - 1
+GET /teacher/create-assignment - 1
+GET /teacher/assignments/{assignment_id}/edit - 3 ❌ TRIPLICATE (lines 548, 662, 750)
+GET /teacher/attendance/take - 1
+GET /teacher/grades/add - 1
+GET /teacher/tests/create - 1
+GET /teacher/tests/{id}/edit - 1
+GET /teacher/notices/create - 1
+GET /teacher/courses/{id} - 1
+GET /teacher/courses/{id}/students - 1
+GET /teacher/assignments/{id}/submissions - 1
+POST /teacher/assignments/submissions/{submission_id}/grade - 1
+GET /teacher/attendance/{id} - 1
+GET /teacher/attendance/{id}/edit - 1
+GET /teacher/tests/{id}/results - 1
+DELETE /teacher/tests/delete/{id} - 1
+DELETE /teacher/assignments/delete/{id} - 1
+GET /teacher/notes/upload - 1
+POST /teacher/notes/upload - 1
+GET /teacher/videos/upload - 1
+POST /teacher/videos/upload - 1
+GET /teacher/attendance/delete/{id} - 1
+GET /teacher/videos/{id} - 1
+GET /teacher/videos/{id}/edit - 1
+DELETE /teacher/videos/{id} - 1
+GET /teacher/groups - 1
+GET /teacher/assignments/{id}/edit - 1 (line 750 - 4th occurrence total but listed above)
 
 
 # authority_routes_complete
