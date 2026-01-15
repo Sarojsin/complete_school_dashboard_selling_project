@@ -3,22 +3,46 @@
 @app.post("/student/profile") : occuring 1+1
 
 ## main issues 
-## ENDPOINT DUPLICATES (Multiple Definitions):
-Highest Duplicates:
-GET /student/assignments - 3 times (lines 693, 763, 1091)
-GET /teacher/assignments - 2 times (lines 349, 456)
-GET /authority/courses/add - 2 times (lines 1377, 1386) + POST /authority/courses/add - 2 times (lines 1392, 1393)
-GET /teacher/grades - 2 times (lines 359, 620)
-GET /teacher/attendance - 2 times (lines 361, 575)
-GET /teacher/tests - 2 times (lines 363, 588)
-GET /teacher/timetable - 2 times (lines 365, 613)
-GET /health - 2 times (lines 157, 176)
-POST /teacher/students/{student_id}/contact - 2 times (lines 330, 733)
-GET /teacher/assignments/{id}/edit - 2 times (lines 548, 662)
+## ENDPOINT DUPLICATES (Multiple Definitions) - RESOLVED:
+The following endpoints have been consolidated. Redundant definitions are now **COMMENTED OUT** in `main.py` to prevent routing conflicts while preserving the code.
 
-## AUTHENTICATION ENDPOINTS (14 endpoints):
+### Summary of Cleanup:
+*   **GET /student/assignments**: 
+    *   **Kept**: Line 781 (Complete implementation with status filtering)
+    *   **Commented Out**: Line 1327 (Redundant)
+*   **GET /teacher/assignments**:
+    *   **Kept**: Line 1214
+    *   **Commented Out**: Line 2909 (Note: Line numbers may shift based on file edits)
+*   **GET /authority/courses/add**:
+    *   **Kept**: Line 2455 (Consolidated with alias `/authority/add-course` via multiple decorators)
+    *   **Commented Out**: Line 2483 (Alias function removed for consolidation)
+*   **POST /authority/courses/add**:
+    *   **Kept**: Line 2502 (Consolidated with alias `/authority/add-course` via multiple decorators)
+*   **GET /teacher/grades**:
+    *   **Kept**: Line 1531
+    *   **Commented Out**: Line 1291
+*   **GET /teacher/attendance**:
+    *   **Kept**: Line 1463
+    *   **Commented Out**: Line 1300
+*   **GET /teacher/tests**:
+    *   **Kept**: Line 1551
+    *   **Commented Out**: Line 1308
+*   **GET /teacher/timetable**:
+    *   **Kept**: Line 1626
+    *   **Commented Out**: Line 1317
+*   **GET /health**:
+    *   **Kept**: Line 213
+    *   **Commented Out**: Line 222
+*   **POST /teacher/students/{student_id}/contact**:
+    *   **Kept**: Line 1157
+    *   **Commented Out**: Line 1881
+*   **GET /teacher/assignments/{id}/edit**:
+    *   **Kept**: Line 1454
+    *   **Commented Out**: Line 1820
+
+## AUTHENTICATION ENDPOINTS:
 GET / - 1
-GET /health - 2 ❌ DUPLICATE
+GET /health - 2 ❌ COMMENTED (kept Line 213)
 GET /logout - 1
 GET /login - 1
 GET /signup - 1
@@ -32,14 +56,14 @@ GET /register/teacher - 1
 GET /register/parent - 1
 GET /favicon.ico - 1
 
-## STUDENT ENDPOINTS (28 endpoints):
+## STUDENT ENDPOINTS:
 GET /student/dashboard - 1
 GET /student/profile - 1
 POST /student/profile - 1
 GET /student/courses - 1
-GET /student/assignments - 3 ❌ TRIPLICATE (lines 693, 763, 1091)
-GET /student/assignments/{assignment_id} - 2 ❌ DUPLICATE (lines 219, 1097)
-POST /student/assignments/{assignment_id}/submit - 2 ❌ DUPLICATE (lines 233, 1103)
+GET /student/assignments - 3 ❌ CONSOLIDATED (kept Line 781)
+GET /student/assignments/{assignment_id} - 2 ❌ CONSOLIDATED (kept Line 402)
+POST /student/assignments/{assignment_id}/submit - 2 ❌ CONSOLIDATED (kept Line 846)
 GET /student/grades - 1
 GET /student/attendance - 1
 GET /student/fees - 1
@@ -57,27 +81,27 @@ GET /student/teachers - 1
 POST /student/teachers/{teacher_id}/contact - 1
 GET /student/groups - 1
 
-## TEACHER ENDPOINTS (44 endpoints):
+## TEACHER ENDPOINTS:
 GET /teacher/dashboard - 1
 GET /teacher/profile - 1
 POST /teacher/profile - 1
 GET /teacher/students - 1
 GET /teacher/students/{student_id} - 1
 GET /teacher/students/{student_id}/grades - 1
-POST /teacher/students/{student_id}/contact - 2 ❌ DUPLICATE (lines 330, 733)
+POST /teacher/students/{student_id}/contact - 2 ❌ COMMENTED (kept Line 1157)
 GET /teacher/messages - 1
 POST /teacher/messages/{message_id}/read - 1
-GET /teacher/assignments - 2 ❌ DUPLICATE (lines 349, 456)
+GET /teacher/assignments - 2 ❌ COMMENTED (kept Line 1214)
 GET /teacher/assignments/create - 1
 POST /teacher/assignments/create - 1
-GET /teacher/grades - 2 ❌ DUPLICATE (lines 359, 620)
-GET /teacher/attendance - 2 ❌ DUPLICATE (lines 361, 575)
-GET /teacher/tests - 2 ❌ DUPLICATE (lines 363, 588)
-GET /teacher/timetable - 2 ❌ DUPLICATE (lines 365, 613)
+GET /teacher/grades - 2 ❌ COMMENTED (kept Line 1531)
+GET /teacher/attendance - 2 ❌ COMMENTED (kept Line 1463)
+GET /teacher/tests - 2 ❌ COMMENTED (kept Line 1551)
+GET /teacher/timetable - 2 ❌ COMMENTED (kept Line 1626)
 GET /teacher/chat - 1
 GET /teacher/courses - 1
-GET /teacher/create-assignment - 1
-GET /teacher/assignments/{assignment_id}/edit - 3 ❌ TRIPLICATE (lines 548, 662, 750)
+GET /teacher/create-assignment - 1 (Commented Out)
+GET /teacher/assignments/{assignment_id}/edit - 3 ❌ CONSOLIDATED (kept Line 1454)
 GET /teacher/attendance/take - 1
 GET /teacher/grades/add - 1
 GET /teacher/tests/create - 1
@@ -101,9 +125,8 @@ GET /teacher/videos/{id} - 1
 GET /teacher/videos/{id}/edit - 1
 DELETE /teacher/videos/{id} - 1
 GET /teacher/groups - 1
-GET /teacher/assignments/{id}/edit - 1 (line 750 - 4th occurrence total but listed above)
 
-## AUTHORITY ENDPOINTS (36 endpoints):
+## AUTHORITY ENDPOINTS:
 GET /authority/dashboard - 1
 GET /authority/students - 1
 GET /authority/students/add - 1
@@ -116,10 +139,10 @@ GET /authority/teachers/{teacher_id}/edit - 1
 GET /authority/teachers/{teacher_id} - 1
 POST /authority/teachers/{id}/delete - 1
 GET /authority/courses - 1
-GET /authority/courses/add - 2 ❌ DUPLICATE (lines 1377, 1386)
-GET /authority/add-course - 1 (alias, same as above)
-POST /authority/courses/add - 2 ❌ DUPLICATE (lines 1392, 1393)
-POST /authority/add-course - 1 (alias, same as above)
+GET /authority/courses/add - 1 (Consolidated)
+GET /authority/add-course - 1 (Alias, consolidated)
+POST /authority/courses/add - 1 (Consolidated)
+POST /authority/add-course - 1 (Alias, consolidated)
 GET /authority/courses/{course_id} - 1
 GET /authority/courses/{course_id}/edit - 1
 POST /authority/courses/{course_id}/edit - 1
@@ -139,9 +162,9 @@ GET /authority/notices/view/{id} - 1
 GET /authority/analytics - 1
 GET /authority/groups - 1
 
-## UTILITY/DEBUG ENDPOINTS (2 endpoints):
+## UTILITY/DEBUG ENDPOINTS:
 GET /debug/check_user - 1
-GET /favicon.ico - 1 (already counted)
+GET /favicon.ico - 1
 ## SUMMARY BY OCCURRENCE:
 ## 3 TIMES (Most Critical):
 GET /student/assignments - 3 times (lines 693, 763, 1091)

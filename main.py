@@ -219,9 +219,9 @@ async def logout(request: Request):
     response = RedirectResponse(url="/login", status_code=302)
     response.delete_cookie("access_token")
     return response
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+# @app.get("/health")
+# async def health_check():
+#     return {"status": "healthy"}
 
 # ------------------ AUTHENTICATION PAGES ------------------
 @app.get("/login", response_class=HTMLResponse)
@@ -1288,104 +1288,104 @@ async def teacher_create_assignment_post(request: Request, current_user: User = 
     AssignmentRepository.create(db, assignment_data)
     return RedirectResponse(url="/teacher/dashboard?success=Assignment+created", status_code=303)
 
-@app.get("/teacher/grades")
-async def teacher_grades_list(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/grades.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "grades": []
-    })
+# @app.get("/teacher/grades")
+# async def teacher_grades_list(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/grades.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "grades": []
+#     })
 
-@app.get("/teacher/attendance")
-async def teacher_attendance_page(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/attendance.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user
-    })
+# @app.get("/teacher/attendance")
+# async def teacher_attendance_page(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/attendance.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user
+#     })
 
-@app.get("/teacher/tests")
-async def teacher_tests_page(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/tests.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "tests": []
-    })
+# @app.get("/teacher/tests")
+# async def teacher_tests_page(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/tests.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "tests": []
+#     })
 
-@app.get("/teacher/timetable")
-async def teacher_timetable_page(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/timetable.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user
-    })
+# @app.get("/teacher/timetable")
+# async def teacher_timetable_page(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/timetable.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user
+#     })
 
 # ===== STUDENT ROUTES =====
 
-@app.get("/student/assignments")
-async def student_assignments(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from repositories.assignment_repository import AssignmentRepository
-    from repositories.student_repository import StudentRepository
-    from models.models import CourseEnrollment
+# @app.get("/student/assignments")
+# async def student_assignments(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     from repositories.assignment_repository import AssignmentRepository
+#     from repositories.student_repository import StudentRepository
+#     from models.models import CourseEnrollment
     
-    student = StudentRepository.get_by_user_id(db, current_user.id)
-    assignments = []
-    stats = {
-        "total": 0,
-        "pending": 0,
-        "submitted": 0,
-        "graded": 0,
-        "overdue": 0
-    }
+#     student = StudentRepository.get_by_user_id(db, current_user.id)
+#     assignments = []
+#     stats = {
+#         "total": 0,
+#         "pending": 0,
+#         "submitted": 0,
+#         "graded": 0,
+#         "overdue": 0
+#     }
     
-    if student:
-        # Get all courses the student is enrolled in
-        enrollments = db.query(CourseEnrollment).filter(
-            CourseEnrollment.student_id == student.id
-        ).all()
+#     if student:
+#         # Get all courses the student is enrolled in
+#         enrollments = db.query(CourseEnrollment).filter(
+#             CourseEnrollment.student_id == student.id
+#         ).all()
         
-        course_ids = [e.course_id for e in enrollments]
+#         course_ids = [e.course_id for e in enrollments]
         
-        # Get all assignments for those courses
-        if course_ids:
-            for course_id in course_ids:
-                course_assignments = AssignmentRepository.get_all(db, course_id=course_id)
-                assignments.extend(course_assignments)
+#         # Get all assignments for those courses
+#         if course_ids:
+#             for course_id in course_ids:
+#                 course_assignments = AssignmentRepository.get_all(db, course_id=course_id)
+#                 assignments.extend(course_assignments)
         
-        stats["total"] = len(assignments)
-        # Calculate other stats (simplified for now)
-        stats["pending"] = len([a for a in assignments if not getattr(a, 'is_submitted', False)])
-        stats["submitted"] = stats["total"] - stats["pending"]
+#         stats["total"] = len(assignments)
+#         # Calculate other stats (simplified for now)
+#         stats["pending"] = len([a for a in assignments if not getattr(a, 'is_submitted', False)])
+#         stats["submitted"] = stats["total"] - stats["pending"]
     
-    return templates.TemplateResponse("student/assignments.html", {
-        "request": request,
-        "current_user": current_user,
-        "student": current_user,
-        "assignments": assignments,
-        "stats": stats
-    })
+#     return templates.TemplateResponse("student/assignments.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "student": current_user,
+#         "assignments": assignments,
+#         "stats": stats
+#     })
 
-@app.get("/student/assignments/{assignment_id}")
-async def student_assignment_detail(
-    request: Request,
-    assignment_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.assignment_repository import AssignmentRepository
+# @app.get("/student/assignments/{assignment_id}")
+# async def student_assignment_detail(
+#     request: Request,
+#     assignment_id: int,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     from repositories.assignment_repository import AssignmentRepository
     
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
+#     assignment = AssignmentRepository.get_by_id(db, assignment_id)
+#     if not assignment:
+#         raise HTTPException(status_code=404, detail="Assignment not found")
     
-    return templates.TemplateResponse("student/assignment_detail.html", {
-        "request": request,
-        "current_user": current_user,
-        "student": current_user,
-        "assignment": assignment
-    })
+#     return templates.TemplateResponse("student/assignment_detail.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "student": current_user,
+#         "assignment": assignment
+#     })
 
 @app.get("/teacher/courses")
 async def teacher_courses(request: Request, current_user: User = Depends(get_current_user)):
@@ -1440,16 +1440,16 @@ async def teacher_courses(request: Request, current_user: User = Depends(get_cur
 
 
 # Alias route for create-assignment
-@app.get("/teacher/create-assignment")
-async def teacher_create_assignment_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from models.models import Course
-    courses = db.query(Course).all()
-    return templates.TemplateResponse("teacher/create_assignment.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "courses": courses
-    })
+# @app.get("/teacher/create-assignment")
+# async def teacher_create_assignment_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     from models.models import Course
+#     courses = db.query(Course).all()
+#     return templates.TemplateResponse("teacher/create_assignment.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "courses": courses
+#     })
 
 @app.get("/teacher/assignments/{assignment_id}/edit")
 async def teacher_edit_assignment(request: Request, assignment_id: int, current_user: User = Depends(get_current_user)):
@@ -1817,24 +1817,24 @@ async def teacher_grade_submission(
     
     return RedirectResponse(url=f"/teacher/assignments/{submission.assignment_id}/submissions?success=Grade+updated", status_code=303)
 
-@app.get("/teacher/assignments/{id}/edit")
-async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/edit_assignment.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "assignment": {
-            "id": id,
-            "title": "Algebra Problem Set 1",
-            "description": "Complete exercises 1-10 from Chapter 2",
-            "subject": "Mathematics",
-            "class": "10-A",
-            "due_date": "2023-10-15",
-            "points": 100
-        },
-        "classes": ["10-A", "10-B"],
-        "subjects": ["Mathematics", "Physics"]
-    })
+# @app.get("/teacher/assignments/{id}/edit")
+# async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/edit_assignment.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "assignment": {
+#             "id": id,
+#             "title": "Algebra Problem Set 1",
+#             "description": "Complete exercises 1-10 from Chapter 2",
+#             "subject": "Mathematics",
+#             "class": "10-A",
+#             "due_date": "2023-10-15",
+#             "points": 100
+#         },
+#         "classes": ["10-A", "10-B"],
+#         "subjects": ["Mathematics", "Physics"]
+#     })
 
 @app.get("/teacher/attendance/{id}")
 async def teacher_view_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
@@ -1878,9 +1878,9 @@ async def teacher_test_results(request: Request, id: int, current_user: User = D
 async def teacher_delete_test(request: Request, id: int, current_user: User = Depends(get_current_user)):
     return JSONResponse(content={"message": "Test deleted successfully"})
 
-@app.post("/teacher/students/{student_id}/contact")
-async def teacher_contact_student(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Message sent successfully"})
+# @app.post("/teacher/students/{student_id}/contact")
+# async def teacher_contact_student(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
+#     return JSONResponse(content={"message": "Message sent successfully"})
 
 @app.delete("/teacher/assignments/delete/{id}")
 async def teacher_delete_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
@@ -2453,6 +2453,7 @@ async def authority_courses(
 
 
 @app.get("/authority/courses/add")
+@app.get("/authority/add-course")
 async def authority_add_course(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     from repositories.teacher_repository import TeacherRepository
     
@@ -2479,31 +2480,31 @@ async def authority_add_course(request: Request, current_user: User = Depends(ge
         "grades": grades
     })
 
-# Alias route for add-course
-@app.get("/authority/add-course")
-async def authority_add_course_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from repositories.teacher_repository import TeacherRepository
-    
-    teachers_raw = TeacherRepository.get_all(db)
-    teachers = []
-    for t in teachers_raw:
-        teachers.append({
-            "id": t.id,
-            "name": t.user.full_name if t.user else "Unknown",
-            "department": t.department or "General"
-        })
-    
-    departments = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Computer Science"]
-    grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
-    
-    return templates.TemplateResponse("authority/add_course.html", {
-        "request": request,
-        "current_user": current_user,
-        "authority": current_user,
-        "teachers": teachers,
-        "departments": departments,
-        "grades": grades
-    })
+# # Alias route for add-course
+# @app.get("/authority/add-course")
+# async def authority_add_course_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     from repositories.teacher_repository import TeacherRepository
+#     
+#     teachers_raw = TeacherRepository.get_all(db)
+#     teachers = []
+#     for t in teachers_raw:
+#         teachers.append({
+#             "id": t.id,
+#             "name": t.user.full_name if t.user else "Unknown",
+#             "department": t.department or "General"
+#         })
+#     
+#     departments = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Computer Science"]
+#     grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+#     
+#     return templates.TemplateResponse("authority/add_course.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "authority": current_user,
+#         "teachers": teachers,
+#         "departments": departments,
+#         "grades": grades
+#     })
 
 # POST handler for creating course
 @app.post("/authority/courses/add")
