@@ -1,3 +1,4 @@
+## quick_solve_issue_API.md 
 ## merging two endpoints/ api
 @app.post("/student/profile") : occuring 1+1
 
@@ -137,6 +138,33 @@ DELETE /authority/notices/delete/{id} - 1
 GET /authority/notices/view/{id} - 1
 GET /authority/analytics - 1
 GET /authority/groups - 1
+
+## UTILITY/DEBUG ENDPOINTS (2 endpoints):
+GET /debug/check_user - 1
+GET /favicon.ico - 1 (already counted)
+## SUMMARY BY OCCURRENCE:
+## 3 TIMES (Most Critical):
+GET /student/assignments - 3 times (lines 693, 763, 1091)
+GET /teacher/assignments/{id}/edit - 3 times (lines 548, 662, 750)
+## 2 TIMES (Duplicates):
+GET /health - 2 times (lines 157, 176)
+GET /student/assignments/{assignment_id} - 2 times (lines 219, 1097)
+POST /student/assignments/{assignment_id}/submit - 2 times (lines 233, 1103)
+GET /teacher/assignments - 2 times (lines 349, 456)
+POST /teacher/students/{student_id}/contact - 2 times (lines 330, 733)
+GET /teacher/grades - 2 times (lines 359, 620)
+GET /teacher/attendance - 2 times (lines 361, 575)
+GET /teacher/tests - 2 times (lines 363, 588)
+GET /teacher/timetable - 2 times (lines 365, 613)
+GET /authority/courses/add - 2 times (lines 1377, 1386)
+POST /authority/courses/add - 2 times (lines 1392, 1393)
+## 1 TIME (Singles - 89 endpoints):
+All other endpoints appear only once.
+## TOTALS:
+Total Endpoint Definitions: 117
+Unique Endpoint Patterns: ~104
+Duplicate Definitions: 13 instances affecting 12 unique endpoints
+Most Duplicated: GET /student/assignments (3 times)
 
 # authority_routes_complete
 @app.get("/authority/students")
