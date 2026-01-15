@@ -1,4 +1,117 @@
 ## issues_by_claud.md
+## 🚨 STUDENT ENDPOINTS MISSING LOGIC
+/student/dashboard - No real stats calculation (assignments due, recent grades, attendance)
+/student/grades - Returns empty array, no grade calculation or GPA computation
+/student/attendance - Empty attendance data with no percentage calculation
+/student/tests - Empty test list, no test-taking logic
+/student/timetable - Empty timetable, no schedule generation
+/student/forum - Empty posts, no discussion functionality
+/student/tests/{test_id}/start - No test retrieval, no timer, no question display
+/student/tests/{test_id}/result - No result calculation or display
+
+## TEACHER ENDPOINTS MISSING LOGIC
+/teacher/dashboard - Stats incomplete (no real calculations for student performance)
+/teacher/courses - Hardcoded course data, no dynamic course loading
+/teacher/attendance - Mocked stats, no real attendance marking system
+/teacher/grades - Empty interface, no grade entry/editing system
+/teacher/tests - Mocked test data, no test creation backend
+/teacher/timetable - Empty timetable, no schedule management
+/teacher/tests/create - No question bank, no test structure creation
+/teacher/tests/{id}/edit - No test editing backend
+/teacher/chat - Incomplete contact list population logic
+/teacher/add_grade - Empty students/courses dropdowns
+
+## AUTHORITY ENDPOINTS MISSING LOGIC
+/authority/dashboard - Empty stats and activities
+/authority/analytics - Incomplete analytics queries (grade distribution, attendance stats)
+/authority/fees/structure - No validation against existing structures
+/authority/fees/add - No payment processing integration
+/authority/courses/{course_id}/edit - Missing schedule management
+/authority/courses/add - No conflict checking with existing courses
+
+## AUTHENTICATION ENDPOINTS MISSING LOGIC
+/logout - Only deletes cookie, no token blacklist/session cleanup
+All signup endpoints - No email verification, no CAPTCHA, no duplicate checking
+
+## GENERAL ENDPOINTS MISSING LOGIC
+/student/assignments - Assignment status logic incomplete (overdue detection)
+/student/assignments/{assignment_id} - No plagiarism check, no submission validation
+/student/fees - Mocked payment history, no real payment gateway
+/teacher/assignments/create - No due date validation, no file type restriction
+/teacher/assignments/{assignment_id}/submissions - No bulk download, no plagiarism detection
+/teacher/assignments/submissions/{submission_id}/grade - No rubric-based grading
+/teacher/notes/upload - No file type/size validation, no virus scan
+/teacher/videos/upload - No video format validation, no thumbnail generation
+/authority/students/add - No admission number generation, no parent linking
+/authority/teachers/add - No employee ID generation, no department validation
+/authority/notices/add - No announcement scheduling, no push notifications
+All message endpoints - No email notifications, no read receipts
+All file upload endpoints - No virus scanning, no storage quota checking
+All group endpoints - No membership validation, no permission checking
+
+## CRITICAL BUSINESS LOGIC MISSING
+Grade calculation - No algorithm for GPA, term grades, or final grades
+Attendance calculation - No automated percentage, no late marking
+Fee calculation - No late fees, discounts, or installment calculations
+Test grading - No auto-grading for objective questions
+Report generation - No PDF report cards, transcripts, or certificates
+Notification system - No email/SMS alerts for due dates, results
+Calendar/scheduling - No exam timetable generation, no room allocation
+Bulk operations - No mass student/teacher import/update
+Parent portal - No parent login or child progress tracking
+Analytics - No predictive analytics for at-risk students
+
+## 🚨 SECURITY LOGIC MISSING
+CSRF protection - No CSRF token validation on form submission
+Rate limiting - No protection against brute force attacks
+Input validation - Minimal validation on all endpoints
+File upload security - No malware scanning, no size limits
+Session security - No session timeout enforcement, no concurrent session control
+
+## 🚨 DATA CONSISTENCY LOGIC MISSING
+Transaction management - No rollback for failed operations
+Data cleanup - No orphaned file cleanup, no expired data deletion
+Backup/restore - No automated database backups
+Audit logging - No track of who changed what and when
+Data export - No CSV/Excel export functionality
+
+## Summary of Critical Missing Logic:
+## Academic:
+Grade calculation algorithms
+Attendance automation
+Test proctoring/grading
+Report generation
+
+## Financial:
+Payment processing
+Fee calculation with late fees
+Receipt generation
+
+## Communication:
+Email/SMS notifications
+Push notifications
+Announcement system
+
+## Operations:
+Bulk data import/export
+Automated scheduling
+Resource allocation
+
+## Security:
+Input validation
+Rate limiting
+File security
+Most Endpoints Are Missing:
+Proper error handling
+Input validation
+Business rule enforcement
+Data consistency checks
+Performance optimization
+Security hardening
+
+## The code has endpoints defined but most lack the core business logic that makes an LMS functional.
+
+
 
 ### 1. AUTHENTICATION & AUTHORIZATION ISSUES
 1.1 Missing role validation in many endpoints - routes check role at URL level but not content access
@@ -36,7 +149,7 @@
 5.2 File upload security - No virus scanning, file type validation, or size limits
 5.3 Error handling - Inconsistent error responses, missing 404/500 pages
 5.4 Data consistency - No transaction management for complex operations
-5.5 Caching - No caching layer for frequently accessed data (course lists, notices
+5.5 Caching - No caching layer for frequently accessed data (course lists, notices)
 5.6 Search functionality - Limited or missing search capabilities
 5.7 Pagination - Missing pagination on list endpoints (students, teachers, assignments)
 5.8 Export functionality - No data export (CSV/PDF) for reports
