@@ -182,7 +182,7 @@ MIT License
 1. Saroj 
 
 ## contibuters
-1. Saroj Singh Dhami
-2. Rijan Ghimire
-3. sushil Ghimire
-4. sujal pant
+1. Saroj Singh Dhami (backend)
+2. Rijan Ghimire (frontend)
+3. sushil Ghimire (frontend)
+4. sujal pant (Designer)
