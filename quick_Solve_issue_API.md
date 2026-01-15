@@ -1,6 +1,20 @@
 ## merging two endpoints/ api
 @app.post("/student/profile") : occuring 1+1
 
+## main issues 
+## ENDPOINT DUPLICATES (Multiple Definitions):
+Highest Duplicates:
+GET /student/assignments - 3 times (lines 693, 763, 1091)
+GET /teacher/assignments - 2 times (lines 349, 456)
+GET /authority/courses/add - 2 times (lines 1377, 1386) + POST /authority/courses/add - 2 times (lines 1392, 1393)
+GET /teacher/grades - 2 times (lines 359, 620)
+GET /teacher/attendance - 2 times (lines 361, 575)
+GET /teacher/tests - 2 times (lines 363, 588)
+GET /teacher/timetable - 2 times (lines 365, 613)
+GET /health - 2 times (lines 157, 176)
+POST /teacher/students/{student_id}/contact - 2 times (lines 330, 733)
+GET /teacher/assignments/{id}/edit - 2 times (lines 548, 662)
+
 # authority_routes_complete
 @app.get("/authority/students")
 @app.post("/authority/students/add")
