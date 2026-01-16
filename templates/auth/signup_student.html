@@ -42,10 +42,16 @@
                                 <label for="grade" class="form-label">Grade</label>
                                 <select class="form-select" id="grade" name="grade_level" required>
                                     <option value="">Select Grade</option>
+                                    {% if grades %}
+                                    {% for grade in grades %}
+                                    <option value="{{ grade }}">{{ grade }}</option>
+                                    {% endfor %}
+                                    {% else %}
                                     <option value="9">Grade 9</option>
                                     <option value="10">Grade 10</option>
                                     <option value="11">Grade 11</option>
                                     <option value="12">Grade 12</option>
+                                    {% endif %}
                                 </select>
                             </div>
                         </div>

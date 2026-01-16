@@ -42,6 +42,11 @@
                                 <label for="department" class="form-label">Department</label>
                                 <select class="form-select" id="department" name="department" required>
                                     <option value="">Select Department</option>
+                                    {% if departments %}
+                                    {% for dept in departments %}
+                                    <option value="{{ dept }}">{{ dept }}</option>
+                                    {% endfor %}
+                                    {% else %}
                                     <option value="Mathematics">Mathematics</option>
                                     <option value="Science">Science</option>
                                     <option value="English">English</option>
@@ -49,6 +54,7 @@
                                     <option value="Computer Science">Computer Science</option>
                                     <option value="Arts">Arts</option>
                                     <option value="Physical Education">Physical Education</option>
+                                    {% endif %}
                                 </select>
                             </div>
                         </div>

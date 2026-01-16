@@ -214,15 +214,19 @@
                                                         <select class="form-select question-type"
                                                             name="questions[{{ loop.index0 }}][type]" required>
                                                             <option value="multiple_choice" {% if
-                                                                question.type=='multiple_choice' %}selected{% endif %}>
+                                                                question.question_type.value=='multiple_choice'
+                                                                %}selected{% endif %}>
                                                                 Multiple Choice</option>
-                                                            <option value="true_false" {% if question.type=='true_false'
-                                                                %}selected{% endif %}>True/False</option>
+                                                            <option value="true_false" {% if
+                                                                question.question_type.value=='true_false' %}selected{%
+                                                                endif %}>True/False</option>
                                                             <option value="short_answer" {% if
-                                                                question.type=='short_answer' %}selected{% endif %}>
+                                                                question.question_type.value=='short_answer'
+                                                                %}selected{% endif %}>
                                                                 Short Answer</option>
-                                                            <option value="essay" {% if question.type=='essay'
-                                                                %}selected{% endif %}>Essay</option>
+                                                            <option value="essay" {% if
+                                                                question.question_type.value=='essay' %}selected{% endif
+                                                                %}>Essay</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -231,7 +235,7 @@
                                                         <label class="form-label">Marks</label>
                                                         <input type="number" class="form-control question-marks"
                                                             name="questions[{{ loop.index0 }}][marks]"
-                                                            value="{{ question.marks }}" min="1" max="100" required>
+                                                            value="{{ question.points }}" min="1" max="100" required>
                                                     </div>
                                                 </div>
                                             </div>
@@ -240,12 +244,12 @@
                                                 <label class="form-label">Question Text *</label>
                                                 <textarea class="form-control question-text"
                                                     name="questions[{{ loop.index0 }}][text]" rows="3"
-                                                    required>{{ question.text }}</textarea>
+                                                    required>{{ question.question_text }}</textarea>
                                             </div>
 
                                             <!-- Multiple Choice Options -->
                                             <div class="multiple-choice-options"
-                                                style="display: {% if question.type in ['multiple_choice', 'true_false'] %}block{% else %}none{% endif %};">
+                                                style="display: {% if question.question_type.value in ['multiple_choice', 'true_false'] or question.question_type in ['multiple_choice', 'true_false'] %}block{% else %}none{% endif %};">
                                                 <label class="form-label">Options</label>
                                                 <div class="options-container">
                                                     {% for option in question.options %}

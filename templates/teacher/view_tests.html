@@ -81,12 +81,21 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Class</label>
                     <select class="form-select" id="classFilter">
                         <option value="all">All Classes</option>
                         {% for class in classes %}
                         <option value="{{ class }}">{{ class }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Section</label>
+                    <select class="form-select" id="sectionFilter">
+                        <option value="all">All Sections</option>
+                        {% for section in ["A", "B", "C", "D", "E"] %}
+                        <option value="{{ section }}">{{ section }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -139,8 +148,8 @@
                     </thead>
                     <tbody>
                         {% for test in tests %}
-                        <tr data-subject="{{ test.subject }}" data-class="{{ test.class }}"
-                            data-status="{{ test.status }}">
+                        <tr data-subject="{{ test.subject }}" data-grade="{{ test.grade }}"
+                            data-section="{{ test.section }}" data-status="{{ test.status }}">
                             <td>
                                 <div>
                                     <strong>{{ test.title }}</strong>
@@ -256,6 +265,7 @@
         // Filter functionality
         const subjectFilter = document.getElementById('subjectFilter');
         const classFilter = document.getElementById('classFilter');
+        const sectionFilter = document.getElementById('sectionFilter');
         const statusFilter = document.getElementById('statusFilter');
         const searchInput = document.getElementById('searchTests');
         const tableRows = document.querySelectorAll('#testsTable tbody tr');
@@ -268,16 +278,18 @@
 
             tableRows.forEach(row => {
                 const subject = row.getAttribute('data-subject');
-                const classVal = row.getAttribute('data-class');
+                const grade = row.getAttribute('data-grade');
+                const section = row.getAttribute('data-section');
                 const status = row.getAttribute('data-status');
                 const title = row.querySelector('td:first-child strong').textContent.toLowerCase();
 
                 const subjectMatch = subjectValue === 'all' || subject === subjectValue;
-                const classMatch = classValue === 'all' || classVal === classValue;
+                const classMatch = classValue === 'all' || grade === classValue;
+                const sectionMatch = sectionValue === 'all' || section === sectionValue || section === 'All';
                 const statusMatch = statusValue === 'all' || status === statusValue;
                 const searchMatch = title.includes(searchValue);
 
-                if (subjectMatch && classMatch && statusMatch && searchMatch) {
+                if (subjectMatch && classMatch && sectionMatch && statusMatch && searchMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -287,6 +299,7 @@
 
         subjectFilter.addEventListener('change', filterTests);
         classFilter.addEventListener('change', filterTests);
+        sectionFilter.addEventListener('change', filterTests);
         statusFilter.addEventListener('change', filterTests);
         searchInput.addEventListener('input', filterTests);
 

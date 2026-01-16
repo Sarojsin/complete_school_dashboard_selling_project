@@ -44,18 +44,30 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Class/Grade *</label>
-                                    <select class="form-select" name="class" required>
-                                        <option value="">Select Class</option>
+                                    <select class="form-select" name="grade" required>
+                                        <option value="">Select Grade</option>
                                         {% for class in classes %}
                                         <option value="{{ class }}">{{ class }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Section *</label>
+                                    <select class="form-select" name="section" required>
+                                        <option value="">Select Section</option>
+                                        {% for section in sections %}
+                                        <option value="{{ section }}">{{ section }}</option>
+                                        {% endfor %}
+                                        <option value="All">All Sections</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Total Marks *</label>
                                     <input type="number" class="form-control" name="total_marks" min="1" max="1000"
