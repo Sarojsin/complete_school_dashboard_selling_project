@@ -1632,13 +1632,13 @@ async def teacher_courses(request: Request, current_user: User = Depends(get_cur
 #         "courses": courses
 #     })
 
-@app.get("/teacher/assignments/{assignment_id}/edit")
-async def teacher_edit_assignment(request: Request, assignment_id: int, current_user: User = Depends(get_current_user)):
+@app.get("/teacher/assignments/{id}/edit")
+async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
     return templates.TemplateResponse("teacher/edit_assignment.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "assignment_id": assignment_id
+        "assignment_id": id
     })
 
 @app.get("/teacher/attendance")
@@ -2113,12 +2113,45 @@ async def teacher_course_detail(request: Request, id: int, current_user: User = 
     })
 
 @app.get("/teacher/courses/{id}/students")
-async def teacher_course_students(request: Request, id: int, current_user: User = Depends(get_current_user)):
+async def teacher_course_students(
+    request: Request, 
+    id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.course_repository import CourseRepository
+    
+    course = CourseRepository.get_by_id(db, id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    students = CourseRepository.get_enrolled_students(db, id)
+    
+    # Format students for template
+    formatted_students = []
+    for s in students:
+        formatted_students.append({
+            "id": s.id,
+            "name": s.user.full_name,
+            "email": s.user.email,
+            "grade": s.grade_level,
+            "section": s.section,
+            "attendance": 100, # Simplified/Default
+            "average_grade": 0, # Simplified/Default
+            "pending_assignments": 0, # Simplified/Default
+            "avatar": f"https://ui-avatars.com/api/?name={s.user.full_name.replace(' ', '+')}&background=random"
+        })
+
     return templates.TemplateResponse("teacher/students.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "students": []
+        "students": formatted_students,
+        "search_query": None,
+        "filters": {
+            "grade": course.grade_level,
+            "section": None # Course might not have section fixed
+        }
     })
 
 @app.get("/teacher/assignments/{id}/submissions")
