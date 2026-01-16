@@ -126,7 +126,6 @@ class Course(Base):
     assignments = relationship("Assignment", back_populates="course")
     attendance_records = relationship("Attendance", back_populates="course")
     grades = relationship("Grade", back_populates="course")
-    tests = relationship("Test", back_populates="course")
     notes = relationship("Note", back_populates="course", cascade="all, delete-orphan")
     videos = relationship("Video", back_populates="course", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="course", cascade="all, delete-orphan")
