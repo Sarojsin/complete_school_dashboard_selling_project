@@ -24,7 +24,9 @@ class TestBase(BaseModel):
     title: str
     description: Optional[str] = None
     instructions: Optional[str] = None
-    course_id: int
+    subject_name: Optional[str] = None
+    grade_level: Optional[str] = None
+    target_section: Optional[str] = None
     start_time: datetime
     end_time: datetime
     duration: int
@@ -63,7 +65,9 @@ class TestForStudent(BaseModel):
     title: str
     description: Optional[str]
     instructions: Optional[str]
-    course_id: int
+    subject_name: Optional[str] = None
+    grade_level: Optional[str] = None
+    target_section: Optional[str] = None
     start_time: datetime
     end_time: datetime
     duration: int

@@ -17,18 +17,19 @@ class Test(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
     instructions = Column(Text)
-    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    subject_name = Column(String(255))
+    grade_level = Column(String(50))
     teacher_id = Column(Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
     duration = Column(Integer, nullable=False)  # in minutes
     total_points = Column(Float, default=0.0)
+    target_section = Column(String(50))  # Optional section filtering
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    course = relationship("Course", back_populates="tests")
     teacher = relationship("Teacher", back_populates="tests")
     questions = relationship("TestQuestion", back_populates="test", cascade="all, delete-orphan")
     submissions = relationship("TestSubmission", back_populates="test", cascade="all, delete-orphan")
@@ -43,6 +44,7 @@ class TestQuestion(Base):
     options = Column(JSON)  # List of options for MCQ
     correct_answer = Column(Text)  # For auto-grading
     points = Column(Float, default=1.0)
+    explanation = Column(Text)
     order = Column(Integer, default=0)
 
     # Relationships

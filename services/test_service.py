@@ -6,12 +6,12 @@ from repositories.test_repository import TestRepository
 class TestService:
     @staticmethod
     def is_test_available(test: Test) -> bool:
-        now = datetime.utcnow()
+        now = datetime.now()
         return test.is_active and test.start_time <= now <= test.end_time
 
     @staticmethod
     def is_test_started(test: Test) -> bool:
-        now = datetime.utcnow()
+        now = datetime.now()
         return now >= test.start_time
 
     @staticmethod
@@ -26,7 +26,7 @@ class TestService:
             submission = TestSubmission(
                 test_id=test_id,
                 student_id=student_id,
-                started_at=datetime.utcnow(),
+                started_at=datetime.now(),
                 answers={}
             )
             db.add(submission)
@@ -36,7 +36,7 @@ class TestService:
 
     @staticmethod
     def calculate_time_remaining(test: Test) -> int:
-        now = datetime.utcnow()
+        now = datetime.now()
         end_time = test.end_time
         
         # Also check duration from start if applicable?

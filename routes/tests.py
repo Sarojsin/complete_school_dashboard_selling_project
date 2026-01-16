@@ -42,12 +42,14 @@ async def create_test(
         test_data={
             "title": test_data.title,
             "description": test_data.description,
-            "course_id": test_data.course_id,
+            "subject_name": test_data.subject_name,
+            "grade_level": test_data.grade_level,
             "teacher_id": teacher.id,
             "duration": test_data.duration,
             "start_time": test_data.start_time,
             "end_time": test_data.end_time,
-            "instructions": test_data.instructions
+            "instructions": test_data.instructions,
+            "target_section": test_data.target_section
         },
         questions_data=[q.dict() for q in test_data.questions]
     )
@@ -185,10 +187,7 @@ async def get_available_tests(
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
-    course_ids = [c.id for c in courses]
-    
-    tests = TestRepository.get_available_tests_for_student(db, student.id, course_ids)
+    tests = TestRepository.get_available_tests_for_student(db, student.id, section=student.section, grade_level=student.grade_level)
     return tests
 
 @router.get("/student/{test_id}", response_model=TestForStudent)
@@ -206,10 +205,11 @@ async def get_test_for_student(
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
-    # Check if student is enrolled in the course
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
-    if test.course_id not in [c.id for c in courses]:
-        raise HTTPException(status_code=403, detail="Not enrolled in this course")
+    # Access check (grade/section) - already handled by visibility, but can be added here for safety
+    if test.grade_level and test.grade_level != student.grade_level:
+        raise HTTPException(status_code=403, detail="Test not for your grade level")
+    if test.target_section and test.target_section != "All" and test.target_section != student.section:
+        raise HTTPException(status_code=403, detail="Test not for your section")
     
     # Check if test is available
     if not TestService.is_test_available(test):

@@ -50,17 +50,28 @@ class TestRepository:
         db.commit()
 
     @staticmethod
-    def get_available_tests_for_student(db: Session, student_id: int, course_ids: List[int]) -> List[Test]:
-        now = datetime.utcnow()
-        # Get tests for enrolled courses that are active and within time window
-        # Also exclude tests already submitted? Or maybe include them but mark as submitted?
-        # For now, just get available tests
-        return db.query(Test).filter(
-            Test.course_id.in_(course_ids),
+    def get_available_tests_for_student(db: Session, student_id: int, section: Optional[str] = None, grade_level: Optional[str] = None) -> List[Test]:
+        now = datetime.now()
+        # Base query: active tests within time window
+        query = db.query(Test).filter(
             Test.is_active == True,
             Test.start_time <= now,
             Test.end_time >= now
-        ).all()
+        )
+        
+        # Filter by Grade/Section targeting as requested (e.g., "9A")
+        if grade_level and section:
+            # Show tests matching this grade AND (this section OR "All")
+            query = query.filter(
+                Test.grade_level == grade_level,
+                or_(
+                    Test.target_section == section,
+                    Test.target_section == "All",
+                    Test.target_section.is_(None)
+                )
+            )
+            
+        return query.all()
 
     @staticmethod
     def get_submission(db: Session, test_id: int, student_id: int) -> Optional[TestSubmission]:
@@ -91,3 +102,7 @@ class TestRepository:
             TestSubmission.test_id == test_id,
             TestSubmission.submitted_at.isnot(None)
         ).all()
+
+    @staticmethod
+    def get_by_teacher(db: Session, teacher_id: int) -> List[Test]:
+        return db.query(Test).filter(Test.teacher_id == teacher_id).order_by(Test.created_at.desc()).all()
