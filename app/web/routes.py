@@ -1060,17 +1060,41 @@ async def authority_teachers(request: Request, department: str = None, status: s
     for t in teachers:
         formatted.append({
             "id": t.id,
+            "name": t.user.full_name if t.user else "N/A",
             "full_name": t.user.full_name if t.user else "N/A",
             "employee_id": t.employee_id,
             "department": t.department or "N/A",
             "email": t.user.email if t.user else "N/A",
+            "phone": t.phone or "N/A",
+            "dob": "1985-01-01",
+            "employment_type": "full_time",
+            "join_date": "2020-01-01",
+            "experience": 5,
+            "classes_taught": 3,
+            "courses_taught": 2,
+            "students_count": 45,
+            "performance": 90,
+            "rating": 4.5,
+            "status": "active",
+            "is_class_teacher": False,
             "avatar": f"https://ui-avatars.com/api/?name={t.user.full_name.replace(' ', '+') if t.user else 'User'}&background=random"
         })
+    
+    # Mock department data
+    dept_data = [
+        {"name": "Mathematics", "teacher_count": 12, "active_count": 10, "class_count": 8, "hod": "Dr. Smith"},
+        {"name": "Science", "teacher_count": 10, "active_count": 9, "class_count": 7, "hod": "Dr. Johnson"},
+        {"name": "English", "teacher_count": 8, "active_count": 7, "class_count": 6, "hod": "Mr. Brown"},
+        {"name": "History", "teacher_count": 6, "active_count": 5, "class_count": 5, "hod": "Ms. Davis"}
+    ]
+    
     return templates.TemplateResponse("authority/teachers.html", {
         "request": request,
         "current_user": current_user,
         "teachers": formatted,
-        "filters": {"department": department, "status": status}
+        "filters": {"department": department, "status": status},
+        "departments": dept_data,
+        "search_query": search
     })
 
 @router.get("/authority/courses")
@@ -1081,38 +1105,77 @@ async def authority_courses(request: Request, search: str = None, current_user: 
         formatted.append({
             "id": c.id,
             "code": c.course_code,
+            "course_code": c.course_code,
             "name": c.course_name,
+            "course_name": c.course_name,
+            "grade": c.grade_level if hasattr(c, 'grade_level') else "N/A",
             "instructor": c.teacher.user.full_name if c.teacher and c.teacher.user else "Unassigned",
+            "instructor_id": c.teacher_id if c.teacher_id else None,
             "instructor_avatar": f"https://ui-avatars.com/api/?name={c.teacher.user.full_name if c.teacher and c.teacher.user else 'Unassigned'}&background=random",
-            "student_count": len(c.enrollments) if hasattr(c, 'enrollments') else 0
+            "student_count":len(c.enrollments) if hasattr(c, 'enrollments') else 0,
+            "enrolled": len(c.enrollments) if hasattr(c, 'enrollments') else 0,
+            "schedule": "Mon, Wed, Fri",
+            "room": "Room 101",
+            "status": "active"
         })
     return templates.TemplateResponse("authority/courses.html", {
         "request": request,
         "current_user": current_user,
         "courses": formatted,
-        "search_query": search
+        "search_query": search,
+        "stats": {"total": len(formatted), "active": len(formatted)}
     })
 
 @router.get("/authority/fees")
 async def authority_fees(request: Request, search: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     fees = FeeRepository.search(db, search) if search else db.query(FeeRecord).all()
     summary = FeeRepository.get_all_fees_summary(db)
+    
+    formatted_fees = []
+    for f in fees:
+        formatted_fees.append({
+            "id": f.id,
+            "student_name": f.student.user.full_name if f.student and f.student.user else "N/A",
+            "student_id": f.student.student_id if f.student else "N/A",
+            "grade": f.student.grade_level if f.student else "N/A",
+            "total_amount": f.total_amount if hasattr(f, 'total_amount') else 0,
+            "paid_amount": f.paid_amount if hasattr(f, 'paid_amount') else 0,
+            "balance": (f.total_amount - f.paid_amount) if hasattr(f, 'total_amount') and hasattr(f, 'paid_amount') else 0,
+            "status": "paid" if hasattr(f, 'paid_amount') and f.paid_amount >= (f.total_amount if hasattr(f, 'total_amount') else 0) else "pending",
+            "due_date": f.due_date.strftime("%Y-%m-%d") if hasattr(f, 'due_date') and f.due_date else "N/A",
+            "payment_method": f.payment_method if hasattr(f, 'payment_method') else "N/A"
+        })
+    
     return templates.TemplateResponse("authority/fees.html", {
         "request": request,
         "current_user": current_user,
-        "fee_records": fees,
+        "fee_records": formatted_fees,
         "total_collected": summary['total_paid'],
-        "pending_amount": summary['total_pending']
+        "pending_amount": summary['total_pending'],
+        "search_query": search
     })
 
 @router.get("/authority/notices")
 async def authority_notices(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     notices = NoticeRepository.get_all(db)
+    formatted_notices = []
+    for n in notices:
+        formatted_notices.append({
+            "id": n.id,
+            "title": n.title,
+            "content": n.content if hasattr(n, 'content') else "",
+            "date": n.created_at.strftime("%Y-%m-%d") if hasattr(n, 'created_at') and n.created_at else "N/A",
+            "created_at": n.created_at.strftime("%Y-%m-%d %H:%M") if hasattr(n, 'created_at') and n.created_at else "N/A",
+            "author": "Admin",
+            "target_role": n.target_role if hasattr(n, 'target_role') else "all",
+            "priority": n.priority if hasattr(n, 'priority') else "normal",
+            "status": "active"
+        })
     return templates.TemplateResponse("authority/notices.html", {
         "request": request,
         "current_user": current_user,
-        "notices": notices,
-        "stats": {"total_notices": len(notices)}
+        "notices": formatted_notices,
+        "stats": {"total_notices": len(formatted_notices)}
     })
 
 @router.get("/authority/analytics")
