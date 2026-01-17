@@ -44,3 +44,5 @@ DEPARTMENTS = [
 ]
 
 SECTIONS = ["A", "B", "C", "D", "E"]
+
+WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
