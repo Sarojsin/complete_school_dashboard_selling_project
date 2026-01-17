@@ -10,6 +10,7 @@ import os
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.csrf import CSRFMiddleware
 from app.web.routes import router as web_router
 from services.chat_cleanup_service import cleanup_expired_messages
 
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
 
     # Security Middleware first
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(CSRFMiddleware)
 
     # CORS Middleware
     app.add_middleware(
