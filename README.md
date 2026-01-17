@@ -63,24 +63,91 @@ Once running, visit:
 
 ```
 claud/
-├── app/
-│   └── static/              # Alternate static assets location
-├── config/
-│   └── config.py            # Application configuration
-├── database/
-│   └── database.py          # Database connection handling
-├── media/                   # Uploaded media storage
+├── .env
+├── .env.example
+├── .gitignore
+├── README.md
+├── RENDER_DEPLOYMENT.md
+├── api_testing.md
+├── app
+│   ├── api
+│   │   └── v1
+│   │       └── endpoints
+│   ├── core
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   └── templates.py
+│   ├── main.py
+│   ├── middleware
+│   │   └── security.py
+│   ├── static
+│   │   ├── images
+│   │   │   └── default-avatar.png
+│   │   └── uploads
+│   │       ├── assignments
+│   │       │   └── 07f47ade-3552-4fd4-b411-c18cb460164e.jpg
+│   │       ├── avatars
+│   │       │   ├── 2cc78636-5756-4ee7-8fd3-618e73a21912.jpeg
+│   │       │   ├── 43ce75b3-1fca-4634-8567-b5e0b4ab43d4.jpg
+│   │       │   ├── bfba1bef-2551-4bf9-9056-721be7bcded7.jpg
+│   │       │   └── e4263e2a-0ec9-49e9-85e4-75c30c4ebde9.jpeg
+│   │       ├── chat
+│   │       ├── notes
+│   │       │   ├── bf72ae6d-a437-4b7f-b405-63a65f512784.pptx
+│   │       │   └── bff963cd-e61d-49fd-9652-ac1a37137433.pptx
+│   │       ├── notices
+│   │       └── videos
+│   └── web
+│       ├── authority_crud.py
+│       └── routes.py
+├── authority_routes_complete.py
+├── build.sh
+├── config
+│   └── config.py
+├── database
+│   └── database.py
+├── debug_enrollments.py
+├── debug_test_questions.py
+├── debug_tests.py
+├── debug_visibility.py
+├── dependencies.py
+├── deployment.md
+├── drop_column.py
+├── enrollment_system.md
+├── final_debug.py
+├── finally_check_list.md
+├── fix_main.py
+├── group.md
+├── guide.md
+├── issue_to_solve.md
+├── issued_by_claud.md
+├── know_about_project.md
+├── main.py
+├── main.py.backup
+├── makefile
+├── media
 │   └── logo2.png
-├── migrations/              # Database migrations
+├── migrate_grades.py
+├── migrate_profile_pic.py
+├── migrations
 │   ├── add_name_columns.sql
 │   ├── add_parent_id_to_students.py
 │   └── add_parent_to_enum.sql
-├── models/                  # Database models
-│   ├── chat_models.py       # Chat-specific models
-│   ├── group_models.py      # Group relationship models
-│   ├── models.py            # Core models (Users, Profiles)
-│   └── test_models.py       # Assessment models
-├── repositories/            # Data access layer
+├── models
+│   ├── chat_models.py
+│   ├── group_models.py
+│   ├── models.py
+│   └── test_models.py
+├── models_backup.py
+├── old_fee_routes.py
+├── plan_implemented.md
+├── plan_to_do.txt
+├── production_ready.md
+├── project_report.md
+├── quick_Solve_issue_API.md
+├── quickstart.md
+├── render.yaml
+├── repositories
 │   ├── assignment_repository.py
 │   ├── attendance_repository.py
 │   ├── chat_repository.py
@@ -99,7 +166,8 @@ claud/
 │   ├── test_repository.py
 │   ├── user_repository.py
 │   └── videos_repository.py
-├── routes/                  # API route handlers
+├── requirements.txt
+├── routes
 │   ├── assignments.py
 │   ├── attendance.py
 │   ├── auth.py
@@ -114,15 +182,20 @@ claud/
 │   ├── notices.py
 │   ├── parents.py
 │   ├── students.py
+│   ├── students.py.backup
 │   ├── teachers.py
 │   ├── tests.py
 │   ├── videos.py
 │   └── websocket_chat.py
-├── schemas/                 # Pydantic models/schemas
+├── routes.txt
+├── run.py
+├── schemas
 │   ├── group_post_schemas.py
 │   └── group_schemas.py
-├── scripts/                 # Utility and maintenance scripts
-│   ├── check/               # Database consistency checks
+├── school_db.sqlite
+├── scripts
+│   ├── add_target_classes_column.py
+│   ├── check
 │   │   ├── check_db_enum.py
 │   │   ├── check_enum.py
 │   │   ├── check_enum_values.py
@@ -130,39 +203,44 @@ claud/
 │   │   ├── check_role_type.py
 │   │   ├── check_schema.py
 │   │   └── check_users.py
-│   ├── fix/                 # Data repair scripts
+│   ├── create_assignment_test_data.py
+│   ├── create_test_users.py
+│   ├── debug_access.py
+│   ├── fix
 │   │   ├── fix_authority_urls.py
 │   │   ├── fix_null_bytes.py
 │   │   └── fix_student_urls.py
-│   ├── migrations/          # Python migration scripts
+│   ├── generate_tree.py
+│   ├── list_courses.py
+│   ├── list_users.py
+│   ├── migrations
 │   │   ├── migrations_add_messages.py
 │   │   └── run_add_name_migration.py
-│   ├── setup/               # Setup and seeding scripts
+│   ├── raw_list_courses.py
+│   ├── raw_list_users.py
+│   ├── seed_courses.py
+│   ├── setup
 │   │   ├── add_parent_enum.py
 │   │   ├── create_messages_table.py
 │   │   ├── create_signup_student.py
 │   │   ├── create_test_parent.py
 │   │   ├── create_user.py
 │   │   └── setup_database.py
-│   ├── temp/                # Temporary/Debug scripts
+│   ├── temp
 │   │   ├── reproduce_enum.py
-│   │   └── temp_routes.py
-│   ├── verify/              # Verification scripts
+│   │   ├── temp_routes.py
+│   │   ├── temp_routes_2.py
+│   │   └── temp_routes_3.py
+│   ├── test_auth.py
+│   ├── verify
 │   │   ├── debug_filter.py
 │   │   ├── inspect_routes.py
 │   │   ├── verify_authority_search.py
 │   │   ├── verify_endpoints.py
 │   │   └── verify_fix.py
-│   ├── add_target_classes_column.py
-│   ├── create_assignment_test_data.py
-│   ├── create_test_users.py
-│   ├── debug_access.py
-│   ├── list_courses.py
-│   ├── list_users.py
-│   ├── seed_courses.py
-│   ├── test_auth.py
 │   └── verify_groups.py
-├── services/                # Business logic services
+├── security.md
+├── services
 │   ├── attendance_service.py
 │   ├── auth_service.py
 │   ├── chat_cleanup_service.py
@@ -173,41 +251,48 @@ claud/
 │   ├── student_service.py
 │   ├── teacher_service.py
 │   └── test_service.py
-├── static/                  # Static assets
-│   ├── css/
+├── setup_database.py
+├── simple_debug.py
+├── static
+│   ├── css
 │   │   ├── style.css
 │   │   └── test.css
-│   ├── groups/              # Group-specific styles
+│   ├── groups
 │   │   ├── groups.css
 │   │   └── posts.css
-│   └── js/
-│       ├── chat.js
-│       ├── dashboard.js
-│       ├── main.js
-│       └── test_timer.js
-├── tables/                  # Table definitions/utilities
+│   ├── js
+│   │   ├── chat.js
+│   │   ├── dashboard.js
+│   │   ├── main.js
+│   │   └── test_timer.js
+│   └── uploads
+│       ├── assignments
+│       ├── avatars
+│       ├── notes
+│       └── videos
+├── tables
 │   ├── chat_tables.py
 │   ├── group_post_schemas.py
 │   ├── group_schemas.py
 │   ├── tables.py
 │   └── test_tables.py
-├── templates/               # HTML templates
-│   ├── auth/
+├── templates
+│   ├── auth
 │   │   ├── login.html
 │   │   ├── signup.html
 │   │   ├── signup_authority.html
 │   │   ├── signup_parent.html
 │   │   ├── signup_student.html
 │   │   └── signup_teacher.html
-│   ├── authority/
+│   ├── authority
 │   │   ├── add_course.html
 │   │   ├── add_fee.html
 │   │   ├── add_notice.html
 │   │   ├── add_student.html
 │   │   ├── add_teacher.html
 │   │   ├── analytics_v2.html
-│   │   ├── courses.html
 │   │   ├── course_detail.html
+│   │   ├── courses.html
 │   │   ├── create_notice.html
 │   │   ├── dashboard.html
 │   │   ├── edit_course.html
@@ -224,7 +309,8 @@ claud/
 │   │   ├── teacher_detail.html
 │   │   ├── teachers.html
 │   │   └── view_notice.html
-│   ├── groups/
+│   ├── base.html
+│   ├── groups
 │   │   ├── create_group.html
 │   │   ├── edit_group.html
 │   │   ├── group_detail.html
@@ -233,7 +319,8 @@ claud/
 │   │   ├── manage_members.html
 │   │   ├── new_post.html
 │   │   └── view_post.html
-│   ├── parent/
+│   ├── index.html
+│   ├── parent
 │   │   ├── attendance.html
 │   │   ├── chat.html
 │   │   ├── dashboard.html
@@ -241,7 +328,7 @@ claud/
 │   │   ├── homework.html
 │   │   ├── notices.html
 │   │   └── profile.html
-│   ├── student/
+│   ├── student
 │   │   ├── assignments.html
 │   │   ├── assignments_detail.html
 │   │   ├── attendance.html
@@ -262,36 +349,36 @@ claud/
 │   │   ├── test_result.html
 │   │   ├── timetable.html
 │   │   └── videos.html
-│   ├── teacher/
-│   │   ├── add_grade.html
-│   │   ├── assignments.html
-│   │   ├── attendance.html
-│   │   ├── chat.html
-│   │   ├── course_detail.html
-│   │   ├── courses.html
-│   │   ├── create_assignment.html
-│   │   ├── create_notice.html
-│   │   ├── create_test.html
-│   │   ├── dashboard.html
-│   │   ├── edit_assignment.html
-│   │   ├── edit_test.html
-│   │   ├── grades.html
-│   │   ├── groups.html
-│   │   ├── messages.html
-│   │   ├── profile.html
-│   │   ├── sidebar.html
-│   │   ├── student_detail.html
-│   │   ├── student_grades.html
-│   │   ├── students.html
-│   │   ├── take_attendance.html
-│   │   ├── timetable.html
-│   │   ├── upload_notes.html
-│   │   ├── upload_videos.html
-│   │   ├── view_submissions.html
-│   │   └── view_tests.html
-│   ├── base.html
-│   └── index.html
-├── tests/                   # Unit and integration tests
+│   └── teacher
+│       ├── add_grade.html
+│       ├── assignments.html
+│       ├── attendance.html
+│       ├── chat.html
+│       ├── course_detail.html
+│       ├── courses.html
+│       ├── create_assignment.html
+│       ├── create_notice.html
+│       ├── create_test.html
+│       ├── dashboard.html
+│       ├── edit_assignment.html
+│       ├── edit_test.html
+│       ├── grades.html
+│       ├── groups.html
+│       ├── messages.html
+│       ├── profile.html
+│       ├── sidebar.html
+│       ├── student_detail.html
+│       ├── student_grades.html
+│       ├── students.html
+│       ├── take_attendance.html
+│       ├── timetable.html
+│       ├── upload_notes.html
+│       ├── upload_videos.html
+│       ├── view_submissions.html
+│       └── view_tests.html
+├── test_output.txt
+├── test_output_2.txt
+├── tests
 │   ├── test_add_course.py
 │   ├── test_add_student_form.py
 │   ├── test_auth_api_only.py
@@ -312,15 +399,14 @@ claud/
 │   ├── test_student_auth.py
 │   ├── test_teacher_chat.py
 │   └── test_teacher_search.py
-├── utils/                   # Utility functions
+├── things_to_add_on security.md
+├── things_we_learn_by_this_project.md
+├── utils
 │   ├── bcrypt_compat.py
 │   ├── constants.py
 │   ├── exceptions.py
 │   └── websocket_manager.py
-├── dependencies.py          # Dependency injection
-├── main.py                  # Application entry point
-├── requirements.txt         # Project dependencies
-└── run.py                   # Server runner
+└── verify_cleanup.py
 ```
 
 ## API Endpoints
