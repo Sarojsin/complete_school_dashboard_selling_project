@@ -89,5 +89,4 @@ This document provides an exhaustive detailed analysis of all identified issues 
 1.  [ ] **Security**: Implement CSRF Middleware & Fix Secrets.
 2.  [ ] **Performance**: Switch to AsyncDB or fix N+1 queries.
 3.  [ ] **Scalability**: Add Redis for Websockets.
-4.  [ ] **Ops**: Create Dockerfile & Lock dependencies.
-5.  [ ] **Cleanup**: Refactor `routes.py` and delete clutter.
+4.  [ ] **Cleanup**: Refactor `routes.py` and delete clutter.
