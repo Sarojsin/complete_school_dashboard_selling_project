@@ -29,9 +29,18 @@ from utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS, WEEKDAYS
 
 router = APIRouter()
 
+# ==================== HOME & AUTH ROUTES ====================
 @router.get("/", response_class=HTMLResponse)
 async def home_page(request: Request):
+    """Home page"""
     return templates.TemplateResponse("index.html", {"request": request})
+
+@router.get("/logout")
+async def logout(request: Request):
+    """Logout route"""
+    response = RedirectResponse(url="/login", status_code=302)
+    response.delete_cookie("access_token")
+    return response
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -1099,31 +1108,64 @@ async def authority_teachers(request: Request, department: str = None, status: s
 
 @router.get("/authority/courses")
 async def authority_courses(request: Request, search: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    courses = CourseRepository.search(db, search) if search else CourseRepository.get_all(db)
-    formatted = []
-    for c in courses:
-        formatted.append({
-            "id": c.id,
-            "code": c.course_code,
-            "course_code": c.course_code,
-            "name": c.course_name,
-            "course_name": c.course_name,
-            "grade": c.grade_level if hasattr(c, 'grade_level') else "N/A",
-            "instructor": c.teacher.user.full_name if c.teacher and c.teacher.user else "Unassigned",
-            "instructor_id": c.teacher_id if c.teacher_id else None,
-            "instructor_avatar": f"https://ui-avatars.com/api/?name={c.teacher.user.full_name if c.teacher and c.teacher.user else 'Unassigned'}&background=random",
-            "student_count":len(c.enrollments) if hasattr(c, 'enrollments') else 0,
-            "enrolled": len(c.enrollments) if hasattr(c, 'enrollments') else 0,
-            "schedule": "Mon, Wed, Fri",
-            "room": "Room 101",
-            "status": "active"
+    # Fetch courses with filters if needed
+    query = db.query(Course)
+    if search:
+        query = query.filter(Course.course_name.ilike(f"%{search}%") | Course.course_code.ilike(f"%{search}%"))
+    
+    courses_data = query.all()
+    
+    formatted_courses = []
+    
+    # Dept colors mapping
+    dept_colors = {
+        "Mathematics": "primary",
+        "Science": "success",
+        "English": "info", 
+        "History": "warning",
+        "Arts": "danger",
+        "Physical Education": "secondary",
+        "General": "secondary"
+    }
+        
+    for course in courses_data:
+        # Determine department safely
+        department = getattr(course, "department", "General")
+        dept_color = dept_colors.get(department, "secondary")
+        
+        # Safely count students and check grade
+        student_count = len(course.enrollments) if hasattr(course, "enrollments") and course.enrollments else 0
+        
+        formatted_courses.append({
+            "id": course.id,
+            "name": course.course_name,
+            "code": course.course_code,
+            "department": department,
+            "department_color": dept_color,
+            "credits": getattr(course, "credits", 3),
+            "grade_level": getattr(course, "grade_level", "N/A"),
+            "semester": getattr(course, "semester", 1),
+            "instructor": course.teacher.full_name if course.teacher else "Unassigned",
+            "instructor_avatar": f"https://ui-avatars.com/api/?name={course.teacher.full_name}&background=random" if course.teacher else "https://ui-avatars.com/api/?name=Unassigned&background=gray",
+            "status": "active", 
+            "student_count": student_count,
+            "class_count": 1,
+            "avg_grade": 85 # Placeholder
         })
+
+    # Mock department stats
+    departments = [
+        {"name": "Mathematics", "color": "primary", "course_count": 12, "student_count": 450, "teacher_count": 8, "avg_grade": 78, "utilization": 85},
+        {"name": "Science", "color": "success", "course_count": 10, "student_count": 380, "teacher_count": 6, "avg_grade": 82, "utilization": 90},
+        {"name": "English", "color": "info", "course_count": 8, "student_count": 410, "teacher_count": 5, "avg_grade": 80, "utilization": 75}
+    ]
+
     return templates.TemplateResponse("authority/courses.html", {
         "request": request,
         "current_user": current_user,
-        "courses": formatted,
-        "search_query": search,
-        "stats": {"total": len(formatted), "active": len(formatted)}
+        "courses": formatted_courses,
+        "departments": departments,
+        "search_query": search
     })
 
 @router.get("/authority/fees")
@@ -1505,3 +1547,329 @@ async def authority_reports(request: Request, current_user: User = Depends(get_c
         "current_user": current_user,
         "reports": []
     })
+# Authority CRUD Routes - Maintained here
+# These routes handle create, read, update, delete operations for authority management
+
+# ==================== STUDENT CRUD ====================
+@router.get("/authority/students/add")
+async def authority_add_student_form(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("authority/add_student.html", {
+        "request": request,
+        "current_user": current_user,
+        "grades": GRADE_LEVELS
+    })
+
+@router.post("/authority/students/add")
+async def authority_add_student(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    # Create student logic here
+    student = StudentRepository.create_student_with_user(db, {
+        "full_name": form_data.get("full_name"),
+        "email": form_data.get("email"),
+        "grade_level": form_data.get("grade_level"),
+        "section": form_data.get("section"),
+        "phone": form_data.get("phone"),
+        "address": form_data.get("address")
+    })
+    return RedirectResponse(url="/authority/students?success=added", status_code=303)
+
+@router.get("/authority/students/{id}")
+async def authority_student_detail(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    student = StudentRepository.get_by_id(db, id)
+    if not student: raise HTTPException(status_code=404)
+    return templates.TemplateResponse("authority/student_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": student
+    })
+
+@router.get("/authority/students/{id}/edit")
+async def authority_edit_student_form(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    student = StudentRepository.get_by_id(db, id)
+    if not student: raise HTTPException(status_code=404)
+    return templates.TemplateResponse("authority/edit_student.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": student,
+        "grades": GRADE_LEVELS
+    })
+
+@router.post("/authority/students/{id}/edit")
+async def authority_edit_student(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    student = StudentRepository.get_by_id(db, id)
+    if not student: raise HTTPException(status_code=404)
+    
+    student.grade_level = form_data.get("grade_level")
+    student.section = form_data.get("section")
+    student.phone = form_data.get("phone")
+    student.address = form_data.get("address")
+    if student.user:
+        student.user.full_name = form_data.get("full_name")
+        student.user.email = form_data.get("email")
+    db.commit()
+    return RedirectResponse(url=f"/authority/students/{id}?success=updated", status_code=303)
+
+@router.post("/authority/students/{id}/delete", name="authority_delete_student")
+async def authority_delete_student(id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    student = StudentRepository.get_by_id(db, id)
+    if not student: raise HTTPException(status_code=404)
+    StudentRepository.delete(db, student)
+    return RedirectResponse(url="/authority/students?success=deleted", status_code=303)
+
+# ==================== TEACHER CRUD ====================
+@router.get("/authority/teachers/add")
+async def authority_add_teacher_form(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("authority/add_teacher.html", {
+        "request": request,
+        "current_user": current_user,
+        "departments": DEPARTMENTS
+    })
+
+@router.post("/authority/teachers/add")
+async def authority_add_teacher(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    teacher = TeacherRepository.create_teacher_with_user(db, {
+        "full_name": form_data.get("full_name"),
+        "email": form_data.get("email"),
+        "department": form_data.get("department"),
+        "phone": form_data.get("phone"),
+        "qualification": form_data.get("qualification"),
+        "specialization": form_data.get("specialization")
+    })
+    db.add(teacher)
+    db.commit()
+    return RedirectResponse(url="/authority/teachers?success=added", status_code=303)
+
+@router.get("/authority/teachers/{id}")
+async def authority_teacher_detail(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    teacher = TeacherRepository.get_by_id(db, id)
+    if not teacher: raise HTTPException(status_code=404)
+    return templates.TemplateResponse("authority/teacher_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": teacher,
+        "courses": teacher.courses if hasattr(teacher, 'courses') else []
+    })
+
+@router.get("/authority/teachers/{id}/edit")
+async def authority_edit_teacher_form(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    teacher = TeacherRepository.get_by_id(db, id)
+    if not teacher: raise HTTPException(status_code=404)
+    return templates.TemplateResponse("authority/edit_teacher.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": teacher,
+        "departments": DEPARTMENTS
+    })
+
+@router.post("/authority/teachers/{id}/edit")
+async def authority_edit_teacher(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    teacher = TeacherRepository.get_by_id(db, id)
+    if not teacher: raise HTTPException(status_code=404)
+    
+    teacher.department = form_data.get("department")
+    teacher.phone = form_data.get("phone")
+    if teacher.user:
+        teacher.user.full_name = form_data.get("full_name")
+        teacher.user.email = form_data.get("email")
+    db.commit()
+    return RedirectResponse(url=f"/authority/teachers/{id}?success=updated", status_code=303)
+
+@router.post("/authority/teachers/{id}/delete", name="authority_delete_teacher")
+async def authority_delete_teacher(id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    teacher = TeacherRepository.get_by_id(db, id)
+    if not teacher: raise HTTPException(status_code=404)
+    TeacherRepository.delete(db, teacher)
+    return RedirectResponse(url="/authority/teachers?success=deleted", status_code=303)
+
+# ==================== COURSE CRUD ====================
+@router.get("/authority/courses/add")
+async def authority_add_course_form(request: Request, current_user: User = Depends(get_current_user), db: Session =  Depends(get_db)):
+    teachers = TeacherRepository.get_all(db)
+    return templates.TemplateResponse("authority/add_course.html", {
+        "request": request,
+        "current_user": current_user,
+        "teachers": teachers,
+        "departments": DEPARTMENTS,
+        "grades": GRADE_LEVELS
+    })
+
+@router.post("/authority/courses/add")
+async def authority_add_course(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    course_data = {
+        "course_code": form_data.get("course_code"),
+        "course_name": form_data.get("course_name"),
+        "grade_level": form_data.get("grade_level"),
+        "teacher_id": int(form_data.get("teacher_id")) if form_data.get("teacher_id") else None,
+        "description": form_data.get("description")
+    }
+    CourseRepository.create(db, course_data)
+    return RedirectResponse(url="/authority/courses?success=added", status_code=303)
+
+@router.get("/authority/courses/{id}")
+async def authority_course_detail(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    course = CourseRepository.get_by_id(db, id)
+    if not course: raise HTTPException(status_code=404)
+    return templates.TemplateResponse("authority/course_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "course": course
+    })
+
+@router.get("/authority/courses/{id}/edit")
+async def authority_edit_course_form(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    course = CourseRepository.get_by_id(db, id)
+    if not course: raise HTTPException(status_code=404)
+    teachers = TeacherRepository.get_all(db)
+    return templates.TemplateResponse("authority/edit_course.html", {
+        "request": request,
+        "current_user": current_user,
+        "course": course,
+        "teachers": teachers,
+        "grades": GRADE_LEVELS
+    })
+
+@router.post("/authority/courses/{id}/edit")
+async def authority_edit_course(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    course = CourseRepository.get_by_id(db, id)
+    if not course: raise HTTPException(status_code=404)
+    
+    course.course_code = form_data.get("course_code")
+    course.course_name = form_data.get("course_name")
+    course.grade_level = form_data.get("grade_level")
+    course.teacher_id = int(form_data.get("teacher_id")) if form_data.get("teacher_id") else None
+    course.description = form_data.get("description")
+    db.commit()
+    return RedirectResponse(url=f"/authority/courses/{id}?success=updated", status_code=303)
+
+# ==================== NOTICE CRUD ====================
+@router.get("/authority/notices/create")
+async def authority_create_notice_form(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return templates.TemplateResponse("authority/create_notice.html", {
+        "request": request,
+        "current_user": current_user,
+        "grades": GRADE_LEVELS
+    })
+
+@router.post("/authority/notices/create")
+async def authority_create_notice(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    notice_data = {
+        "title": form_data.get("title"),
+        "content": form_data.get("content"),
+        "target_role": form_data.get("target_role"),
+        "priority": form_data.get("priority", "normal")
+    }
+    NoticeRepository.create(db, notice_data)
+    return RedirectResponse(url="/authority/notices?success=created", status_code=303)
+
+@router.get("/authority/notices/{id}")
+async def authority_view_notice(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    notice = NoticeRepository.get_by_id(db, id)
+    if not notice: raise HTTPException(status_code=404)
+    return templates.TemplateResponse("authority/view_notice.html", {
+        "request": request,
+        "current_user": current_user,
+        "notice": notice
+    })
+
+@router.get("/authority/notices/{id}/edit")
+async def authority_edit_notice_form(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    notice = NoticeRepository.get_by_id(db, id)
+    if not notice: raise HTTPException(status_code=404)
+    return templates.TemplateResponse("authority/edit_notice.html", {
+        "request": request,
+        "current_user": current_user,
+        "notice": notice,
+        "grades": GRADE_LEVELS
+    })
+
+@router.post("/authority/notices/{id}/edit")
+async def authority_edit_notice(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    form_data = await request.form()
+    notice = NoticeRepository.get_by_id(db, id)
+    if not notice: raise HTTPException(status_code=404)
+    
+    notice.title = form_data.get("title")
+    notice.content = form_data.get("content")
+    notice.target_role = form_data.get("target_role")
+    notice.priority = form_data.get("priority", "normal")
+    db.commit()
+    return RedirectResponse(url="/authority/notices?success=updated", status_code=303)
+
+@router.get("/authority/courses")
+async def authority_courses(request: Request, search: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Fetch courses with filters if needed
+    query = db.query(Course)
+    if search:
+        query = query.filter(Course.course_name.ilike(f"%{search}%") | Course.course_code.ilike(f"%{search}%"))
+    
+    courses_data = query.all()
+    
+    # Format courses for template
+    formatted_courses = []
+    
+    # Dept colors mapping
+    dept_colors = {
+        "Mathematics": "primary",
+        "Science": "success",
+        "English": "info", 
+        "History": "warning",
+        "Arts": "danger",
+        "Physical Education": "secondary",
+        "General": "secondary"
+    }
+        
+    for course in courses_data:
+        # Determine department (Course model doesn't have department column, so we default efficiently)
+        # In a real app, this might come from teacher's department or a separate table
+        department = getattr(course, "department", "General")
+        
+        dept_color = dept_colors.get(department, "secondary")
+        
+        # Safely count students (Course uses enrollments relationship)
+        student_count = len(course.enrollments) if hasattr(course, "enrollments") and course.enrollments else 0
+        
+        formatted_courses.append({
+            "id": course.id,
+            "name": course.course_name,
+            "code": course.course_code,
+            "department": department,
+            "department_color": dept_color,
+            "credits": getattr(course, "credits", 3),
+            "grade_level": getattr(course, "grade_level", "N/A"),
+            "semester": getattr(course, "semester", 1),
+            "instructor": course.teacher.full_name if course.teacher else "Unassigned",
+            "instructor_avatar": f"https://ui-avatars.com/api/?name={course.teacher.full_name}&background=random" if course.teacher else "https://ui-avatars.com/api/?name=Unassigned&background=gray",
+            "status": "active", # Mock status
+            "student_count": student_count,
+            "class_count": 1, # Placeholder
+            "avg_grade": 85 # Placeholder
+        })
+
+    # Mock department stats for the overview cards
+    departments = [
+        {"name": "Mathematics", "color": "primary", "course_count": 12, "student_count": 450, "teacher_count": 8, "avg_grade": 78, "utilization": 85},
+        {"name": "Science", "color": "success", "course_count": 10, "student_count": 380, "teacher_count": 6, "avg_grade": 82, "utilization": 90},
+        {"name": "English", "color": "info", "course_count": 8, "student_count": 410, "teacher_count": 5, "avg_grade": 80, "utilization": 75}
+    ]
+
+    return templates.TemplateResponse("authority/courses.html", {
+        "request": request,
+        "current_user": current_user,
+        "courses": formatted_courses,
+        "departments": departments,
+        "search_query": search
+    })
+
+@router.post("/authority/courses/{id}/delete", name="authority_delete_course")
+async def authority_delete_course(id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    course = CourseRepository.get_by_id(db, id)
+    if not course: raise HTTPException(status_code=404)
+    db.delete(course)
+    db.commit()
+    return RedirectResponse(url="/authority/courses?success=deleted", status_code=303)
