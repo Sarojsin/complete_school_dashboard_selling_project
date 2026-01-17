@@ -13,7 +13,8 @@ from contextlib import asynccontextmanager
 import os
 import shutil
 import uuid
-from datetime import datetime
+from datetime import datetime, date, time
+from utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS
 
 from config.config import settings
 from database.database import engine, Base, get_db
@@ -219,9 +220,9 @@ async def logout(request: Request):
     response = RedirectResponse(url="/login", status_code=302)
     response.delete_cookie("access_token")
     return response
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+# @app.get("/health")
+# async def health_check():
+#     return {"status": "healthy"}
 
 # ------------------ AUTHENTICATION PAGES ------------------
 @app.get("/login", response_class=HTMLResponse)
@@ -234,11 +235,17 @@ async def signup_page(request: Request):
 
 @app.get("/signup/student", response_class=HTMLResponse)
 async def signup_student_page(request: Request):
-    return templates.TemplateResponse("auth/signup_student.html", {"request": request})
+    return templates.TemplateResponse("auth/signup_student.html", {
+        "request": request,
+        "grades": GRADE_LEVELS
+    })
 
 @app.get("/signup/teacher", response_class=HTMLResponse)
 async def signup_teacher_page(request: Request):
-    return templates.TemplateResponse("auth/signup_teacher.html", {"request": request})
+    return templates.TemplateResponse("auth/signup_teacher.html", {
+        "request": request,
+        "departments": DEPARTMENTS
+    })
 
 @app.get("/signup/authority", response_class=HTMLResponse)
 async def signup_authority_page(request: Request):
@@ -255,11 +262,17 @@ async def register_page(request: Request):
 
 @app.get("/register/student", response_class=HTMLResponse)
 async def register_student_page(request: Request):
-    return templates.TemplateResponse("auth/signup_student.html", {"request": request})
+    return templates.TemplateResponse("auth/signup_student.html", {
+        "request": request,
+        "grades": GRADE_LEVELS
+    })
 
 @app.get("/register/teacher", response_class=HTMLResponse)
 async def register_teacher_page(request: Request):
-    return templates.TemplateResponse("auth/signup_teacher.html", {"request": request})
+    return templates.TemplateResponse("auth/signup_teacher.html", {
+        "request": request,
+        "departments": DEPARTMENTS
+    })
 
 @app.get("/register/parent", response_class=HTMLResponse)
 async def register_parent_page(request: Request):
@@ -511,26 +524,194 @@ async def student_fees(request: Request, current_user: User = Depends(get_curren
     })
 
 @app.get("/student/tests")
-async def student_tests(request: Request, current_user: User = Depends(get_current_user)):
+async def student_test_list(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.student_repository import StudentRepository
+    from repositories.test_repository import TestRepository
+    from models.test_models import Test
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    tests = []
+    if student:
+        tests = TestRepository.get_available_tests_for_student(
+            db, 
+            student.id, 
+            section=student.section, 
+            grade_level=student.grade_level
+        )
+    
     return templates.TemplateResponse("student/test_list.html", {
         "request": request,
         "current_user": current_user,
         "student": current_user,
-        "tests": []
+        "tests": tests
     })
 
 @app.get("/student/tests/{test_id}/start")
-async def student_take_test(request: Request, test_id: int):
+async def student_take_test(
+    request: Request, 
+    test_id: int, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    from repositories.test_repository import TestRepository
+    from services.test_service import TestService
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+    
+    test = TestRepository.get_by_id(db, test_id)
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+    
+    # Availability check (time window)
+    if not TestService.is_test_available(test):
+        raise HTTPException(status_code=400, detail="Test is not currently available")
+        
+    # Check section visibility
+    if test.target_section and test.target_section != "All" and test.target_section != student.section:
+        raise HTTPException(status_code=403, detail="This test is not assigned to your section")
+        
+    # Check grade visibility
+    if test.grade_level and test.grade_level != student.grade_level:
+        raise HTTPException(status_code=403, detail="This test is not for your grade level")
+    
+    # Check if submitted
+    if TestService.has_student_submitted(db, test_id, student.id):
+        return RedirectResponse(f"/student/tests/{test_id}/result")
+    
+    submission = TestService.get_or_create_submission(db, test_id, student.id)
+    
     return templates.TemplateResponse("student/take_test.html", {
         "request": request,
-        "test_id": test_id
+        "test": test,
+        "submission": submission,
+        "user_answers": submission.answers or {}
     })
 
+@app.post("/student/tests/{test_id}/submit")
+async def student_submit_test(
+    request: Request,
+    test_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    from repositories.test_repository import TestRepository
+    from services.test_service import TestService
+    from datetime import datetime
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+        
+    test = TestRepository.get_by_id(db, test_id)
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+        
+    submission = TestRepository.get_submission(db, test_id, student.id)
+    if not submission:
+        raise HTTPException(status_code=400, detail="Test session not found")
+        
+    if submission.submitted_at:
+        return RedirectResponse(f"/student/tests/{test_id}/result")
+        
+    form_data = await request.form()
+    answers = {}
+    for key, value in form_data.items():
+        if key.startswith("question_"):
+            # The format is question_{question_id}
+            q_id = key.replace("question_", "")
+            answers[q_id] = value
+            
+    time_taken = (datetime.utcnow() - submission.started_at).total_seconds()
+    
+    submission = TestRepository.update_submission(
+        db,
+        submission,
+        answers=answers,
+        submitted_at=datetime.utcnow(),
+        time_taken=int(time_taken)
+    )
+    
+    TestService.grade_submission(db, submission, test)
+    
+    # Use 303 See Other for redirecting after POST
+    return RedirectResponse(url=f"/student/tests/{test_id}/result", status_code=303)
+
 @app.get("/student/tests/{test_id}/result")
-async def student_test_result(request: Request, test_id: int):
+async def student_test_result(
+    request: Request, 
+    test_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.student_repository import StudentRepository
+    from repositories.test_repository import TestRepository
+    
+    student = StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+        
+    test = TestRepository.get_by_id(db, test_id)
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+        
+    submission = TestRepository.get_submission(db, test_id, student.id)
+    
+    if not submission or not submission.submitted_at:
+        return RedirectResponse(f"/student/tests/{test_id}/start")
+        
+    # Prepare questions data for template
+    questions_data = []
+    correct_answers = 0
+    wrong_answers = 0
+    skipped_questions = 0
+    
+    # Map questions to their answers for easier template rendering
+    for q in test.questions:
+        user_ans = submission.answers.get(str(q.id))
+        is_correct = False
+        if user_ans:
+            if str(user_ans).strip().lower() == str(q.correct_answer).strip().lower():
+                is_correct = True
+                correct_answers += 1
+            else:
+                wrong_answers += 1
+        else:
+            skipped_questions += 1
+            
+        questions_data.append({
+            "question_text": q.question_text,
+            "user_answer": user_ans or "Not answered",
+            "correct_answer": q.correct_answer,
+            "is_correct": is_correct,
+            "explanation": getattr(q, 'explanation', None) # If model has explanation
+        })
+        
+    # Result calculations
+    time_taken_formatted = f"{submission.time_taken // 60}m {submission.time_taken % 60}s" if submission.time_taken else "N/A"
+    
+    percentage = submission.percentage or 0
+    performance_rating = "Excellent" if percentage >= 80 else "Good" if percentage >= 60 else "Average" if percentage >= 40 else "Needs Improvement"
+    performance_feedback = "Keep up the great work!" if percentage >= 80 else "Good job, you can do even better!"
+    
     return templates.TemplateResponse("student/test_result.html", {
         "request": request,
-        "test_id": test_id
+        "test": test,
+        "score": submission.score or 0,
+        "total_questions": len(test.questions),
+        "percentage": round(percentage, 1),
+        "result_status": "Passed" if percentage >= 40 else "Failed",
+        "correct_answers": correct_answers,
+        "wrong_answers": wrong_answers,
+        "skipped_questions": skipped_questions,
+        "time_taken": time_taken_formatted,
+        "performance_rating": performance_rating,
+        "performance_feedback": performance_feedback,
+        "questions": questions_data,
+        "improvement_suggestions": ["Review chapters related to incorrect answers."]
     })
 
 @app.get("/student/notices")
@@ -1288,104 +1469,104 @@ async def teacher_create_assignment_post(request: Request, current_user: User = 
     AssignmentRepository.create(db, assignment_data)
     return RedirectResponse(url="/teacher/dashboard?success=Assignment+created", status_code=303)
 
-@app.get("/teacher/grades")
-async def teacher_grades_list(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/grades.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "grades": []
-    })
+# @app.get("/teacher/grades")
+# async def teacher_grades_list(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/grades.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "grades": []
+#     })
 
-@app.get("/teacher/attendance")
-async def teacher_attendance_page(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/attendance.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user
-    })
+# @app.get("/teacher/attendance")
+# async def teacher_attendance_page(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/attendance.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user
+#     })
 
-@app.get("/teacher/tests")
-async def teacher_tests_page(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/tests.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "tests": []
-    })
+# @app.get("/teacher/tests")
+# async def teacher_tests_page(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/tests.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "tests": []
+#     })
 
-@app.get("/teacher/timetable")
-async def teacher_timetable_page(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/timetable.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user
-    })
+# @app.get("/teacher/timetable")
+# async def teacher_timetable_page(request: Request, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/timetable.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user
+#     })
 
 # ===== STUDENT ROUTES =====
 
-@app.get("/student/assignments")
-async def student_assignments(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from repositories.assignment_repository import AssignmentRepository
-    from repositories.student_repository import StudentRepository
-    from models.models import CourseEnrollment
+# @app.get("/student/assignments")
+# async def student_assignments(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     from repositories.assignment_repository import AssignmentRepository
+#     from repositories.student_repository import StudentRepository
+#     from models.models import CourseEnrollment
     
-    student = StudentRepository.get_by_user_id(db, current_user.id)
-    assignments = []
-    stats = {
-        "total": 0,
-        "pending": 0,
-        "submitted": 0,
-        "graded": 0,
-        "overdue": 0
-    }
+#     student = StudentRepository.get_by_user_id(db, current_user.id)
+#     assignments = []
+#     stats = {
+#         "total": 0,
+#         "pending": 0,
+#         "submitted": 0,
+#         "graded": 0,
+#         "overdue": 0
+#     }
     
-    if student:
-        # Get all courses the student is enrolled in
-        enrollments = db.query(CourseEnrollment).filter(
-            CourseEnrollment.student_id == student.id
-        ).all()
+#     if student:
+#         # Get all courses the student is enrolled in
+#         enrollments = db.query(CourseEnrollment).filter(
+#             CourseEnrollment.student_id == student.id
+#         ).all()
         
-        course_ids = [e.course_id for e in enrollments]
+#         course_ids = [e.course_id for e in enrollments]
         
-        # Get all assignments for those courses
-        if course_ids:
-            for course_id in course_ids:
-                course_assignments = AssignmentRepository.get_all(db, course_id=course_id)
-                assignments.extend(course_assignments)
+#         # Get all assignments for those courses
+#         if course_ids:
+#             for course_id in course_ids:
+#                 course_assignments = AssignmentRepository.get_all(db, course_id=course_id)
+#                 assignments.extend(course_assignments)
         
-        stats["total"] = len(assignments)
-        # Calculate other stats (simplified for now)
-        stats["pending"] = len([a for a in assignments if not getattr(a, 'is_submitted', False)])
-        stats["submitted"] = stats["total"] - stats["pending"]
+#         stats["total"] = len(assignments)
+#         # Calculate other stats (simplified for now)
+#         stats["pending"] = len([a for a in assignments if not getattr(a, 'is_submitted', False)])
+#         stats["submitted"] = stats["total"] - stats["pending"]
     
-    return templates.TemplateResponse("student/assignments.html", {
-        "request": request,
-        "current_user": current_user,
-        "student": current_user,
-        "assignments": assignments,
-        "stats": stats
-    })
+#     return templates.TemplateResponse("student/assignments.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "student": current_user,
+#         "assignments": assignments,
+#         "stats": stats
+#     })
 
-@app.get("/student/assignments/{assignment_id}")
-async def student_assignment_detail(
-    request: Request,
-    assignment_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.assignment_repository import AssignmentRepository
+# @app.get("/student/assignments/{assignment_id}")
+# async def student_assignment_detail(
+#     request: Request,
+#     assignment_id: int,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     from repositories.assignment_repository import AssignmentRepository
     
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
+#     assignment = AssignmentRepository.get_by_id(db, assignment_id)
+#     if not assignment:
+#         raise HTTPException(status_code=404, detail="Assignment not found")
     
-    return templates.TemplateResponse("student/assignment_detail.html", {
-        "request": request,
-        "current_user": current_user,
-        "student": current_user,
-        "assignment": assignment
-    })
+#     return templates.TemplateResponse("student/assignment_detail.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "student": current_user,
+#         "assignment": assignment
+#     })
 
 @app.get("/teacher/courses")
 async def teacher_courses(request: Request, current_user: User = Depends(get_current_user)):
@@ -1440,24 +1621,24 @@ async def teacher_courses(request: Request, current_user: User = Depends(get_cur
 
 
 # Alias route for create-assignment
-@app.get("/teacher/create-assignment")
-async def teacher_create_assignment_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from models.models import Course
-    courses = db.query(Course).all()
-    return templates.TemplateResponse("teacher/create_assignment.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "courses": courses
-    })
+# @app.get("/teacher/create-assignment")
+# async def teacher_create_assignment_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     from models.models import Course
+#     courses = db.query(Course).all()
+#     return templates.TemplateResponse("teacher/create_assignment.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "courses": courses
+#     })
 
-@app.get("/teacher/assignments/{assignment_id}/edit")
-async def teacher_edit_assignment(request: Request, assignment_id: int, current_user: User = Depends(get_current_user)):
+@app.get("/teacher/assignments/{id}/edit")
+async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
     return templates.TemplateResponse("teacher/edit_assignment.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "assignment_id": assignment_id
+        "assignment_id": id
     })
 
 @app.get("/teacher/attendance")
@@ -1549,61 +1730,233 @@ async def teacher_add_grade(request: Request, current_user: User = Depends(get_c
     })
 
 @app.get("/teacher/tests")
-async def teacher_tests(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_tests(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.test_repository import TestRepository
+    from services.test_service import TestService
+    from models.models import Student
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        return RedirectResponse("/login")
+        
+    all_tests = TestRepository.get_by_teacher(db, teacher.id)
+    
+    formatted_tests = []
+    now = datetime.now()
+    
+    stats = {
+        "total_tests": len(all_tests),
+        "active_tests": 0,
+        "completed_tests": 0,
+        "upcoming_tests": 0
+    }
+    
+    upcoming_limit = 5
+    formatted_upcoming = []
+    
+    for t in all_tests:
+        # Determine Status
+        status = "active"
+        status_color = "success"
+        
+        if not t.is_active:
+            status = "draft"
+            status_color = "secondary"
+        elif now < t.start_time:
+            status = "upcoming"
+            status_color = "warning"
+            stats["upcoming_tests"] += 1
+            if len(formatted_upcoming) < upcoming_limit:
+                time_to_start = t.start_time - now
+                starts_in = f"{time_to_start.days}d {time_to_start.seconds // 3600}h" if time_to_start.days > 0 else f"{time_to_start.seconds // 3600}h"
+                formatted_upcoming.append({
+                    "id": t.id,
+                    "title": t.title,
+                    "subject": t.subject_name or "Unknown",
+                    "class": f"{t.grade_level or 'N/A'} {t.target_section or ''}",
+                    "starts_in": starts_in,
+                    "duration": t.duration,
+                    "total_students": db.query(Student).filter(Student.grade_level == t.grade_level).count()
+                })
+        elif now > t.end_time:
+            status = "completed"
+            status_color = "info"
+            stats["completed_tests"] += 1
+        else:
+            status = "active"
+            status_color = "success"
+            stats["active_tests"] += 1
+            
+        submitted_count = len([s for s in t.submissions if s.submitted_at])
+        # Participation based on Grade (and section if applicable)
+        student_query = db.query(Student).filter(Student.grade_level == t.grade_level)
+        if t.target_section and t.target_section != "All":
+             student_query = student_query.filter(Student.section == t.target_section)
+        total_eligible = student_query.count()
+        
+        participation_rate = (submitted_count / total_eligible * 100) if total_eligible > 0 else 0
+        
+        time_rem = "N/A"
+        is_overdue = False
+        if status == "active":
+            rem = t.end_time - now
+            time_rem = f"{rem.days}d {rem.seconds // 3600}h" if rem.days > 0 else f"{rem.seconds // 3600}h"
+        elif status == "upcoming":
+            rem = t.start_time - now
+            time_rem = f"Starts in {rem.days}d"
+        elif status == "completed":
+            time_rem = "Ended"
+            is_overdue = True
+
+        formatted_tests.append({
+            "id": t.id,
+            "title": t.title,
+            "subject": t.subject_name or "Unknown",
+            "grade": t.grade_level or "N/A",
+            "section": t.target_section or "All",
+            "class": f"{t.grade_level or 'N/A'} {t.target_section or ''}",
+            "total_marks": t.total_points,
+            "start_time": t.start_time.strftime("%Y-%m-%d %H:%M"),
+            "is_overdue": is_overdue,
+            "time_remaining": time_rem,
+            "duration": t.duration,
+            "participation_rate": participation_rate,
+            "attempted": submitted_count,
+            "total_students": total_eligible,
+            "status": status,
+            "status_color": status_color,
+            "is_important": t.total_points >= 100
+        })
+
     return templates.TemplateResponse("teacher/view_tests.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "stats": {
-            "total_tests": 8,
-            "active_tests": 2,
-            "completed_tests": 5,
-            "upcoming_tests": 1
-        },
-        "subjects": ["Mathematics", "Physics", "Chemistry"],
-        "classes": ["10-A", "10-B", "11-A"],
-        "tests": [
-            {
-                "id": 1,
-                "title": "Mid-Term Algebra",
-                "subject": "Mathematics",
-                "class": "10-A",
-                "total_marks": 100,
-                "start_time": "2023-10-15 09:00",
-                "is_overdue": False,
-                "time_remaining": "2 days",
-                "duration": 90,
-                "participation_rate": 0,
-                "attempted": 0,
-                "total_students": 30,
-                "status": "upcoming",
-                "status_color": "warning",
-                "is_important": True
-            }
-        ],
-        "upcoming_tests": [
-            {
-                "id": 1,
-                "title": "Mid-Term Algebra",
-                "subject": "Mathematics",
-                "class": "10-A",
-                "starts_in": "2 days",
-                "duration": 90,
-                "total_students": 30
-            }
-        ]
+        "stats": stats,
+        "subjects": DEPARTMENTS,
+        "classes": GRADE_LEVELS,
+        "tests": formatted_tests,
+        "upcoming_tests": formatted_upcoming
     })
 
 @app.get("/teacher/tests/create")
-async def teacher_create_test(request: Request, current_user: User = Depends(get_current_user)):
+async def teacher_create_test(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.teacher_repository import TeacherRepository
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher profile not found")
+        
     return templates.TemplateResponse("teacher/create_test.html", {
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "courses": [],
-        "subjects": ["Mathematics", "Physics", "Chemistry", "Biology", "English", "History"],
-        "classes": ["Class 10-A", "Class 10-B", "Class 11-A", "Class 12-B"]
+        "teacher_courses": teacher.courses,
+        "subjects": DEPARTMENTS,
+        "classes": GRADE_LEVELS,
+        "sections": SECTIONS
     })
+
+@app.post("/teacher/tests/create")
+async def teacher_create_test_post(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.test_repository import TestRepository
+    from datetime import datetime
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher profile not found")
+        
+    form_data = await request.form()
+    
+    # Extract test data
+    test_title = form_data.get("title")
+    subject = form_data.get("subject")
+    grade_level = form_data.get("grade")
+    section = form_data.get("section")
+    total_marks = float(form_data.get("total_marks", 100))
+    instructions = form_data.get("instructions")
+    duration = int(form_data.get("duration", 60))
+    
+    # Times are in ISO format from datetime-local input
+    start_time_str = form_data.get("start_time")
+    end_time_str = form_data.get("end_time")
+    
+    start_time = datetime.fromisoformat(start_time_str) if start_time_str else datetime.now()
+    end_time = datetime.fromisoformat(end_time_str) if end_time_str else datetime.now()
+    
+    # Parse questions
+    # questions[1][text], questions[1][type], etc.
+    questions_dict = {}
+    
+    for key in form_data.keys():
+        if key.startswith('questions['):
+            import re
+            match = re.match(r'questions\[(\d+)\]\[(\w+)\](?:\[(\d+)\])?', key)
+            if match:
+                q_idx = int(match.group(1))
+                field = match.group(2)
+                opt_idx = match.group(3)
+                
+                if q_idx not in questions_dict:
+                    questions_dict[q_idx] = {"options": []}
+                
+                if field == 'options' and opt_idx is not None:
+                    # Collect options in order
+                    val = form_data.get(key)
+                    questions_dict[q_idx]["options"].append(val)
+                elif field == 'text':
+                    questions_dict[q_idx]['question_text'] = form_data.get(key)
+                elif field == 'type':
+                    q_type = form_data.get(key)
+                    # Map to QuestionType enum if needed, or just string if model allows
+                    questions_dict[q_idx]['question_type'] = q_type
+                elif field == 'marks':
+                    questions_dict[q_idx]['points'] = float(form_data.get(key, 1))
+                elif field == 'correct_answer':
+                    questions_dict[q_idx]['correct_answer'] = form_data.get(key)
+                elif field == 'explanation':
+                    questions_dict[q_idx]['explanation'] = form_data.get(key)
+
+    # Sort and refine questions list
+    sorted_q_indices = sorted(questions_dict.keys())
+    questions_data = []
+    for idx in sorted_q_indices:
+        q = questions_dict[idx]
+        
+        # If it's MCQ, correct_answer is the index
+        if q.get('question_type') in ['multiple_choice', 'true_false']:
+            try:
+                ans_idx = int(q.get('correct_answer', 0))
+                if ans_idx < len(q['options']):
+                    q['correct_answer'] = q['options'][ans_idx]
+            except (ValueError, TypeError):
+                pass
+                
+        questions_data.append(q)
+
+    # Create test
+    test_data = {
+        "title": test_title,
+        "subject_name": subject,
+        "grade_level": grade_level,
+        "teacher_id": teacher.id,
+        "duration": duration,
+        "start_time": start_time,
+        "end_time": end_time,
+        "instructions": instructions,
+        "total_points": total_marks,
+        "target_section": section
+    }
+    
+    TestRepository.create(db, test_data, questions_data)
+    
+    return RedirectResponse(url="/teacher/tests?success=Test+created+successfully", status_code=303)
+
 
 @app.get("/teacher/tests/{id}/edit")
 async def teacher_edit_test(request: Request, id: int, current_user: User = Depends(get_current_user)):
@@ -1620,7 +1973,7 @@ async def teacher_create_notice(request: Request, current_user: User = Depends(g
         "request": request,
         "current_user": current_user,
         "teacher": current_user,
-        "classes": ["Class 10-A", "Class 10-B", "Class 11-A", "Class 12-B"]
+        "classes": GRADE_LEVELS
     })
 
 @app.get("/teacher/timetable")
@@ -1740,6 +2093,381 @@ async def teacher_chat(request: Request, current_user: User = Depends(get_curren
     })
 
 
+# ------------------ TEACHER ACTION ROUTES ------------------
+@app.get("/teacher/courses/{id}")
+async def teacher_course_detail(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/course_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "course": {
+            "id": id,
+            "subject": "Mathematics",
+            "grade": "10-A",
+            "code": "MATH101",
+            "description": "Introduction to Algebra and Geometry",
+            "student_count": 30,
+            "schedule": "Mon, Wed, Fri 09:00 AM",
+            "progress": 45
+        }
+    })
+
+@app.get("/teacher/courses/{id}/students")
+async def teacher_course_students(
+    request: Request, 
+    id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.course_repository import CourseRepository
+    
+    course = CourseRepository.get_by_id(db, id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+        
+    students = CourseRepository.get_enrolled_students(db, id)
+    
+    # Format students for template
+    formatted_students = []
+    for s in students:
+        formatted_students.append({
+            "id": s.id,
+            "name": s.user.full_name,
+            "email": s.user.email,
+            "grade": s.grade_level,
+            "section": s.section,
+            "attendance": 100, # Simplified/Default
+            "average_grade": 0, # Simplified/Default
+            "pending_assignments": 0, # Simplified/Default
+            "avatar": f"https://ui-avatars.com/api/?name={s.user.full_name.replace(' ', '+')}&background=random"
+        })
+
+    return templates.TemplateResponse("teacher/students.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "students": formatted_students,
+        "search_query": None,
+        "filters": {
+            "grade": course.grade_level,
+            "section": None # Course might not have section fixed
+        }
+    })
+
+@app.get("/teacher/assignments/{id}/submissions")
+async def teacher_view_submissions(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from repositories.assignment_repository import AssignmentRepository
+    from models.models import AssignmentSubmission, Student
+    
+    assignment = AssignmentRepository.get_by_id(db, id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+        
+    # Check if this teacher owns the assignment
+    from repositories.teacher_repository import TeacherRepository
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher or assignment.teacher_id != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    submissions = db.query(AssignmentSubmission).filter(
+        AssignmentSubmission.assignment_id == id
+    ).join(Student).all()
+    
+    return templates.TemplateResponse("teacher/view_submissions.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "assignment": assignment,
+        "submissions": submissions
+    })
+
+@app.post("/teacher/assignments/submissions/{submission_id}/grade")
+async def teacher_grade_submission(
+    submission_id: int, 
+    request: Request, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    from models.models import AssignmentSubmission
+    form_data = await request.form()
+    
+    submission = db.query(AssignmentSubmission).get(submission_id)
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+        
+    submission.score = float(form_data.get("score"))
+    submission.feedback = form_data.get("feedback")
+    submission.graded_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return RedirectResponse(url=f"/teacher/assignments/{submission.assignment_id}/submissions?success=Grade+updated", status_code=303)
+
+# @app.get("/teacher/assignments/{id}/edit")
+# async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
+#     return templates.TemplateResponse("teacher/edit_assignment.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "teacher": current_user,
+#         "assignment": {
+#             "id": id,
+#             "title": "Algebra Problem Set 1",
+#             "description": "Complete exercises 1-10 from Chapter 2",
+#             "subject": "Mathematics",
+#             "class": "10-A",
+#             "due_date": "2023-10-15",
+#             "points": 100
+#         },
+#         "classes": ["10-A", "10-B"],
+#         "subjects": ["Mathematics", "Physics"]
+#     })
+
+@app.get("/teacher/attendance/{id}")
+async def teacher_view_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/attendance.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "stats": {},
+        "classes": [],
+        "subjects": [],
+        "attendance_records": [],
+        "current_month": "",
+        "monthly_overview": [],
+        "monthly_stats": {}
+    })
+
+@app.get("/teacher/attendance/{id}/edit")
+async def teacher_edit_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/take_attendance.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "class_info": {},
+        "students": []
+    })
+
+@app.get("/teacher/tests/{id}/results")
+async def teacher_test_results(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("teacher/view_tests.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "tests": [],
+        "stats": {},
+        "subjects": [],
+        "classes": [],
+        "upcoming_tests": []
+    })
+
+@app.delete("/teacher/tests/delete/{id}")
+async def teacher_delete_test(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Test deleted successfully"})
+
+# @app.post("/teacher/students/{student_id}/contact")
+# async def teacher_contact_student(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
+#     return JSONResponse(content={"message": "Message sent successfully"})
+
+@app.delete("/teacher/assignments/delete/{id}")
+async def teacher_delete_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Assignment deleted successfully"})
+
+@app.get("/teacher/notes/upload")
+async def teacher_upload_notes(
+    request: Request, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.course_repository import CourseRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    courses = []
+    notes = []
+    if teacher:
+        from repositories.notes_repository import NotesRepository
+        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
+        notes = NotesRepository.get_by_teacher(db, teacher.id)
+        
+    return templates.TemplateResponse("teacher/upload_notes.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "courses": courses,
+        "recent_uploads": [
+            {
+                "title": n.title,
+                "course": n.course.course_name if n.course else "Unknown",
+                "upload_time": n.uploaded_at.strftime("%b %d, %H:%M"),
+                "status": "published"
+            } for n in notes[:5]
+        ],
+        "stats": {
+            "total_materials": len(notes),
+            "total_size": f"{sum(n.file_size or 0 for n in notes) / (1024*1024):.1f} MB",
+            "this_month": len([n for n in notes if n.uploaded_at.month == datetime.utcnow().month])
+        }
+    })
+
+@app.post("/teacher/notes/upload")
+async def teacher_upload_notes_post(
+    request: Request,
+    title: str = Form(...),
+    course_id: int = Form(...),
+    description: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.notes_repository import NotesRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        raise HTTPException(status_code=403, detail="Only teachers can upload notes")
+
+    # Handle file upload
+    ext = os.path.splitext(file.filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    file_path = f"/static/uploads/notes/{filename}"
+    
+    save_path = f"app{file_path}"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Get file size
+    file.file.seek(0, os.SEEK_END)
+    file_size = file.file.tell()
+    
+    note_data = {
+        "title": title,
+        "description": description,
+        "course_id": course_id,
+        "teacher_id": teacher.id,
+        "file_path": file_path,
+        "file_size": file_size,
+        "file_type": ext.replace('.', '')
+    }
+    
+    NotesRepository.create(db, note_data)
+    return RedirectResponse(url="/teacher/dashboard?success=Material+uploaded", status_code=303)
+
+@app.get("/teacher/videos/upload")
+async def teacher_upload_videos(
+    request: Request, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.course_repository import CourseRepository
+    from repositories.videos_repository import VideosRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    courses = []
+    videos = []
+    if teacher:
+        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
+        videos = VideosRepository.get_by_teacher(db, teacher.id)
+        
+    formatted_videos = []
+    for v in videos:
+        formatted_videos.append({
+            "id": v.id,
+            "title": v.title,
+            "thumbnail": "https://via.placeholder.com/60x40?text=Video",
+            "duration": f"{v.duration // 60}:{v.duration % 60:02d}" if v.duration else "0:00",
+            "subject": v.course.course_name if v.course else "Unknown",
+            "class": v.course.grade_level if v.course else "Unknown",
+            "upload_date": v.uploaded_at.strftime("%Y-%m-%d"),
+            "size": f"{(v.file_size or 0) / (1024*1024):.1f} MB",
+            "views": 0,
+            "status": "processed"
+        })
+
+    return templates.TemplateResponse("teacher/upload_videos.html", {
+        "request": request,
+        "current_user": current_user,
+        "teacher": current_user,
+        "courses": courses,
+        "videos": formatted_videos,
+        "stats": {
+            "total_videos": len(videos),
+            "total_size": f"{sum(v.file_size or 0 for v in videos) / (1024*1024*1024):.2f}",
+            "total_views": 0,
+            "this_month": len([v for v in videos if v.uploaded_at.month == datetime.utcnow().month])
+        },
+        "storage": {
+            "used": sum(v.file_size or 0 for v in videos) / (1024*1024*1024),
+            "total": 10,
+            "percentage": min(100, (sum(v.file_size or 0 for v in videos) / (1024*1024*1024*10)) * 100)
+        },
+        "subjects": list(set(c.course_name for c in courses)) if courses else ["General"],
+        "classes": list(set(c.grade_level for c in courses)) if courses else ["All"]
+    })
+
+@app.post("/teacher/videos/upload")
+async def teacher_upload_videos_post(
+    request: Request,
+    title: str = Form(...),
+    course_id: int = Form(...),
+    description: Optional[str] = Form(None),
+    video_file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from repositories.teacher_repository import TeacherRepository
+    from repositories.videos_repository import VideosRepository
+    
+    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        raise HTTPException(status_code=403, detail="Only teachers can upload videos")
+
+    # Handle file upload
+    ext = os.path.splitext(video_file.filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    file_path = f"/static/uploads/videos/{filename}"
+    
+    save_path = f"app{file_path}"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(video_file.file, buffer)
+        
+    # Get file size
+    video_file.file.seek(0, os.SEEK_END)
+    file_size = video_file.file.tell()
+    
+    video_data = {
+        "title": title,
+        "description": description,
+        "course_id": course_id,
+        "teacher_id": teacher.id,
+        "file_path": file_path,
+        "file_size": file_size,
+        "duration": 0
+    }
+    
+    VideosRepository.create(db, video_data)
+    return RedirectResponse(url="/teacher/dashboard?success=Video+uploaded", status_code=303)
+
+@app.get("/teacher/attendance/delete/{id}")
+async def teacher_delete_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Attendance record deleted successfully"})
+
+@app.get("/teacher/videos/{id}")
+async def teacher_view_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Video player placeholder"})
+
+@app.get("/teacher/videos/{id}/edit")
+async def teacher_edit_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Edit video placeholder"})
+
+@app.delete("/teacher/videos/{id}")
+async def teacher_delete_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
+    return JSONResponse(content={"message": "Video deleted successfully"})
+
 # ------------------ AUTHORITY/ADMIN PAGES ------------------
 @app.get("/authority/dashboard")
 async def authority_dashboard(request: Request, current_user: User = Depends(get_current_user)):
@@ -1853,8 +2581,8 @@ async def authority_edit_student(
         "current_user": current_user,
         "authority": current_user,
         "student": student_data,
-        "grades": ["9", "10", "11", "12"],
-        "sections": ["A", "B", "C"]
+        "grades": GRADE_LEVELS,
+        "sections": ["A", "B", "C", "D", "E"]
     })
 
 @app.get("/authority/students/{student_id}")
@@ -2010,8 +2738,8 @@ async def authority_edit_teacher(
         "current_user": current_user,
         "authority": current_user,
         "teacher": teacher_data,
-        "departments": ["Mathematics", "Science", "English", "History", "Arts", "Computer Science"],
-        "subjects": ["Math", "Physics", "Chemistry", "Biology", "English", "History", "Geography"]
+        "departments": DEPARTMENTS,
+        "subjects": DEPARTMENTS
     })
 
 @app.get("/authority/teachers/{teacher_id}")
@@ -2111,6 +2839,7 @@ async def authority_courses(
 
 
 @app.get("/authority/courses/add")
+@app.get("/authority/add-course")
 async def authority_add_course(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     from repositories.teacher_repository import TeacherRepository
     
@@ -2125,8 +2854,8 @@ async def authority_add_course(request: Request, current_user: User = Depends(ge
         })
     
     # Define departments and grades (these could also come from DB in future)
-    departments = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Computer Science"]
-    grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+    departments = DEPARTMENTS
+    grades = GRADE_LEVELS
     
     return templates.TemplateResponse("authority/add_course.html", {
         "request": request,
@@ -2137,31 +2866,31 @@ async def authority_add_course(request: Request, current_user: User = Depends(ge
         "grades": grades
     })
 
-# Alias route for add-course
-@app.get("/authority/add-course")
-async def authority_add_course_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from repositories.teacher_repository import TeacherRepository
-    
-    teachers_raw = TeacherRepository.get_all(db)
-    teachers = []
-    for t in teachers_raw:
-        teachers.append({
-            "id": t.id,
-            "name": t.user.full_name if t.user else "Unknown",
-            "department": t.department or "General"
-        })
-    
-    departments = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Computer Science"]
-    grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
-    
-    return templates.TemplateResponse("authority/add_course.html", {
-        "request": request,
-        "current_user": current_user,
-        "authority": current_user,
-        "teachers": teachers,
-        "departments": departments,
-        "grades": grades
-    })
+# # Alias route for add-course
+# @app.get("/authority/add-course")
+# async def authority_add_course_alias(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     from repositories.teacher_repository import TeacherRepository
+#     
+#     teachers_raw = TeacherRepository.get_all(db)
+#     teachers = []
+#     for t in teachers_raw:
+#         teachers.append({
+#             "id": t.id,
+#             "name": t.user.full_name if t.user else "Unknown",
+#             "department": t.department or "General"
+#         })
+#     
+#     departments = ["Mathematics", "Science", "English", "Social Studies", "Arts", "Physical Education", "Computer Science"]
+#     grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+#     
+#     return templates.TemplateResponse("authority/add_course.html", {
+#         "request": request,
+#         "current_user": current_user,
+#         "authority": current_user,
+#         "teachers": teachers,
+#         "departments": departments,
+#         "grades": grades
+#     })
 
 # POST handler for creating course
 @app.post("/authority/courses/add")
@@ -2277,8 +3006,8 @@ async def authority_edit_course(
         "authority": current_user,
         "course": course_data,
         "teachers": formatted_teachers,
-        "departments": ["Mathematics", "Science", "English", "History", "Arts", "Computer Science"],
-        "grades": ["9", "10", "11", "12"],
+        "departments": DEPARTMENTS,
+        "grades": GRADE_LEVELS,
         "all_courses": [] # Would need another fetch if we want real prereqs
     })
 
@@ -2436,8 +3165,7 @@ async def authority_fee_structure(
         "stats": stats,
         "fee_structures": formatted_structures,
         "fee_breakdown": formatted_structures, # Re-using for simplicity or specialized if needed
-        "grades": ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", 
-                   "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"],
+        "grades": GRADE_LEVELS,
         "current_year": datetime.utcnow().year,
         "search_query": search
     })
@@ -2865,7 +3593,8 @@ async def authority_analytics(
         "demographics_data": [55, 45] # Mock gender dist
     })
 
-# ------------------ FAVICON ------------------
+
+# ------------------ UTILITY & DEBUGGING ------------------
 @app.get("/favicon.ico")
 async def favicon():
     from fastapi.responses import FileResponse, Response
@@ -2878,353 +3607,10 @@ async def favicon():
         # Return 204 No Content if favicon doesn't exist
         return Response(status_code=204)
 
-# ------------------ TEACHER ACTION ROUTES ------------------
-@app.get("/teacher/courses/{id}")
-async def teacher_course_detail(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/course_detail.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "course": {
-            "id": id,
-            "subject": "Mathematics",
-            "grade": "10-A",
-            "code": "MATH101",
-            "description": "Introduction to Algebra and Geometry",
-            "student_count": 30,
-            "schedule": "Mon, Wed, Fri 09:00 AM",
-            "progress": 45
-        }
-    })
-
-@app.get("/teacher/courses/{id}/students")
-async def teacher_course_students(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/students.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "students": []
-    })
-
-@app.get("/teacher/assignments/{id}/submissions")
-async def teacher_view_submissions(request: Request, id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from repositories.assignment_repository import AssignmentRepository
-    from models.models import AssignmentSubmission, Student
-    
-    assignment = AssignmentRepository.get_by_id(db, id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-        
-    # Check if this teacher owns the assignment
-    from repositories.teacher_repository import TeacherRepository
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    if not teacher or assignment.teacher_id != teacher.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    submissions = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.assignment_id == id
-    ).join(Student).all()
-    
-    return templates.TemplateResponse("teacher/view_submissions.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "assignment": assignment,
-        "submissions": submissions
-    })
-
-@app.post("/teacher/assignments/submissions/{submission_id}/grade")
-async def teacher_grade_submission(
-    submission_id: int, 
-    request: Request, 
-    db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
-):
-    from models.models import AssignmentSubmission
-    form_data = await request.form()
-    
-    submission = db.query(AssignmentSubmission).get(submission_id)
-    if not submission:
-        raise HTTPException(status_code=404, detail="Submission not found")
-        
-    submission.score = float(form_data.get("score"))
-    submission.feedback = form_data.get("feedback")
-    submission.graded_at = datetime.utcnow()
-    
-    db.commit()
-    
-    return RedirectResponse(url=f"/teacher/assignments/{submission.assignment_id}/submissions?success=Grade+updated", status_code=303)
-
-@app.get("/teacher/assignments/{id}/edit")
-async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/edit_assignment.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "assignment": {
-            "id": id,
-            "title": "Algebra Problem Set 1",
-            "description": "Complete exercises 1-10 from Chapter 2",
-            "subject": "Mathematics",
-            "class": "10-A",
-            "due_date": "2023-10-15",
-            "points": 100
-        },
-        "classes": ["10-A", "10-B"],
-        "subjects": ["Mathematics", "Physics"]
-    })
-
-@app.get("/teacher/attendance/{id}")
-async def teacher_view_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/attendance.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "stats": {},
-        "classes": [],
-        "subjects": [],
-        "attendance_records": [],
-        "current_month": "",
-        "monthly_overview": [],
-        "monthly_stats": {}
-    })
-
-@app.get("/teacher/attendance/{id}/edit")
-async def teacher_edit_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/take_attendance.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "class_info": {},
-        "students": []
-    })
-
-@app.get("/teacher/tests/{id}/results")
-async def teacher_test_results(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/view_tests.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "tests": [],
-        "stats": {},
-        "subjects": [],
-        "classes": [],
-        "upcoming_tests": []
-    })
-
-@app.delete("/teacher/tests/delete/{id}")
-async def teacher_delete_test(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Test deleted successfully"})
-
-@app.post("/teacher/students/{student_id}/contact")
-async def teacher_contact_student(request: Request, student_id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Message sent successfully"})
-
-@app.delete("/teacher/assignments/delete/{id}")
-async def teacher_delete_assignment(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Assignment deleted successfully"})
-
-@app.get("/teacher/notes/upload")
-async def teacher_upload_notes(
-    request: Request, 
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.course_repository import CourseRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    courses = []
-    notes = []
-    if teacher:
-        from repositories.notes_repository import NotesRepository
-        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
-        notes = NotesRepository.get_by_teacher(db, teacher.id)
-        
-    return templates.TemplateResponse("teacher/upload_notes.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "courses": courses,
-        "recent_uploads": [
-            {
-                "title": n.title,
-                "course": n.course.course_name if n.course else "Unknown",
-                "upload_time": n.uploaded_at.strftime("%b %d, %H:%M"),
-                "status": "published"
-            } for n in notes[:5]
-        ],
-        "stats": {
-            "total_materials": len(notes),
-            "total_size": f"{sum(n.file_size or 0 for n in notes) / (1024*1024):.1f} MB",
-            "this_month": len([n for n in notes if n.uploaded_at.month == datetime.utcnow().month])
-        }
-    })
-
-@app.post("/teacher/notes/upload")
-async def teacher_upload_notes_post(
-    request: Request,
-    title: str = Form(...),
-    course_id: int = Form(...),
-    description: Optional[str] = Form(None),
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.notes_repository import NotesRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    if not teacher:
-        raise HTTPException(status_code=403, detail="Only teachers can upload notes")
-
-    # Handle file upload
-    ext = os.path.splitext(file.filename)[1]
-    filename = f"{uuid.uuid4()}{ext}"
-    file_path = f"/static/uploads/notes/{filename}"
-    
-    save_path = f"app{file_path}"
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    
-    with open(save_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
-    # Get file size
-    file.file.seek(0, os.SEEK_END)
-    file_size = file.file.tell()
-    
-    note_data = {
-        "title": title,
-        "description": description,
-        "course_id": course_id,
-        "teacher_id": teacher.id,
-        "file_path": file_path,
-        "file_size": file_size,
-        "file_type": ext.replace('.', '')
-    }
-    
-    NotesRepository.create(db, note_data)
-    return RedirectResponse(url="/teacher/dashboard?success=Material+uploaded", status_code=303)
-
-@app.get("/teacher/videos/upload")
-async def teacher_upload_videos(
-    request: Request, 
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.course_repository import CourseRepository
-    from repositories.videos_repository import VideosRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    courses = []
-    videos = []
-    if teacher:
-        courses = CourseRepository.get_all(db, teacher_id=teacher.id)
-        videos = VideosRepository.get_by_teacher(db, teacher.id)
-        
-    formatted_videos = []
-    for v in videos:
-        formatted_videos.append({
-            "id": v.id,
-            "title": v.title,
-            "thumbnail": "https://via.placeholder.com/60x40?text=Video",
-            "duration": f"{v.duration // 60}:{v.duration % 60:02d}" if v.duration else "0:00",
-            "subject": v.course.course_name if v.course else "Unknown",
-            "class": v.course.grade_level if v.course else "Unknown",
-            "upload_date": v.uploaded_at.strftime("%Y-%m-%d"),
-            "size": f"{(v.file_size or 0) / (1024*1024):.1f} MB",
-            "views": 0,
-            "status": "processed"
-        })
-
-    return templates.TemplateResponse("teacher/upload_videos.html", {
-        "request": request,
-        "current_user": current_user,
-        "teacher": current_user,
-        "courses": courses,
-        "videos": formatted_videos,
-        "stats": {
-            "total_videos": len(videos),
-            "total_size": f"{sum(v.file_size or 0 for v in videos) / (1024*1024*1024):.2f}",
-            "total_views": 0,
-            "this_month": len([v for v in videos if v.uploaded_at.month == datetime.utcnow().month])
-        },
-        "storage": {
-            "used": sum(v.file_size or 0 for v in videos) / (1024*1024*1024),
-            "total": 10,
-            "percentage": min(100, (sum(v.file_size or 0 for v in videos) / (1024*1024*1024*10)) * 100)
-        },
-        "subjects": list(set(c.course_name for c in courses)) if courses else ["General"],
-        "classes": list(set(c.grade_level for c in courses)) if courses else ["All"]
-    })
-
-@app.post("/teacher/videos/upload")
-async def teacher_upload_videos_post(
-    request: Request,
-    title: str = Form(...),
-    course_id: int = Form(...),
-    description: Optional[str] = Form(None),
-    video_file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    from repositories.teacher_repository import TeacherRepository
-    from repositories.videos_repository import VideosRepository
-    
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
-    if not teacher:
-        raise HTTPException(status_code=403, detail="Only teachers can upload videos")
-
-    # Handle file upload
-    ext = os.path.splitext(video_file.filename)[1]
-    filename = f"{uuid.uuid4()}{ext}"
-    file_path = f"/static/uploads/videos/{filename}"
-    
-    save_path = f"app{file_path}"
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    
-    with open(save_path, "wb") as buffer:
-        shutil.copyfileobj(video_file.file, buffer)
-        
-    # Get file size
-    video_file.file.seek(0, os.SEEK_END)
-    file_size = video_file.file.tell()
-    
-    video_data = {
-        "title": title,
-        "description": description,
-        "course_id": course_id,
-        "teacher_id": teacher.id,
-        "file_path": file_path,
-        "file_size": file_size,
-        "duration": 0
-    }
-    
-    VideosRepository.create(db, video_data)
-    return RedirectResponse(url="/teacher/dashboard?success=Video+uploaded", status_code=303)
-
-@app.get("/teacher/attendance/delete/{id}")
-async def teacher_delete_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Attendance record deleted successfully"})
-
-@app.get("/teacher/videos/{id}")
-async def teacher_view_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Video player placeholder"})
-
-@app.get("/teacher/videos/{id}/edit")
-async def teacher_edit_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Edit video placeholder"})
-
-@app.delete("/teacher/videos/{id}")
-async def teacher_delete_video(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return JSONResponse(content={"message": "Video deleted successfully"})
-
 # ------------------ SCHEDULER ------------------
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.chat_cleanup_service import cleanup_expired_messages
 
-# ------------------ DEBUGGING ------------------
 @app.get("/debug/check_user")
 def debug_check_user(email: str = "student@test.com", db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
@@ -3296,4 +3682,3 @@ async def startup_event():
     scheduler.add_job(cleanup_expired_messages, 'interval', hours=1)
     scheduler.start()
     print("Scheduler started for chat message cleanup")
-
