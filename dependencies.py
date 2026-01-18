@@ -1,19 +1,20 @@
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import Optional
-from database.database import get_db
+from app.core.database import get_async_db
 from models.models import User, UserRole
 from tables.tables import TokenData
-from config.config import settings
+from app.core.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 async def get_current_user(
     request: Request,
     token: Optional[str] = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -43,10 +44,12 @@ async def get_current_user(
             raise credentials_exception
             
         token_data = TokenData(user_id=user_id, role=role)
-    except JWTError:
+    except (JWTError, ValueError):
         raise credentials_exception
     
-    user = db.query(User).filter(User.id == token_data.user_id).first()
+    result = await db.execute(select(User).filter(User.id == token_data.user_id))
+    user = result.scalars().first()
+    
     if user is None or not user.is_active:
         raise credentials_exception
     
