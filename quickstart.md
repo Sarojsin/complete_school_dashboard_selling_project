@@ -4,7 +4,7 @@ Get the School Management System running in 5 minutes!
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9 or higher (3.13 recommended for best async performance)
 - PostgreSQL 12 or higher
 - Git
 
@@ -160,17 +160,30 @@ Once the application is running, visit:
 school_dashboard_project/
 ├── app/
 │   ├── main.py              # Application entry point
-│   ├── models/              # Database models
-│   ├── routes/              # API endpoints
-│   ├── services/            # Business logic
-│   ├── repositories/        # Data access layer
-│   ├── templates/           # HTML templates
-│   └── static/              # CSS, JS, images
+│   ├── core/                # Core configuration
+│   │   ├── config.py        # Settings
+│   │   ├── database.py      # Async database setup
+│   │   └── templates.py     # Template configuration
+│   ├── web/                 # Web routes (modular)
+│   │   └── routers/         # Role-based route modules
+│   │       ├── student.py   # Student routes
+│   │       ├── teacher.py   # Teacher routes
+│   │       ├── authority.py # Authority routes
+│   │       ├── parent.py    # Parent routes
+│   │       └── common.py    # Common routes
+│   ├── middleware/          # Middleware (security, CSRF)
+├── models/                  # Database models
+├── routes/                  # API endpoints
+├── services/                # Business logic (async)
+├── repositories/            # Data access layer (async)
+├── templates/               # HTML templates
+├── static/                  # CSS, JS, images
 ├── tests/                   # Test files
+│   └── conftest.py         # Pytest async fixtures
 ├── requirements.txt         # Dependencies
 ├── setup_database.py        # Database initialization
 ├── run.py                   # Application runner
-└── Makefile                 # Common commands
+└── pytest.ini               # Test configuration
 ```
 
 ## Key Features
@@ -202,13 +215,17 @@ school_dashboard_project/
 - Generate reports
 
 ### 🚀 Technical Features
+- **Async/Await**: Full asynchronous architecture using AsyncPG
+- **High Performance**: Non-blocking I/O for all database operations
+- **Modular Routes**: Role-based route organization for maintainability
 - JWT Authentication
 - Role-based access control
 - WebSocket real-time chat
 - Automatic test grading
 - File upload support
-- Background job scheduling
+- Background job scheduling (AsyncIOScheduler)
 - Responsive design
+- Eager loading strategies to prevent N+1 queries
 
 ## Troubleshooting
 
@@ -304,12 +321,13 @@ git push
 
 ## Performance Tips
 
-- Use connection pooling for database
-- Enable caching for static files
-- Use CDN for media files
-- Optimize database queries
-- Monitor application performance
-- Scale horizontally with multiple workers
+- ✅ **AsyncPG**: Already using async database driver for maximum performance
+- ✅ **Connection Pooling**: Configured in `app/core/database.py`
+- ✅ **Eager Loading**: Relationships are eagerly loaded to prevent N+1 queries
+- Enable caching for static files in production
+- Use CDN for media files in production
+- Monitor application performance with APM tools
+- Scale horizontally with multiple workers using Gunicorn
 
 ## Updating the Application
 
