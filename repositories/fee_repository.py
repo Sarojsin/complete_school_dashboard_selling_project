@@ -1,44 +1,55 @@
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, and_, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete, or_, func, desc
+from sqlalchemy.orm import joinedload
 from typing import List, Optional, Dict
 from datetime import date, datetime
-from models.models import FeeRecord, Student
+from models.models import FeeRecord, Student, User
 
 class FeeRepository:
     @staticmethod
-    def search(db: Session, query: str) -> List[FeeRecord]:
-        return db.query(FeeRecord).join(Student).filter(
-            or_(
-                Student.full_name.ilike(f"%{query}%"),
-                Student.student_id.ilike(f"%{query}%"),
-                Student.parent_name.ilike(f"%{query}%")
+    async def search(db: AsyncSession, query: str) -> List[FeeRecord]:
+        result = await db.execute(
+            select(FeeRecord).options(
+                joinedload(FeeRecord.student).joinedload(Student.user)
+            ).join(Student).filter(
+                or_(
+                    Student.full_name.ilike(f"%{query}%"),
+                    Student.student_id.ilike(f"%{query}%"),
+                    Student.parent_name.ilike(f"%{query}%")
+                )
             )
-        ).all()
+        )
+        return result.scalars().unique().all()
 
     @staticmethod
-    def get_by_id(db: Session, fee_id: int) -> Optional[FeeRecord]:
-        return db.query(FeeRecord).filter(FeeRecord.id == fee_id).first()
+    async def get_by_id(db: AsyncSession, fee_id: int) -> Optional[FeeRecord]:
+        result = await db.execute(
+            select(FeeRecord).options(
+                joinedload(FeeRecord.student).joinedload(Student.user)
+            ).filter(FeeRecord.id == fee_id)
+        )
+        return result.scalars().first()
     
     @staticmethod
-    def create(db: Session, fee_data: dict) -> FeeRecord:
+    async def create(db: AsyncSession, fee_data: dict) -> FeeRecord:
         fee = FeeRecord(**fee_data)
         db.add(fee)
-        db.commit()
-        db.refresh(fee)
+        await db.commit()
+        await db.refresh(fee)
         return fee
     
     @staticmethod
-    def create_bulk(db: Session, fees_list: List[dict]) -> List[FeeRecord]:
+    async def create_bulk(db: AsyncSession, fees_list: List[dict]) -> List[FeeRecord]:
         """Create multiple fee records at once"""
         fees = [FeeRecord(**data) for data in fees_list]
         db.add_all(fees)
-        db.commit()
+        await db.commit()
         for fee in fees:
-            db.refresh(fee)
+            await db.refresh(fee)
         return fees
     
     @staticmethod
-    def update(db: Session, fee: FeeRecord, **kwargs) -> FeeRecord:
+    async def update(db: AsyncSession, fee: FeeRecord, **kwargs) -> FeeRecord:
         for key, value in kwargs.items():
             if value is not None and hasattr(fee, key):
                 setattr(fee, key, value)
@@ -56,35 +67,39 @@ class FeeRepository:
         if fee.status != 'paid' and fee.due_date < date.today():
             fee.status = 'overdue'
         
-        db.commit()
-        db.refresh(fee)
+        await db.commit()
+        await db.refresh(fee)
         return fee
     
     @staticmethod
-    def delete(db: Session, fee: FeeRecord):
-        db.delete(fee)
-        db.commit()
+    async def delete(db: AsyncSession, fee: FeeRecord):
+        await db.delete(fee)
+        await db.commit()
     
     @staticmethod
-    def get_student_fees(db: Session, student_id: int, 
+    async def get_student_fees(db: AsyncSession, student_id: int, 
                         status: str = None) -> List[FeeRecord]:
-        query = db.query(FeeRecord).filter(FeeRecord.student_id == student_id)
+        query = select(FeeRecord).filter(FeeRecord.student_id == student_id)
         
         if status:
             query = query.filter(FeeRecord.status == status)
         
-        return query.order_by(FeeRecord.due_date.desc()).all()
+        result = await db.execute(query.order_by(desc(FeeRecord.due_date)))
+        return result.scalars().all()
     
     @staticmethod
-    def get_pending_fees(db: Session, student_id: int) -> List[FeeRecord]:
-        return db.query(FeeRecord).filter(
-            FeeRecord.student_id == student_id,
-            FeeRecord.status.in_(['pending', 'partial', 'overdue'])
-        ).order_by(FeeRecord.due_date).all()
+    async def get_pending_fees(db: AsyncSession, student_id: int) -> List[FeeRecord]:
+        result = await db.execute(
+            select(FeeRecord).filter(
+                FeeRecord.student_id == student_id,
+                FeeRecord.status.in_(['pending', 'partial', 'overdue'])
+            ).order_by(FeeRecord.due_date)
+        )
+        return result.scalars().all()
     
     @staticmethod
-    def get_overdue_fees(db: Session, student_id: int = None) -> List[FeeRecord]:
-        query = db.query(FeeRecord).filter(
+    async def get_overdue_fees(db: AsyncSession, student_id: int = None) -> List[FeeRecord]:
+        query = select(FeeRecord).filter(
             FeeRecord.due_date < date.today(),
             FeeRecord.status.in_(['pending', 'partial', 'overdue'])
         )
@@ -92,14 +107,14 @@ class FeeRepository:
         if student_id:
             query = query.filter(FeeRecord.student_id == student_id)
         
-        return query.order_by(FeeRecord.due_date).all()
+        result = await db.execute(query.order_by(FeeRecord.due_date))
+        return result.scalars().all()
     
     @staticmethod
-    def get_fee_summary(db: Session, student_id: int) -> Dict:
+    async def get_fee_summary(db: AsyncSession, student_id: int) -> Dict:
         """Get fee summary for a student"""
-        fees = db.query(FeeRecord).filter(
-            FeeRecord.student_id == student_id
-        ).all()
+        result = await db.execute(select(FeeRecord).filter(FeeRecord.student_id == student_id))
+        fees = result.scalars().all()
         
         total_amount = sum(f.amount for f in fees)
         total_paid = sum(f.paid_amount for f in fees)
@@ -117,17 +132,23 @@ class FeeRepository:
         }
     
     @staticmethod
-    def get_all_fees_summary(db: Session) -> Dict:
+    async def get_all_fees_summary(db: AsyncSession) -> Dict:
         """Get summary of all fees in the system"""
-        result = db.query(
-            func.sum(FeeRecord.amount).label('total_amount'),
-            func.sum(FeeRecord.paid_amount).label('total_paid'),
-            func.count(FeeRecord.id).label('total_records')
-        ).first()
+        res = await db.execute(
+            select(
+                func.sum(FeeRecord.amount).label('total_amount'),
+                func.sum(FeeRecord.paid_amount).label('total_paid'),
+                func.count(FeeRecord.id).label('total_records')
+            )
+        )
+        result = res.first()
         
-        pending = db.query(func.count(FeeRecord.id)).filter(
-            FeeRecord.status.in_(['pending', 'partial', 'overdue'])
-        ).scalar()
+        pen_res = await db.execute(
+            select(func.count(FeeRecord.id)).filter(
+                FeeRecord.status.in_(['pending', 'partial', 'overdue'])
+            )
+        )
+        pending = pen_res.scalar()
         
         return {
             'total_amount': result.total_amount or 0,
@@ -138,42 +159,49 @@ class FeeRepository:
         }
     
     @staticmethod
-    def record_payment(db: Session, fee_id: int, amount: float, 
+    async def record_payment(db: AsyncSession, fee_id: int, amount: float, 
                       payment_date: date = None) -> FeeRecord:
         """Record a payment for a fee"""
-        fee = FeeRepository.get_by_id(db, fee_id)
+        fee = await FeeRepository.get_by_id(db, fee_id)
         if not fee:
             return None
         
         new_paid = fee.paid_amount + amount
         
-        return FeeRepository.update(
+        return await FeeRepository.update(
             db, fee,
             paid_amount=new_paid,
             payment_date=payment_date or date.today()
         )
     
     @staticmethod
-    def get_payment_history(db: Session, student_id: int) -> List[FeeRecord]:
+    async def get_payment_history(db: AsyncSession, student_id: int) -> List[FeeRecord]:
         """Get all paid fees for a student"""
-        return db.query(FeeRecord).filter(
-            FeeRecord.student_id == student_id,
-            FeeRecord.paid_amount > 0
-        ).order_by(FeeRecord.payment_date.desc()).all()
+        result = await db.execute(
+            select(FeeRecord).filter(
+                FeeRecord.student_id == student_id,
+                FeeRecord.paid_amount > 0
+            ).order_by(desc(FeeRecord.payment_date))
+        )
+        return result.scalars().all()
     
     @staticmethod
-    def get_fees_by_type(db: Session, fee_type: str) -> List[FeeRecord]:
+    async def get_fees_by_type(db: AsyncSession, fee_type: str) -> List[FeeRecord]:
         """Get all fees of a specific type"""
-        return db.query(FeeRecord).filter(
-            FeeRecord.fee_type == fee_type
-        ).order_by(FeeRecord.due_date.desc()).all()
+        result = await db.execute(
+            select(FeeRecord).filter(
+                FeeRecord.fee_type == fee_type
+            ).order_by(desc(FeeRecord.due_date))
+        )
+        return result.scalars().all()
     
     @staticmethod
-    def update_overdue_status(db: Session):
+    async def update_overdue_status(db: AsyncSession):
         """Update status of overdue fees (run as scheduled task)"""
-        db.query(FeeRecord).filter(
-            FeeRecord.due_date < date.today(),
-            FeeRecord.status.in_(['pending', 'partial'])
-        ).update({'status': 'overdue'}, synchronize_session=False)
-        
-        db.commit()
+        await db.execute(
+            update(FeeRecord).filter(
+                FeeRecord.due_date < date.today(),
+                FeeRecord.status.in_(['pending', 'partial'])
+            ).values(status='overdue')
+        )
+        await db.commit()

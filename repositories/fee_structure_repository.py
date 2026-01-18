@@ -1,44 +1,49 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, or_
 from typing import List, Optional
 from models.models import FeeStructure
 
 class FeeStructureRepository:
     @staticmethod
-    def get_all(db: Session) -> List[FeeStructure]:
-        return db.query(FeeStructure).order_by(FeeStructure.grade_level).all()
+    async def get_all(db: AsyncSession) -> List[FeeStructure]:
+        result = await db.execute(select(FeeStructure).order_by(FeeStructure.grade_level))
+        return result.scalars().all()
     
     @staticmethod
-    def search(db: Session, query: str) -> List[FeeStructure]:
-        return db.query(FeeStructure).filter(
-            or_(
-                FeeStructure.grade_level.ilike(f"%{query}%"),
-                FeeStructure.academic_year.ilike(f"%{query}%")
+    async def search(db: AsyncSession, query: str) -> List[FeeStructure]:
+        result = await db.execute(
+            select(FeeStructure).filter(
+                or_(
+                    FeeStructure.grade_level.ilike(f"%{query}%"),
+                    FeeStructure.academic_year.ilike(f"%{query}%")
+                )
             )
-        ).all()
+        )
+        return result.scalars().all()
     
     @staticmethod
-    def get_by_id(db: Session, structure_id: int) -> Optional[FeeStructure]:
-        return db.query(FeeStructure).filter(FeeStructure.id == structure_id).first()
+    async def get_by_id(db: AsyncSession, structure_id: int) -> Optional[FeeStructure]:
+        result = await db.execute(select(FeeStructure).filter(FeeStructure.id == structure_id))
+        return result.scalars().first()
     
     @staticmethod
-    def create(db: Session, data: dict) -> FeeStructure:
+    async def create(db: AsyncSession, data: dict) -> FeeStructure:
         structure = FeeStructure(**data)
         db.add(structure)
-        db.commit()
-        db.refresh(structure)
+        await db.commit()
+        await db.refresh(structure)
         return structure
     
     @staticmethod
-    def update(db: Session, structure: FeeStructure, **kwargs) -> FeeStructure:
+    async def update(db: AsyncSession, structure: FeeStructure, **kwargs) -> FeeStructure:
         for key, value in kwargs.items():
             if value is not None and hasattr(structure, key):
                 setattr(structure, key, value)
-        db.commit()
-        db.refresh(structure)
+        await db.commit()
+        await db.refresh(structure)
         return structure
     
     @staticmethod
-    def delete(db: Session, structure: FeeStructure):
-        db.delete(structure)
-        db.commit()
+    async def delete(db: AsyncSession, structure: FeeStructure):
+        await db.delete(structure)
+        await db.commit()
