@@ -5,6 +5,8 @@ python-multipart
 # Database
 sqlalchemy
 psycopg2-binary
+asyncpg
+aiosqlite
 alembic
 
 # Authentication & Security
