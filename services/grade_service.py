@@ -1,15 +1,15 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, List
 from repositories.grade_repository import GradeRepository
 
 class GradeService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.grade_repo = GradeRepository(db)
 
-    def calculate_class_performance(self, course_id: int) -> Dict:
+    async def calculate_class_performance(self, course_id: int) -> Dict:
         """Calculate overall class performance for a course"""
-        grades = self.grade_repo.get_by_course(course_id)
+        grades = await self.grade_repo.get_by_course(course_id)
         
         if not grades:
             return {

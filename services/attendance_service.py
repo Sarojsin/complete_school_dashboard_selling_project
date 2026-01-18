@@ -1,14 +1,14 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, timedelta
 from typing import Dict, List
 from repositories.attendance_repository import AttendanceRepository
 
 class AttendanceService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.attendance_repo = AttendanceRepository(db)
 
-    def get_monthly_attendance_report(self, student_id: int, year: int, month: int) -> Dict:
+    async def get_monthly_attendance_report(self, student_id: int, year: int, month: int) -> Dict:
         """Generate monthly attendance report for a student"""
         start_date = date(year, month, 1)
         if month == 12:
@@ -16,7 +16,7 @@ class AttendanceService:
         else:
             end_date = date(year, month + 1, 1) - timedelta(days=1)
         
-        attendance_records = self.attendance_repo.get_by_student(student_id, start_date, end_date)
+        attendance_records = await self.attendance_repo.get_by_student(student_id, start_date, end_date)
         
         # Calculate statistics
         total_days = (end_date - start_date).days + 1
@@ -37,7 +37,7 @@ class AttendanceService:
             'records': attendance_records
         }
 
-    def bulk_mark_attendance(self, course_id: int, attendance_date: date, attendance_data: List[Dict]) -> Dict:
+    async def bulk_mark_attendance(self, course_id: int, attendance_date: date, attendance_data: List[Dict]) -> Dict:
         """Mark attendance for multiple students at once"""
         from tables.tables import AttendanceCreate
         
@@ -52,7 +52,7 @@ class AttendanceService:
                 )
             )
         
-        records = self.attendance_repo.mark_attendance(attendance_list)
+        records = await self.attendance_repo.mark_attendance(attendance_list)
         
         return {
             'message': f'Attendance marked for {len(records)} students',

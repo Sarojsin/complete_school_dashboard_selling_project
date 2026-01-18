@@ -4,20 +4,27 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
 
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.csrf import CSRFMiddleware
-from app.web.routes import router as web_router
+from app.web.routers import (
+    common_router,
+    student_router,
+    teacher_router,
+    parent_router,
+    authority_router,
+    groups_router,
+)
 from services.chat_cleanup_service import cleanup_expired_messages
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize scheduler
-    scheduler = BackgroundScheduler()
+    scheduler = AsyncIOScheduler()
     scheduler.add_job(cleanup_expired_messages, 'interval', hours=1)
     scheduler.start()
     print("Scheduler started for chat message cleanup")
@@ -80,7 +87,12 @@ def create_app() -> FastAPI:
         )
 
     # Include Web Routes
-    app.include_router(web_router)
+    app.include_router(common_router)
+    app.include_router(student_router)
+    app.include_router(teacher_router)
+    app.include_router(parent_router)
+    app.include_router(authority_router)
+    app.include_router(groups_router)
 
     # Include API Routes (Legacy and New)
     # We will eventually move these into app/api/v1/endpoints

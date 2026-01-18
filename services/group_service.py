@@ -14,18 +14,18 @@ class GroupService:
     def __init__(self, group_repo: GroupRepository):
         self.group_repo = group_repo
     
-    def generate_group_code(self) -> str:
+    async def generate_group_code(self) -> str:
         """Generate a unique group code"""
         while True:
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            existing = self.group_repo.get_group_by_code(code)
+            existing = await self.group_repo.get_group_by_code(code)
             if not existing:
                 return code
     
-    def create_group(self, group_data: GroupCreate, creator_id: int) -> Dict[str, Any]:
+    async def create_group(self, group_data: GroupCreate, creator_id: int) -> Dict[str, Any]:
         """Create a new group with the creator as a teacher"""
         # Generate unique group code
-        group_code = self.generate_group_code()
+        group_code = await self.generate_group_code()
         
         # Create group
         group_dict = group_data.dict()
@@ -34,10 +34,10 @@ class GroupService:
             "code": group_code
         })
         
-        group = self.group_repo.create_group(group_dict)
+        group = await self.group_repo.create_group(group_dict)
         
         # Add creator as teacher member
-        self.group_repo.add_member({
+        await self.group_repo.add_member({
             "group_id": group.id,
             "user_id": creator_id,
             "role": "teacher"
@@ -50,14 +50,14 @@ class GroupService:
             "created_at": group.created_at
         }
     
-    def get_user_groups(self, user_id: int, user_role: str) -> List[Dict[str, Any]]:
+    async def get_user_groups(self, user_id: int, user_role: str) -> List[Dict[str, Any]]:
         """Get all groups for a user"""
-        groups = self.group_repo.get_user_groups(user_id)
+        groups = await self.group_repo.get_user_groups(user_id)
         
         result = []
         for group in groups:
             # Get member counts
-            all_members = self.group_repo.get_group_members(group.id)
+            all_members = await self.group_repo.get_group_members(group.id)
             teachers = [m for m in all_members if m.role == "teacher"]
             students = [m for m in all_members if m.role == "student"]
             
@@ -75,15 +75,15 @@ class GroupService:
         
         return result
     
-    def update_group(self, group_id: int, name: Optional[str], description: Optional[str], current_user_id: int) -> dict:
+    async def update_group(self, group_id: int, name: Optional[str], description: Optional[str], current_user_id: int) -> dict:
         """Update group details - only creator or teachers can update"""
-        group = self.group_repo.get_group_by_id(group_id)
+        group = await self.group_repo.get_group_by_id(group_id)
         if not group:
             raise NotFoundError(f"Group {group_id} not found")
         
         # Check if user is creator or teacher in the group
         is_creator = group.created_by == current_user_id
-        user_role = self.group_repo.get_member_role(group_id, current_user_id)
+        user_role = await self.group_repo.get_member_role(group_id, current_user_id)
         is_teacher = user_role == "teacher"
         
         if not (is_creator or is_teacher):
@@ -96,7 +96,7 @@ class GroupService:
         if description is not None:
             update_data["description"] = description
         
-        updated_group = self.group_repo.update_group(group_id, update_data)
+        updated_group = await self.group_repo.update_group(group_id, update_data)
         
         return {
             "id": updated_group.id,
@@ -106,7 +106,7 @@ class GroupService:
             "updated_at": updated_group.updated_at.isoformat() if updated_group.updated_at else None
         }
     
-    def add_members_to_group(
+    async def add_members_to_group(
         self, 
         group_id: int, 
         invite_data: GroupInviteRequest, 
@@ -114,12 +114,12 @@ class GroupService:
     ) -> Dict[str, Any]:
         """Add multiple members to a group"""
         # Verify group exists
-        group = self.group_repo.get_group_by_id(group_id)
+        group = await self.group_repo.get_group_by_id(group_id)
         if not group:
             raise NotFoundError(f"Group {group_id} not found")
         
         # Verify requester is a teacher in the group
-        requester_role = self.group_repo.get_member_role(group_id, requester_id)
+        requester_role = await self.group_repo.get_member_role(group_id, requester_id)
         if requester_role != "teacher":
             raise PermissionDeniedError("Only teachers can add members")
         
@@ -128,19 +128,19 @@ class GroupService:
         
         for user_id in invite_data.user_ids:
             # Check if user exists using static UserRepository with session from group_repo
-            user = UserRepository.get_by_id(self.group_repo.session, user_id)
+            user = await UserRepository.get_by_id(self.group_repo.session, user_id)
             if not user or not user.is_active:
                 failed.append({"user_id": user_id, "reason": "User not found or inactive"})
                 continue
             
             # Check if user is already a member
-            is_member = self.group_repo.is_group_member(group_id, user_id)
+            is_member = await self.group_repo.is_group_member(group_id, user_id)
             if is_member:
                 failed.append({"user_id": user_id, "reason": "Already a member"})
                 continue
             
             # Add user to group
-            self.group_repo.add_member({
+            await self.group_repo.add_member({
                 "group_id": group_id,
                 "user_id": user_id,
                 "role": invite_data.role
@@ -159,7 +159,7 @@ class GroupService:
             "failed": failed
         }
     
-    def remove_member_from_group(
+    async def remove_member_from_group(
         self, 
         group_id: int, 
         user_id: int, 
@@ -167,36 +167,36 @@ class GroupService:
     ) -> bool:
         """Remove a member from a group"""
         # Verify group exists
-        group = self.group_repo.get_group_by_id(group_id)
+        group = await self.group_repo.get_group_by_id(group_id)
         if not group:
             raise NotFoundError(f"Group {group_id} not found")
         
         # Verify requester is a teacher in the group
-        requester_role = self.group_repo.get_member_role(group_id, requester_id)
+        requester_role = await self.group_repo.get_member_role(group_id, requester_id)
         if requester_role != "teacher":
             raise PermissionDeniedError("Only teachers can remove members")
         
         # Cannot remove yourself if you're the only teacher
         if user_id == requester_id:
-            teachers = self.group_repo.get_group_members(group_id, "teacher")
+            teachers = await self.group_repo.get_group_members(group_id, "teacher")
             if len(teachers) <= 1:
                 raise ValidationError("Cannot remove the only teacher from the group")
         
-        return self.group_repo.remove_member(group_id, user_id)
+        return await self.group_repo.remove_member(group_id, user_id)
     
-    def get_group_details(self, group_id: int, user_id: int) -> Optional[Dict[str, Any]]:
+    async def get_group_details(self, group_id: int, user_id: int) -> Optional[Dict[str, Any]]:
         """Get detailed group information"""
-        group = self.group_repo.get_group_by_id(group_id)
+        group = await self.group_repo.get_group_by_id(group_id)
         if not group:
             return None
         
         # Check if user is a member
-        is_member = self.group_repo.is_group_member(group_id, user_id)
+        is_member = await self.group_repo.is_group_member(group_id, user_id)
         if not is_member:
             raise PermissionDeniedError("You are not a member of this group")
         
         # Get all members
-        members = self.group_repo.get_group_members(group_id)
+        members = await self.group_repo.get_group_members(group_id)
         teachers = []
         students = []
         
@@ -215,7 +215,7 @@ class GroupService:
                 students.append(member_info)
         
         # Get user's role in group
-        user_role = self.group_repo.get_member_role(group_id, user_id)
+        user_role = await self.group_repo.get_member_role(group_id, user_id)
         
         return {
             "id": group.id,
@@ -232,7 +232,7 @@ class GroupService:
             "total_students": len(students)
         }
     
-    def search_users_to_invite(
+    async def search_users_to_invite(
         self, 
         group_id: int, 
         search_term: str, 
@@ -240,16 +240,16 @@ class GroupService:
     ) -> List[Dict[str, Any]]:
         """Search users to invite to group"""
         # Verify requester is a teacher in the group
-        requester_role = self.group_repo.get_member_role(group_id, requester_id)
+        requester_role = await self.group_repo.get_member_role(group_id, requester_id)
         if requester_role != "teacher":
             raise PermissionDeniedError("Only teachers can invite members")
         
         # Get existing member IDs to exclude
-        members = self.group_repo.get_group_members(group_id)
+        members = await self.group_repo.get_group_members(group_id)
         exclude_ids = [member.user_id for member in members]
         
         # Search users
-        users = self.group_repo.search_users_for_invite(search_term, exclude_ids)
+        users = await self.group_repo.search_users_for_invite(search_term, exclude_ids)
         
         return [
             {
