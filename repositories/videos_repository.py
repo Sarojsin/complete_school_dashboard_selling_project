@@ -1,72 +1,86 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, or_, desc
+from sqlalchemy.orm import joinedload
 from typing import List, Optional
 from models.models import Video
 
 class VideosRepository:
     @staticmethod
-    def get_by_id(db: Session, video_id: int) -> Optional[Video]:
-        return db.query(Video).options(
-            joinedload(Video.course),
-            joinedload(Video.teacher)
-        ).filter(Video.id == video_id).first()
+    async def get_by_id(db: AsyncSession, video_id: int) -> Optional[Video]:
+        result = await db.execute(
+            select(Video).options(
+                joinedload(Video.course),
+                joinedload(Video.teacher)
+            ).filter(Video.id == video_id)
+        )
+        return result.scalars().first()
     
     @staticmethod
-    def create(db: Session, video_data: dict) -> Video:
+    async def create(db: AsyncSession, video_data: dict) -> Video:
         video = Video(**video_data)
         db.add(video)
-        db.commit()
-        db.refresh(video)
+        await db.commit()
+        await db.refresh(video)
         return video
     
     @staticmethod
-    def update(db: Session, video: Video, **kwargs) -> Video:
+    async def update(db: AsyncSession, video: Video, **kwargs) -> Video:
         for key, value in kwargs.items():
             if value is not None and hasattr(video, key):
                 setattr(video, key, value)
-        db.commit()
-        db.refresh(video)
+        await db.commit()
+        await db.refresh(video)
         return video
     
     @staticmethod
-    def delete(db: Session, video: Video):
-        db.delete(video)
-        db.commit()
+    async def delete(db: AsyncSession, video: Video):
+        await db.delete(video)
+        await db.commit()
     
     @staticmethod
-    def get_by_course(db: Session, course_id: int) -> List[Video]:
-        return db.query(Video).options(
-            joinedload(Video.teacher)
-        ).filter(
-            Video.course_id == course_id
-        ).order_by(Video.uploaded_at.desc()).all()
+    async def get_by_course(db: AsyncSession, course_id: int) -> List[Video]:
+        result = await db.execute(
+            select(Video).options(
+                joinedload(Video.teacher)
+            ).filter(
+                Video.course_id == course_id
+            ).order_by(desc(Video.uploaded_at))
+        )
+        return result.scalars().unique().all()
     
     @staticmethod
-    def get_by_teacher(db: Session, teacher_id: int) -> List[Video]:
-        return db.query(Video).options(
-            joinedload(Video.course)
-        ).filter(
-            Video.teacher_id == teacher_id
-        ).order_by(Video.uploaded_at.desc()).all()
+    async def get_by_teacher(db: AsyncSession, teacher_id: int) -> List[Video]:
+        result = await db.execute(
+            select(Video).options(
+                joinedload(Video.course)
+            ).filter(
+                Video.teacher_id == teacher_id
+            ).order_by(desc(Video.uploaded_at))
+        )
+        return result.scalars().unique().all()
     
     @staticmethod
-    def search_videos(db: Session, query: str, course_id: int = None) -> List[Video]:
+    async def search_videos(db: AsyncSession, query: str, course_id: int = None) -> List[Video]:
         """Search videos by title or description"""
         search_pattern = f"%{query}%"
         
-        search_query = db.query(Video).filter(
-            (Video.title.ilike(search_pattern)) |
-            (Video.description.ilike(search_pattern))
+        search_query = select(Video).filter(
+            or_(
+                Video.title.ilike(search_pattern),
+                Video.description.ilike(search_pattern)
+            )
         )
         
         if course_id:
             search_query = search_query.filter(Video.course_id == course_id)
         
-        return search_query.order_by(Video.uploaded_at.desc()).limit(50).all()
+        result = await db.execute(search_query.order_by(desc(Video.uploaded_at)).limit(50))
+        return result.scalars().all()
     
     @staticmethod
-    def get_recent_videos(db: Session, course_id: int = None, limit: int = 10) -> List[Video]:
+    async def get_recent_videos(db: AsyncSession, course_id: int = None, limit: int = 10) -> List[Video]:
         """Get recently uploaded videos"""
-        query = db.query(Video).options(
+        query = select(Video).options(
             joinedload(Video.course),
             joinedload(Video.teacher)
         )
@@ -74,4 +88,5 @@ class VideosRepository:
         if course_id:
             query = query.filter(Video.course_id == course_id)
         
-        return query.order_by(Video.uploaded_at.desc()).limit(limit).all()
+        result = await db.execute(query.order_by(desc(Video.uploaded_at)).limit(limit))
+        return result.scalars().unique().all()

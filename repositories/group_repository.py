@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session, joinedload, selectinload
-from sqlalchemy import and_, or_, func, desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete, or_, and_, func, desc
+from sqlalchemy.orm import joinedload, selectinload
 from typing import List, Optional
 from models.group_models import Group, GroupMember
 from models.models import User
@@ -8,47 +9,49 @@ import logging
 logger = logging.getLogger(__name__)
 
 class GroupRepository:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
     
-    def create_group(self, group_data: dict) -> Group:
+    async def create_group(self, group_data: dict) -> Group:
         """Create a new group"""
         group = Group(**group_data)
         self.session.add(group)
-        self.session.commit()
-        self.session.refresh(group)
+        await self.session.commit()
+        await self.session.refresh(group)
         return group
     
-    def get_group_by_id(self, group_id: int) -> Optional[Group]:
+    async def get_group_by_id(self, group_id: int) -> Optional[Group]:
         """Get group by ID"""
-        return self.session.query(Group).filter(Group.id == group_id).first()
+        result = await self.session.execute(select(Group).filter(Group.id == group_id))
+        return result.scalars().first()
     
-    def get_group_by_code(self, code: str) -> Optional[Group]:
+    async def get_group_by_code(self, code: str) -> Optional[Group]:
         """Get group by unique code"""
-        return self.session.query(Group).filter(Group.code == code).first()
+        result = await self.session.execute(select(Group).filter(Group.code == code))
+        return result.scalars().first()
     
-    def update_group(self, group_id: int, update_data: dict) -> Optional[Group]:
+    async def update_group(self, group_id: int, update_data: dict) -> Optional[Group]:
         """Update group information"""
-        group = self.get_group_by_id(group_id)
+        group = await self.get_group_by_id(group_id)
         if group:
             for key, value in update_data.items():
                 setattr(group, key, value)
-            self.session.commit()
-            self.session.refresh(group)
+            await self.session.commit()
+            await self.session.refresh(group)
         return group
     
-    def delete_group(self, group_id: int) -> bool:
+    async def delete_group(self, group_id: int) -> bool:
         """Delete a group (soft delete)"""
-        group = self.get_group_by_id(group_id)
+        group = await self.get_group_by_id(group_id)
         if group:
             group.is_active = False
-            self.session.commit()
+            await self.session.commit()
             return True
         return False
     
-    def get_user_groups(self, user_id: int, role: str = None) -> List[Group]:
+    async def get_user_groups(self, user_id: int, role: str = None) -> List[Group]:
         """Get all groups a user belongs to, optionally filtered by role"""
-        query = self.session.query(Group).join(GroupMember, GroupMember.group_id == Group.id).filter(
+        query = select(Group).join(GroupMember, GroupMember.group_id == Group.id).filter(
             GroupMember.user_id == user_id,
             GroupMember.is_active == True,
             Group.is_active == True
@@ -57,50 +60,60 @@ class GroupRepository:
         if role:
             query = query.filter(GroupMember.role == role)
         
-        return query.all()
+        result = await self.session.execute(query)
+        return result.scalars().all()
     
-    def is_group_member(self, group_id: int, user_id: int) -> bool:
+    async def is_group_member(self, group_id: int, user_id: int) -> bool:
         """Check if user is a member of the group"""
-        member = self.session.query(GroupMember).filter(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == user_id,
-            GroupMember.is_active == True
-        ).first()
+        result = await self.session.execute(
+            select(GroupMember).filter(
+                GroupMember.group_id == group_id,
+                GroupMember.user_id == user_id,
+                GroupMember.is_active == True
+            )
+        )
+        member = result.scalars().first()
         return member is not None
     
-    def get_member_role(self, group_id: int, user_id: int) -> Optional[str]:
+    async def get_member_role(self, group_id: int, user_id: int) -> Optional[str]:
         """Get user's role in a group"""
-        member = self.session.query(GroupMember).filter(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == user_id,
-            GroupMember.is_active == True
-        ).first()
+        result = await self.session.execute(
+            select(GroupMember).filter(
+                GroupMember.group_id == group_id,
+                GroupMember.user_id == user_id,
+                GroupMember.is_active == True
+            )
+        )
+        member = result.scalars().first()
         return member.role if member else None
     
-    def add_member(self, member_data: dict) -> GroupMember:
+    async def add_member(self, member_data: dict) -> GroupMember:
         """Add a user to a group"""
         member = GroupMember(**member_data)
         self.session.add(member)
-        self.session.commit()
-        self.session.refresh(member)
+        await self.session.commit()
+        await self.session.refresh(member)
         return member
     
-    def remove_member(self, group_id: int, user_id: int) -> bool:
+    async def remove_member(self, group_id: int, user_id: int) -> bool:
         """Remove a user from a group"""
-        member = self.session.query(GroupMember).filter(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == user_id
-        ).first()
+        result = await self.session.execute(
+            select(GroupMember).filter(
+                GroupMember.group_id == group_id,
+                GroupMember.user_id == user_id
+            )
+        )
+        member = result.scalars().first()
         
         if member:
             member.is_active = False
-            self.session.commit()
+            await self.session.commit()
             return True
         return False
     
-    def get_group_members(self, group_id: int, role: str = None) -> List[GroupMember]:
+    async def get_group_members(self, group_id: int, role: str = None) -> List[GroupMember]:
         """Get all members of a group"""
-        query = self.session.query(GroupMember).options(joinedload(GroupMember.user)).filter(
+        query = select(GroupMember).options(joinedload(GroupMember.user)).filter(
             GroupMember.group_id == group_id,
             GroupMember.is_active == True
         )
@@ -108,17 +121,21 @@ class GroupRepository:
         if role:
             query = query.filter(GroupMember.role == role)
         
-        return query.all()
+        result = await self.session.execute(query)
+        return result.scalars().unique().all()
     
-    def get_group_with_members(self, group_id: int) -> Optional[Group]:
+    async def get_group_with_members(self, group_id: int) -> Optional[Group]:
         """Get group with all members"""
-        return self.session.query(Group).options(
-            selectinload(Group.members).selectinload(GroupMember.user)
-        ).filter(Group.id == group_id).first()
+        result = await self.session.execute(
+            select(Group).options(
+                selectinload(Group.members).selectinload(GroupMember.user)
+            ).filter(Group.id == group_id)
+        )
+        return result.scalars().first()
     
-    def search_users_for_invite(self, search_term: str, exclude_ids: List[int] = None) -> List[User]:
+    async def search_users_for_invite(self, search_term: str, exclude_ids: List[int] = None) -> List[User]:
         """Search users to invite to group"""
-        query = self.session.query(User).filter(
+        query = select(User).filter(
             and_(
                 or_(
                     User.email.ilike(f"%{search_term}%"),
@@ -131,4 +148,5 @@ class GroupRepository:
         if exclude_ids:
             query = query.filter(User.id.notin_(exclude_ids))
         
-        return query.limit(20).all()
+        result = await self.session.execute(query.limit(20))
+        return result.scalars().all()

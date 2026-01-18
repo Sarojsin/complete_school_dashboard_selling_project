@@ -1,10 +1,13 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete, func
+from sqlalchemy.orm import joinedload
 from typing import List, Optional
 from models.models import Message, User
+from datetime import datetime, timedelta
 
 class MessageRepository:
     @staticmethod
-    def create(db: Session, sender_id: int, recipient_id: int, subject: str, body: str) -> Message:
+    async def create(db: AsyncSession, sender_id: int, recipient_id: int, subject: str, body: str) -> Message:
         """Create a new message"""
         message = Message(
             sender_id=sender_id,
@@ -13,19 +16,17 @@ class MessageRepository:
             body=body
         )
         db.add(message)
-        db.commit()
-        db.refresh(message)
+        await db.commit()
+        await db.refresh(message)
         return message
     
     @staticmethod
-    def get_inbox(db: Session, user_id: int, limit: int = 50, unread_only: bool = False) -> List[Message]:
+    async def get_inbox(db: AsyncSession, user_id: int, limit: int = 50, unread_only: bool = False) -> List[Message]:
         """Get messages for a user's inbox (only messages from last 24 hours)"""
-        from datetime import datetime, timedelta
-        
         # Filter messages older than 24 hours
         cutoff_time = datetime.utcnow() - timedelta(hours=24)
         
-        query = db.query(Message).options(
+        query = select(Message).options(
             joinedload(Message.sender)
         ).filter(
             Message.recipient_id == user_id,
@@ -35,35 +36,41 @@ class MessageRepository:
         if unread_only:
             query = query.filter(Message.is_read == False)
         
-        return query.order_by(Message.created_at.desc()).limit(limit).all()
+        result = await db.execute(query.order_by(Message.created_at.desc()).limit(limit))
+        return result.scalars().unique().all()
     
     @staticmethod
-    def get_by_id(db: Session, message_id: int) -> Optional[Message]:
+    async def get_by_id(db: AsyncSession, message_id: int) -> Optional[Message]:
         """Get a single message by ID"""
-        return db.query(Message).options(
-            joinedload(Message.sender),
-            joinedload(Message.recipient)
-        ).filter(Message.id == message_id).first()
+        result = await db.execute(
+            select(Message).options(
+                joinedload(Message.sender),
+                joinedload(Message.recipient)
+            ).filter(Message.id == message_id)
+        )
+        return result.scalars().first()
     
     @staticmethod
-    def mark_as_read(db: Session, message_id: int) -> Optional[Message]:
+    async def mark_as_read(db: AsyncSession, message_id: int) -> Optional[Message]:
         """Mark a message as read"""
-        message = db.query(Message).filter(Message.id == message_id).first()
+        result = await db.execute(select(Message).filter(Message.id == message_id))
+        message = result.scalars().first()
         if message:
             message.is_read = True
-            db.commit()
-            db.refresh(message)
+            await db.commit()
+            await db.refresh(message)
         return message
     
     @staticmethod
-    def get_unread_count(db: Session, user_id: int) -> int:
+    async def get_unread_count(db: AsyncSession, user_id: int) -> int:
         """Get count of unread messages for a user (only from last 24 hours)"""
-        from datetime import datetime, timedelta
-        
         cutoff_time = datetime.utcnow() - timedelta(hours=24)
         
-        return db.query(Message).filter(
-            Message.recipient_id == user_id,
-            Message.is_read == False,
-            Message.created_at >= cutoff_time  # Auto-delete: only count messages < 24hrs old
-        ).count()
+        result = await db.execute(
+            select(func.count(Message.id)).filter(
+                Message.recipient_id == user_id,
+                Message.is_read == False,
+                Message.created_at >= cutoff_time  # Auto-delete: only count messages < 24hrs old
+            )
+        )
+        return result.scalar() or 0

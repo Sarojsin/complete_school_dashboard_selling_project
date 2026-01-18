@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import Optional
 from models.models import User, UserRole
 import bcrypt
@@ -11,12 +12,10 @@ class UserRepository:
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a password using bcrypt."""
-        # Bcrypt has a 72-byte password limit. Truncate if necessary.
         password_bytes = password.encode('utf-8')
         if len(password_bytes) > 72:
             password_bytes = password_bytes[:72]
         
-        # Generate salt and hash the password
         salt = bcrypt.gensalt(rounds=12)
         hashed = bcrypt.hashpw(password_bytes, salt)
         return hashed.decode('utf-8')
@@ -25,12 +24,10 @@ class UserRepository:
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
         try:
-            # Bcrypt has a 72-byte password limit. Truncate if necessary.
             password_bytes = plain_password.encode('utf-8')
             if len(password_bytes) > 72:
                 password_bytes = password_bytes[:72]
             
-            # bcrypt.checkpw expects bytes for both arguments
             hashed_bytes = hashed_password.encode('utf-8')
             return bcrypt.checkpw(password_bytes, hashed_bytes)
         except Exception as e:
@@ -38,19 +35,22 @@ class UserRepository:
             return False
     
     @staticmethod
-    def get_by_id(db: Session, user_id: int) -> Optional[User]:
-        return db.query(User).filter(User.id == user_id).first()
+    async def get_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
+        result = await db.execute(select(User).filter(User.id == user_id))
+        return result.scalars().first()
     
     @staticmethod
-    def get_by_email(db: Session, email: str) -> Optional[User]:
-        return db.query(User).filter(User.email == email).first()
+    async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
+        result = await db.execute(select(User).filter(User.email == email))
+        return result.scalars().first()
     
     @staticmethod
-    def get_by_username(db: Session, username: str) -> Optional[User]:
-        return db.query(User).filter(User.username == username).first()
+    async def get_by_username(db: AsyncSession, username: str) -> Optional[User]:
+        result = await db.execute(select(User).filter(User.username == username))
+        return result.scalars().first()
     
     @staticmethod
-    def create(db: Session, email: str, username: str, password: str, 
+    async def create(db: AsyncSession, email: str, username: str, password: str, 
                full_name: str, role: UserRole) -> User:
         hashed_password = UserRepository.get_password_hash(password)
         user = User(
@@ -61,27 +61,27 @@ class UserRepository:
             role=role
         )
         db.add(user)
-        db.commit()
-        db.refresh(user)
+        await db.commit()
+        await db.refresh(user)
         return user
     
     @staticmethod
-    def update(db: Session, user: User, **kwargs) -> User:
+    async def update(db: AsyncSession, user: User, **kwargs) -> User:
         for key, value in kwargs.items():
             if value is not None and hasattr(user, key):
                 setattr(user, key, value)
-        db.commit()
-        db.refresh(user)
+        await db.commit()
+        await db.refresh(user)
         return user
     
     @staticmethod
-    def delete(db: Session, user: User):
-        db.delete(user)
-        db.commit()
+    async def delete(db: AsyncSession, user: User):
+        await db.delete(user)
+        await db.commit()
     
     @staticmethod
-    def authenticate(db: Session, username: str, password: str) -> Optional[User]:
-        user = UserRepository.get_by_username(db, username)
+    async def authenticate(db: AsyncSession, username: str, password: str) -> Optional[User]:
+        user = await UserRepository.get_by_username(db, username)
         if not user:
             return None
         if not UserRepository.verify_password(password, user.hashed_password):

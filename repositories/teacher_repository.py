@@ -1,31 +1,45 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete, or_
+from sqlalchemy.orm import joinedload, selectinload
 from typing import List, Optional
 from models.models import Teacher, User, Course, Student
 
 class TeacherRepository:
     @staticmethod
-    def get_by_id(db: Session, teacher_id: int) -> Optional[Teacher]:
-        return db.query(Teacher).options(joinedload(Teacher.user)).filter(
-            Teacher.id == teacher_id
-        ).first()
+    async def get_by_id(db: AsyncSession, teacher_id: int) -> Optional[Teacher]:
+        result = await db.execute(
+            select(Teacher).options(
+                joinedload(Teacher.user),
+                selectinload(Teacher.courses)
+            ).filter(Teacher.id == teacher_id)
+        )
+        return result.scalars().first()
     
     @staticmethod
-    def get_by_user_id(db: Session, user_id: int) -> Optional[Teacher]:
-        return db.query(Teacher).options(joinedload(Teacher.user)).filter(
-            Teacher.user_id == user_id
-        ).first()
+    async def get_by_user_id(db: AsyncSession, user_id: int) -> Optional[Teacher]:
+        result = await db.execute(
+            select(Teacher).options(
+                joinedload(Teacher.user),
+                selectinload(Teacher.courses)
+            ).filter(Teacher.user_id == user_id)
+        )
+        return result.scalars().first()
     
     @staticmethod
-    def get_by_employee_id(db: Session, employee_id: str) -> Optional[Teacher]:
-        return db.query(Teacher).options(joinedload(Teacher.user)).filter(
-            Teacher.employee_id == employee_id
-        ).first()
+    async def get_by_employee_id(db: AsyncSession, employee_id: str) -> Optional[Teacher]:
+        result = await db.execute(
+            select(Teacher).options(
+                joinedload(Teacher.user),
+                selectinload(Teacher.courses)
+            ).filter(Teacher.employee_id == employee_id)
+        )
+        return result.scalars().first()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100, 
+    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, 
                 department: str = None, status: str = None, 
                 search: str = None) -> List[Teacher]:
-        query = db.query(Teacher).join(User).options(joinedload(Teacher.user))
+        query = select(Teacher).join(User).options(joinedload(Teacher.user))
         
         if department:
             query = query.filter(Teacher.department == department)
@@ -39,56 +53,65 @@ class TeacherRepository:
         if search:
             search_pattern = f"%{search}%"
             query = query.filter(
-                (User.full_name.ilike(search_pattern)) |
-                (User.email.ilike(search_pattern)) |
-                (Teacher.employee_id.ilike(search_pattern)) |
-                (Teacher.department.ilike(search_pattern))
+                or_(
+                    User.full_name.ilike(search_pattern),
+                    User.email.ilike(search_pattern),
+                    Teacher.employee_id.ilike(search_pattern),
+                    Teacher.department.ilike(search_pattern)
+                )
             )
         
-        return query.offset(skip).limit(limit).all()
+        result = await db.execute(query.offset(skip).limit(limit))
+        return result.scalars().unique().all()
     
     @staticmethod
-    def create(db: Session, teacher_data: dict) -> Teacher:
+    async def create(db: AsyncSession, teacher_data: dict) -> Teacher:
         teacher = Teacher(**teacher_data)
         db.add(teacher)
-        db.commit()
-        db.refresh(teacher)
+        await db.commit()
+        await db.refresh(teacher)
         return teacher
     
     @staticmethod
-    def update(db: Session, teacher: Teacher, **kwargs) -> Teacher:
+    async def update(db: AsyncSession, teacher: Teacher, **kwargs) -> Teacher:
         for key, value in kwargs.items():
             if value is not None and hasattr(teacher, key):
                 setattr(teacher, key, value)
-        db.commit()
-        db.refresh(teacher)
+        await db.commit()
+        await db.refresh(teacher)
         return teacher
     
     @staticmethod
-    def delete(db: Session, teacher: Teacher):
-        db.delete(teacher)
-        db.commit()
+    async def delete(db: AsyncSession, teacher: Teacher):
+        await db.delete(teacher)
+        await db.commit()
     
     @staticmethod
-    def get_teaching_courses(db: Session, teacher_id: int) -> List[Course]:
-        return db.query(Course).filter(Course.teacher_id == teacher_id).all()
+    async def get_teaching_courses(db: AsyncSession, teacher_id: int) -> List[Course]:
+        result = await db.execute(select(Course).filter(Course.teacher_id == teacher_id))
+        return result.scalars().all()
     
     @staticmethod
-    def search(db: Session, query: str) -> List[Teacher]:
+    async def search(db: AsyncSession, query: str) -> List[Teacher]:
         search_pattern = f"%{query}%"
-        return db.query(Teacher).join(User).filter(
-            (User.full_name.ilike(search_pattern)) |
-            (User.email.ilike(search_pattern)) |
-            (Teacher.department.ilike(search_pattern))
-        ).limit(50).all()
+        result = await db.execute(
+            select(Teacher).join(User).filter(
+                or_(
+                    User.full_name.ilike(search_pattern),
+                    User.email.ilike(search_pattern),
+                    Teacher.department.ilike(search_pattern)
+                )
+            ).limit(50)
+        )
+        return result.scalars().unique().all()
     
     @staticmethod
-    def get_my_students(db: Session, teacher_id: int, 
+    async def get_my_students(db: AsyncSession, teacher_id: int, 
                         grade: str = None, section: str = None, 
                         search: str = None) -> List[Student]:
         from models.models import CourseEnrollment
         
-        query = db.query(Student).join(CourseEnrollment).join(Course).filter(
+        query = select(Student).join(CourseEnrollment).join(Course).filter(
             Course.teacher_id == teacher_id
         ).join(User).options(joinedload(Student.user))
         
@@ -100,9 +123,12 @@ class TeacherRepository:
         if search:
             search_pattern = f"%{search}%"
             query = query.filter(
-                (User.full_name.ilike(search_pattern)) |
-                (User.email.ilike(search_pattern)) |
-                (Student.student_id.ilike(search_pattern))
+                or_(
+                    User.full_name.ilike(search_pattern),
+                    User.email.ilike(search_pattern),
+                    Student.student_id.ilike(search_pattern)
+                )
             )
             
-        return query.distinct().all()
+        result = await db.execute(query.distinct())
+        return result.scalars().unique().all()
