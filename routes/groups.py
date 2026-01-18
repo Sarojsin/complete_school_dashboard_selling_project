@@ -1,31 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 
-from dependencies import get_db, get_current_user
+from app.core.database import get_async_db
+from dependencies import get_current_user
 from models.models import UserRole
 from repositories.group_repository import GroupRepository
-from repositories.user_repository import UserRepository
 from services.group_service import GroupService
 from schemas.group_schemas import (
     GroupCreate, GroupUpdate, GroupInviteRequest,
     GroupMemberRole
 )
-
-# Placeholder decorator because @require_roles usage is not clear from context if it supports sync/async
-# Assuming it's a valid dependency or wrapper.
-# If require_roles is a dependency yielding a user, it's fine. If it's a decorator, it might need to handle async properly.
-# Looking at original code, it was used as decorator. I'll keep it as is, assuming it wraps async functions fine.
-# But wait, I'm modifying functions to be "async def" still, so wrapper should be fine.
-
-# BUT I need to remove "from dependencies import require_roles" if it is not available or standard. 
-# The original code imported it. I'll keep it.
-
-# IMPORTANT: I need to check where `require_roles` comes from. It was in `dependencies`. 
-# I did not check dependencies.py for require_roles. Let's assume it exists.
-
-
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
@@ -33,13 +19,13 @@ router = APIRouter(prefix="/groups", tags=["groups"])
 async def list_groups(
     request: Request,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Display all groups user belongs to"""
     group_repo = GroupRepository(db)
     group_service = GroupService(group_repo)
     
-    groups = group_service.get_user_groups(current_user.id, current_user.role)
+    groups = await group_service.get_user_groups(current_user.id, current_user.role)
     
     return request.app.state.templates.TemplateResponse(
         "groups/group_list.html",
@@ -51,7 +37,6 @@ async def list_groups(
     )
 
 @router.get("/create", response_class=HTMLResponse)
-# @require_roles([UserRole.AUTHORITY, UserRole.ADMIN, UserRole.TEACHER]) # require_roles likely expects UserRole enum
 async def create_group_page(
     request: Request,
     current_user = Depends(get_current_user)
@@ -77,7 +62,7 @@ async def create_group(
     name: str = Form(...),
     description: Optional[str] = Form(None),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Create a new group - Authority only"""
     # Only Authority can create groups
@@ -91,7 +76,7 @@ async def create_group(
     group_data = GroupCreate(name=name, description=description)
     
     try:
-        result = group_service.create_group(group_data, current_user.id)
+        result = await group_service.create_group(group_data, current_user.id)
         return RedirectResponse(
             url=f"/groups/{result['id']}",
             status_code=303
@@ -105,14 +90,17 @@ async def group_detail(
     request: Request,
     group_id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Display group details"""
     group_repo = GroupRepository(db)
     group_service = GroupService(group_repo)
     
     try:
-        group_details = group_service.get_group_details(group_id, current_user.id)
+        group_details = await group_service.get_group_details(group_id, current_user.id)
+        if not group_details:
+             raise HTTPException(status_code=404, detail="Group not found")
+             
         return request.app.state.templates.TemplateResponse(
             "groups/group_detail.html",
             {
@@ -133,18 +121,20 @@ async def edit_group_page(
     request: Request,
     group_id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Display edit group form"""
     group_repo = GroupRepository(db)
     group_service = GroupService(group_repo)
     
     try:
-        group_data = group_service.get_group_details(group_id, current_user.id)
+        group_data = await group_service.get_group_details(group_id, current_user.id)
+        if not group_data:
+             raise HTTPException(status_code=404, detail="Group not found")
         
         # Check if user can edit (creator or teacher)
         is_creator = group_data["created_by"] == current_user.id
-        user_role = group_repo.get_member_role(group_id, current_user.id)
+        user_role = await group_repo.get_member_role(group_id, current_user.id)
         is_teacher = user_role == "teacher"
         
         if not (is_creator or is_teacher):
@@ -172,7 +162,7 @@ async def update_group(
     name: str = Form(...),
     description: str = Form(""),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Update group details"""
     from utils.exceptions import PermissionDeniedError, NotFoundError
@@ -181,7 +171,7 @@ async def update_group(
     group_service = GroupService(group_repo)
     
     try:
-        group_service.update_group(group_id, name, description, current_user.id)
+        await group_service.update_group(group_id, name, description, current_user.id)
         request.session["message"] = f"Group '{name}' updated successfully"
         return RedirectResponse(url=f"/groups/{group_id}", status_code=303)
     except NotFoundError as e:
@@ -198,7 +188,7 @@ async def manage_members_page(
     group_id: int,
     search: Optional[str] = Query(None),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Display member management page - Authority only"""
     # Only Authority can manage members
@@ -211,12 +201,14 @@ async def manage_members_page(
     group_service = GroupService(group_repo)
     
     try:
-        group_details = group_service.get_group_details(group_id, current_user.id)
+        group_details = await group_service.get_group_details(group_id, current_user.id)
+        if not group_details:
+             raise HTTPException(status_code=404, detail="Group not found")
 
         # Search for users to invite
         search_results = []
         if search:
-            search_results = group_service.search_users_to_invite(
+            search_results = await group_service.search_users_to_invite(
                 group_id, search, current_user.id
             )
         
@@ -244,7 +236,7 @@ async def add_members(
     user_ids: List[int] = Form(...),
     role: str = Form(...),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Add members to group"""
     from utils.exceptions import PermissionDeniedError, NotFoundError
@@ -255,7 +247,7 @@ async def add_members(
     invite_data = GroupInviteRequest(user_ids=user_ids, role=role)
     
     try:
-        result = group_service.add_members_to_group(
+        result = await group_service.add_members_to_group(
             group_id, invite_data, current_user.id
         )
         request.session["message"] = f"Added {len(result['added'])} members"
@@ -277,7 +269,7 @@ async def remove_member(
     group_id: int,
     user_id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Remove member from group"""
     from utils.exceptions import PermissionDeniedError, NotFoundError, ValidationError
@@ -286,7 +278,7 @@ async def remove_member(
     group_service = GroupService(group_repo)
     
     try:
-        group_service.remove_member_from_group(group_id, user_id, current_user.id)
+        await group_service.remove_member_from_group(group_id, user_id, current_user.id)
         request.session["message"] = "Member removed successfully"
     except (NotFoundError, PermissionDeniedError, ValidationError) as e:
         request.session["error"] = str(e)
@@ -303,17 +295,17 @@ async def remove_member(
 async def get_group_members_api(
     group_id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """API endpoint to get group members"""
     group_repo = GroupRepository(db)
     
     # Check if user is member
-    is_member = group_repo.is_group_member(group_id, current_user.id)
+    is_member = await group_repo.is_group_member(group_id, current_user.id)
     if not is_member:
         raise HTTPException(status_code=403, detail="Not a member of this group")
     
-    members = group_repo.get_group_members(group_id)
+    members = await group_repo.get_group_members(group_id)
     
     return [
         {

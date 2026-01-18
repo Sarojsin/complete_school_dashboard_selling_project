@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, extract
 from typing import List
 from datetime import datetime, timedelta
-from database.database import get_db
+from app.core.database import get_async_db
 from dependencies import get_current_authority
-from models.models import User, Student, Teacher, Course, Assignment, Attendance, Grade, FeeRecord, UserRole
+from models.models import User, Student, Teacher, Course, Assignment, Attendance, Grade, FeeRecord, UserRole, Notice
 from repositories.user_repository import UserRepository
 from repositories.student_repository import StudentRepository
 from repositories.teacher_repository import TeacherRepository
@@ -20,44 +20,57 @@ router = APIRouter()
 @router.get("/dashboard")
 async def get_dashboard(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get authority dashboard with system statistics"""
     
     # Count statistics
-    total_students = db.query(func.count(Student.id)).scalar()
-    total_teachers = db.query(func.count(Teacher.id)).scalar()
-    total_courses = db.query(func.count(Course.id)).scalar()
+    res1 = await db.execute(select(func.count(Student.id)))
+    total_students = res1.scalar() or 0
+    
+    res2 = await db.execute(select(func.count(Teacher.id)))
+    total_teachers = res2.scalar() or 0
+    
+    res3 = await db.execute(select(func.count(Course.id)))
+    total_courses = res3.scalar() or 0
     
     # Active students (enrolled this year)
     current_year = datetime.utcnow().year
-    active_students = db.query(func.count(Student.id)).filter(
-        func.extract('year', Student.enrollment_date) == current_year
-    ).scalar()
+    res4 = await db.execute(select(func.count(Student.id)).filter(
+        extract('year', Student.enrollment_date) == current_year
+    ))
+    active_students = res4.scalar() or 0
     
     # Recent assignments
-    recent_assignments = db.query(Assignment).order_by(
+    res5 = await db.execute(select(Assignment).order_by(
         Assignment.created_at.desc()
-    ).limit(10).all()
+    ).limit(10))
+    recent_assignments = res5.scalars().all()
     
     # Fee statistics
-    total_fees = db.query(func.sum(FeeRecord.amount)).scalar() or 0
-    collected_fees = db.query(func.sum(FeeRecord.paid_amount)).scalar() or 0
+    res6 = await db.execute(select(func.sum(FeeRecord.amount)))
+    total_fees = res6.scalar() or 0
+    
+    res7 = await db.execute(select(func.sum(FeeRecord.paid_amount)))
+    collected_fees = res7.scalar() or 0
+    
     pending_fees = total_fees - collected_fees
     
     # Attendance statistics (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    attendance_stats = db.query(
+    res8 = await db.execute(select(
         Attendance.status,
         func.count(Attendance.id).label('count')
     ).filter(
         Attendance.date >= thirty_days_ago.date()
-    ).group_by(Attendance.status).all()
+    ).group_by(Attendance.status))
+    attendance_stats = res8.all()
     
     # Grade statistics
-    avg_score = db.query(
+    res9 = await db.execute(select(
         func.avg(Grade.score / Grade.max_score * 100)
-    ).scalar()
+    ))
+    avg_score = res9.scalar()
     
     return {
         "statistics": {
@@ -87,30 +100,30 @@ async def get_all_students(
     limit: int = 100,
     grade_level: str = None,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all students"""
-    students = StudentRepository.get_all(db, skip, limit, grade_level)
+    students = await StudentRepository.get_all(db, skip, limit, grade_level)
     return students
 
 @router.post("/students", response_model=StudentResponse)
 async def create_student(
     student: StudentCreate,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Create new student"""
     # Check if user already exists
-    existing_user = UserRepository.get_by_email(db, student.email)
+    existing_user = await UserRepository.get_by_email(db, student.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    existing_username = UserRepository.get_by_username(db, student.username)
+    existing_username = await UserRepository.get_by_username(db, student.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Create user
-    user = UserRepository.create(
+    user = await UserRepository.create(
         db=db,
         email=student.email,
         username=student.username,
@@ -132,7 +145,7 @@ async def create_student(
         "section": student.section
     }
     
-    created_student = StudentRepository.create(db, student_data)
+    created_student = await StudentRepository.create(db, student_data)
     return created_student
 
 @router.put("/students/{student_id}", response_model=StudentResponse)
@@ -140,28 +153,28 @@ async def update_student(
     student_id: int,
     student_update: StudentUpdate,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Update student"""
-    student = StudentRepository.get_by_id(db, student_id)
+    student = await StudentRepository.get_by_id(db, student_id)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
-    updated_student = StudentRepository.update(db, student, **student_update.dict(exclude_unset=True))
+    updated_student = await StudentRepository.update(db, student, **student_update.dict(exclude_unset=True))
     return updated_student
 
 @router.delete("/students/{student_id}")
 async def delete_student(
     student_id: int,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Delete student"""
-    student = StudentRepository.get_by_id(db, student_id)
+    student = await StudentRepository.get_by_id(db, student_id)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
-    StudentRepository.delete(db, student)
+    await StudentRepository.delete(db, student)
     return {"message": "Student deleted successfully"}
 
 # TEACHER MANAGEMENT
@@ -172,30 +185,30 @@ async def get_all_teachers(
     limit: int = 100,
     department: str = None,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all teachers"""
-    teachers = TeacherRepository.get_all(db, skip, limit, department)
+    teachers = await TeacherRepository.get_all(db, skip, limit, department)
     return teachers
 
 @router.post("/teachers", response_model=TeacherResponse)
 async def create_teacher(
     teacher: TeacherCreate,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Create new teacher"""
     # Check if user already exists
-    existing_user = UserRepository.get_by_email(db, teacher.email)
+    existing_user = await UserRepository.get_by_email(db, teacher.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    existing_username = UserRepository.get_by_username(db, teacher.username)
+    existing_username = await UserRepository.get_by_username(db, teacher.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Create user
-    user = UserRepository.create(
+    user = await UserRepository.create(
         db=db,
         email=teacher.email,
         username=teacher.username,
@@ -214,7 +227,7 @@ async def create_teacher(
         "specialization": teacher.specialization
     }
     
-    created_teacher = TeacherRepository.create(db, teacher_data)
+    created_teacher = await TeacherRepository.create(db, teacher_data)
     return created_teacher
 
 @router.put("/teachers/{teacher_id}", response_model=TeacherResponse)
@@ -222,28 +235,28 @@ async def update_teacher(
     teacher_id: int,
     teacher_update: TeacherUpdate,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Update teacher"""
-    teacher = TeacherRepository.get_by_id(db, teacher_id)
+    teacher = await TeacherRepository.get_by_id(db, teacher_id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
     
-    updated_teacher = TeacherRepository.update(db, teacher, **teacher_update.dict(exclude_unset=True))
+    updated_teacher = await TeacherRepository.update(db, teacher, **teacher_update.dict(exclude_unset=True))
     return updated_teacher
 
 @router.delete("/teachers/{teacher_id}")
 async def delete_teacher(
     teacher_id: int,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Delete teacher"""
-    teacher = TeacherRepository.get_by_id(db, teacher_id)
+    teacher = await TeacherRepository.get_by_id(db, teacher_id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
     
-    TeacherRepository.delete(db, teacher)
+    await TeacherRepository.delete(db, teacher)
     return {"message": "Teacher deleted successfully"}
 
 # ANALYTICS
@@ -251,23 +264,25 @@ async def delete_teacher(
 @router.get("/analytics/students")
 async def get_student_analytics(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student analytics"""
     # Students by grade level
-    by_grade = db.query(
+    res1 = await db.execute(select(
         Student.grade_level,
         func.count(Student.id).label('count')
-    ).group_by(Student.grade_level).all()
+    ).group_by(Student.grade_level))
+    by_grade = res1.all()
     
     # Enrollment trend (last 12 months)
     twelve_months_ago = datetime.utcnow() - timedelta(days=365)
-    enrollment_trend = db.query(
-        func.extract('month', Student.enrollment_date).label('month'),
+    res2 = await db.execute(select(
+        extract('month', Student.enrollment_date).label('month'),
         func.count(Student.id).label('count')
     ).filter(
         Student.enrollment_date >= twelve_months_ago.date()
-    ).group_by('month').all()
+    ).group_by('month'))
+    enrollment_trend = res2.all()
     
     return {
         "by_grade_level": {grade: count for grade, count in by_grade},
@@ -278,17 +293,18 @@ async def get_student_analytics(
 async def get_attendance_analytics(
     days: int = 30,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get attendance analytics"""
     cutoff_date = datetime.utcnow() - timedelta(days=days)
     
-    stats = db.query(
+    res1 = await db.execute(select(
         Attendance.status,
         func.count(Attendance.id).label('count')
     ).filter(
         Attendance.date >= cutoff_date.date()
-    ).group_by(Attendance.status).all()
+    ).group_by(Attendance.status))
+    stats = res1.all()
     
     total = sum(count for _, count in stats)
     
@@ -301,47 +317,48 @@ async def get_attendance_analytics(
 @router.get("/analytics/performance")
 async def get_performance_analytics(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get academic performance analytics"""
     # Average grades by course
-    avg_by_course = db.query(
+    res1 = await db.execute(select(
         Course.course_name,
         func.avg(Grade.score / Grade.max_score * 100).label('average')
-    ).join(Grade).group_by(Course.course_name).all()
+    ).join(Grade).group_by(Course.course_name))
+    avg_by_course = res1.all()
     
     # Grade distribution
-    distribution = db.query(
+    res2 = await db.execute(select(
         Grade.grade,
         func.count(Grade.id).label('count')
     ).filter(
         Grade.grade.isnot(None)
-    ).group_by(Grade.grade).all()
+    ).group_by(Grade.grade))
+    distribution = res2.all()
     
     return {
         "average_by_course": {course: round(avg, 2) for course, avg in avg_by_course},
         "grade_distribution": {grade: count for grade, count in distribution}
     }
+
 @router.get("/courses")
 async def get_all_courses(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all courses"""
-    from models.models import Course
-    
-    courses = db.query(Course).order_by(Course.course_name).all()
+    res = await db.execute(select(Course).order_by(Course.course_name))
+    courses = res.scalars().all()
     return courses
 
 @router.get("/fees")
 async def get_all_fees(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all fee records"""
-    from models.models import FeeRecord
-    
-    fees = db.query(FeeRecord).order_by(FeeRecord.due_date.desc()).all()
+    res = await db.execute(select(FeeRecord).order_by(FeeRecord.due_date.desc()))
+    fees = res.scalars().all()
     
     # Calculate totals
     total_amount = sum(f.amount for f in fees)
@@ -358,37 +375,42 @@ async def get_all_fees(
 @router.get("/notices")
 async def get_all_notices(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all notices"""
-    from models.models import Notice
-    
-    notices = db.query(Notice).order_by(Notice.created_at.desc()).all()
+    res = await db.execute(select(Notice).order_by(Notice.created_at.desc()))
+    notices = res.scalars().all()
     return notices
 
 @router.get("/analytics")
 async def get_analytics(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get system analytics"""
-    from models.models import Student, Teacher, Course, FeeRecord, Attendance
-    from sqlalchemy import func
-    
     # Count totals
-    total_students = db.query(func.count(Student.id)).scalar()
-    total_teachers = db.query(func.count(Teacher.id)).scalar()
-    total_courses = db.query(func.count(Course.id)).scalar()
+    res1 = await db.execute(select(func.count(Student.id)))
+    total_students = res1.scalar() or 0
+    
+    res2 = await db.execute(select(func.count(Teacher.id)))
+    total_teachers = res2.scalar() or 0
+    
+    res3 = await db.execute(select(func.count(Course.id)))
+    total_courses = res3.scalar() or 0
     
     # Fee statistics
-    total_fees = db.query(func.sum(FeeRecord.amount)).scalar() or 0
-    total_paid = db.query(func.sum(FeeRecord.paid_amount)).scalar() or 0
+    res4 = await db.execute(select(func.sum(FeeRecord.amount)))
+    total_fees = res4.scalar() or 0
+    
+    res5 = await db.execute(select(func.sum(FeeRecord.paid_amount)))
+    total_paid = res5.scalar() or 0
     
     # Attendance statistics
-    attendance_stats = db.query(
+    res6 = await db.execute(select(
         Attendance.status,
         func.count(Attendance.id).label('count')
-    ).group_by(Attendance.status).all()
+    ).group_by(Attendance.status))
+    attendance_stats = res6.all()
     
     return {
         "total_students": total_students,
@@ -403,38 +425,38 @@ async def get_analytics(
 @router.get("/reports")
 async def get_reports(
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get system reports"""
-    from models.models import Student, Teacher, Course, Grade, Attendance, FeeRecord
-    from sqlalchemy import func
-    from datetime import datetime, timedelta
-    
     # Recent activity (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     
     # New students
-    new_students = db.query(func.count(Student.id)).filter(
+    res1 = await db.execute(select(func.count(Student.id)).filter(
         Student.enrollment_date >= thirty_days_ago.date()
-    ).scalar()
+    ))
+    new_students = res1.scalar() or 0
     
     # Attendance summary
-    recent_attendance = db.query(
+    res2 = await db.execute(select(
         Attendance.status,
         func.count(Attendance.id).label('count')
     ).filter(
         Attendance.date >= thirty_days_ago.date()
-    ).group_by(Attendance.status).all()
+    ).group_by(Attendance.status))
+    recent_attendance = res2.all()
     
     # Fee collection
-    recent_payments = db.query(func.sum(FeeRecord.paid_amount)).filter(
+    res3 = await db.execute(select(func.sum(FeeRecord.paid_amount)).filter(
         FeeRecord.payment_date >= thirty_days_ago.date()
-    ).scalar() or 0
+    ))
+    recent_payments = res3.scalar() or 0
     
     # Overdue fees
-    overdue_fees = db.query(func.count(FeeRecord.id)).filter(
+    res4 = await db.execute(select(func.count(FeeRecord.id)).filter(
         FeeRecord.status == 'overdue'
-    ).scalar()
+    ))
+    overdue_fees = res4.scalar() or 0
     
     return {
         "period": "Last 30 days",

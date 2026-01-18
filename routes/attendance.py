@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import date
-from database.database import get_db
+from app.core.database import get_async_db
 from dependencies import get_current_teacher, get_current_student, get_current_user
 from models.models import User
 from repositories.attendance_repository import AttendanceRepository
@@ -19,26 +19,26 @@ router = APIRouter()
 async def mark_attendance(
     attendance: AttendanceCreate,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Mark attendance for a student (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
     # Verify teacher teaches this course
-    course = CourseRepository.get_by_id(db, attendance.course_id)
+    course = await CourseRepository.get_by_id(db, attendance.course_id)
     if not course or course.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized for this course")
     
     # Check if attendance already exists
-    existing = AttendanceRepository.get_by_date(
+    existing = await AttendanceRepository.get_by_date(
         db, attendance.student_id, attendance.course_id, attendance.date
     )
     
     if existing:
         # Update existing attendance
-        updated = AttendanceRepository.update(
+        updated = await AttendanceRepository.update(
             db, existing,
             status=attendance.status,
             remarks=attendance.remarks
@@ -46,17 +46,17 @@ async def mark_attendance(
         return updated
     
     # Create new attendance record
-    created = AttendanceRepository.create(db, attendance.dict())
+    created = await AttendanceRepository.create(db, attendance.dict())
     return created
 
 @router.post("/bulk")
 async def mark_bulk_attendance(
     attendance_list: List[AttendanceCreate],
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Mark attendance for multiple students at once (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
@@ -65,26 +65,26 @@ async def mark_bulk_attendance(
     
     # Verify teacher teaches this course
     course_id = attendance_list[0].course_id
-    course = CourseRepository.get_by_id(db, course_id)
+    course = await CourseRepository.get_by_id(db, course_id)
     if not course or course.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized for this course")
     
     created_records = []
     for attendance in attendance_list:
         # Check if exists
-        existing = AttendanceRepository.get_by_date(
+        existing = await AttendanceRepository.get_by_date(
             db, attendance.student_id, attendance.course_id, attendance.date
         )
         
         if existing:
-            updated = AttendanceRepository.update(
+            updated = await AttendanceRepository.update(
                 db, existing,
                 status=attendance.status,
                 remarks=attendance.remarks
             )
             created_records.append(updated)
         else:
-            created = AttendanceRepository.create(db, attendance.dict())
+            created = await AttendanceRepository.create(db, attendance.dict())
             created_records.append(created)
     
     return {
@@ -97,22 +97,22 @@ async def get_course_attendance(
     course_id: int,
     date_value: date = None,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get attendance records for a course (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
     # Verify teacher teaches this course
-    course = CourseRepository.get_by_id(db, course_id)
+    course = await CourseRepository.get_by_id(db, course_id)
     if not course or course.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized for this course")
     
-    attendance_records = AttendanceRepository.get_course_attendance(db, course_id, date_value)
+    attendance_records = await AttendanceRepository.get_course_attendance(db, course_id, date_value)
     
     # Get enrolled students
-    enrolled_students = CourseRepository.get_enrolled_students(db, course_id)
+    enrolled_students = await CourseRepository.get_enrolled_students(db, course_id)
     
     if date_value:
         # Check which students are missing attendance for this date
@@ -138,20 +138,20 @@ async def get_course_attendance(
 async def get_course_attendance_stats(
     course_id: int,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get attendance statistics for a course (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
     # Verify teacher teaches this course
-    course = CourseRepository.get_by_id(db, course_id)
+    course = await CourseRepository.get_by_id(db, course_id)
     if not course or course.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized for this course")
     
     # Get low attendance students
-    low_attendance = AttendanceRepository.get_low_attendance_students(db, course_id, 75.0)
+    low_attendance = await AttendanceRepository.get_low_attendance_students(db, course_id, 75.0)
     
     return {
         "course": course,
@@ -164,15 +164,15 @@ async def get_course_attendance_stats(
 async def get_my_attendance(
     course_id: int = None,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's attendance records"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    attendance = AttendanceRepository.get_student_attendance(db, student.id, course_id)
-    stats = AttendanceRepository.get_attendance_stats(db, student.id, course_id)
+    attendance = await AttendanceRepository.get_student_attendance(db, student.id, course_id)
+    stats = await AttendanceRepository.get_attendance_stats(db, student.id, course_id)
     
     return {
         "attendance": attendance,
@@ -183,20 +183,20 @@ async def get_my_attendance(
 async def get_my_course_attendance(
     course_id: int,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's attendance for a specific course"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
     # Check if student is enrolled in the course
-    enrolled_courses = StudentRepository.get_enrolled_courses(db, student.id)
+    enrolled_courses = await StudentRepository.get_enrolled_courses(db, student.id)
     if not any(c.id == course_id for c in enrolled_courses):
         raise HTTPException(status_code=403, detail="Not enrolled in this course")
     
-    attendance = AttendanceRepository.get_student_attendance(db, student.id, course_id)
-    stats = AttendanceRepository.get_attendance_stats(db, student.id, course_id)
+    attendance = await AttendanceRepository.get_student_attendance(db, student.id, course_id)
+    stats = await AttendanceRepository.get_attendance_stats(db, student.id, course_id)
     
     return {
         "course_id": course_id,

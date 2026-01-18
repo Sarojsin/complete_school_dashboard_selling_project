@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
-from dependencies import get_db, get_current_user
+from app.core.database import get_async_db
+from dependencies import get_current_user
 from models.models import UserRole
 from repositories.group_post_repository import GroupPostRepository
 from repositories.group_repository import GroupRepository
@@ -19,7 +20,7 @@ async def list_posts(
     post_type: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Display all posts in a group"""
     post_repo = GroupPostRepository(db)
@@ -30,12 +31,12 @@ async def list_posts(
     offset = (page - 1) * limit
     
     try:
-        posts_data = post_service.get_group_posts(
+        posts_data = await post_service.get_group_posts(
             group_id, current_user.id, post_type, limit, offset
         )
         
         # Get user role for permissions
-        user_role = group_repo.get_member_role(group_id, current_user.id)
+        user_role = await group_repo.get_member_role(group_id, current_user.id)
         
         return request.app.state.templates.TemplateResponse(
             "groups/group_posts.html",
@@ -65,13 +66,13 @@ async def create_post_page(
     request: Request,
     group_id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Display create post form - Authority and Teachers only"""
     group_repo = GroupRepository(db)
     
     # Verify user is teacher or authority
-    user_role = group_repo.get_member_role(group_id, current_user.id)
+    user_role = await group_repo.get_member_role(group_id, current_user.id)
     current_role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
     
     is_authority = current_role.lower() in ["authority", "admin"]
@@ -100,7 +101,7 @@ async def create_post(
     link_url: Optional[str] = Form(None),
     link_description: Optional[str] = Form(None),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Create a new post"""
     post_repo = GroupPostRepository(db)
@@ -117,7 +118,7 @@ async def create_post(
     )
     
     try:
-        result = post_service.create_post(post_data, current_user.id)
+        result = await post_service.create_post(post_data, current_user.id)
         request.session["message"] = f"Post '{result['title']}' created successfully"
         return RedirectResponse(
             url=f"/groups/{group_id}/posts",
@@ -136,23 +137,23 @@ async def view_post(
     group_id: int,
     post_id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """View a single post"""
     post_repo = GroupPostRepository(db)
     group_repo = GroupRepository(db)
     
     # Verify user is group member
-    is_member = group_repo.is_group_member(group_id, current_user.id)
+    is_member = await group_repo.is_group_member(group_id, current_user.id)
     if not is_member:
         raise HTTPException(status_code=403, detail="Not a member of this group")
     
-    post = post_repo.get_post_by_id(post_id)
+    post = await post_repo.get_post_by_id(post_id)
     if not post or post.group_id != group_id:
         raise HTTPException(status_code=404, detail="Post not found")
     
     # Get user role
-    user_role = group_repo.get_member_role(group_id, current_user.id)
+    user_role = await group_repo.get_member_role(group_id, current_user.id)
     
     return request.app.state.templates.TemplateResponse(
         "groups/view_post.html",
@@ -172,7 +173,7 @@ async def delete_post(
     group_id: int,
     post_id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Delete a post"""
     post_repo = GroupPostRepository(db)
@@ -180,7 +181,7 @@ async def delete_post(
     post_service = GroupPostService(post_repo, group_repo)
     
     try:
-        post_service.delete_post(post_id, current_user.id)
+        await post_service.delete_post(post_id, current_user.id)
         request.session["message"] = "Post deleted successfully"
     except Exception as e:
         request.session["error"] = str(e)
@@ -197,7 +198,7 @@ async def get_posts_api(
     post_type: Optional[str] = None,
     page: int = Query(1, ge=1),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """API endpoint for posts (for AJAX)"""
     post_repo = GroupPostRepository(db)
@@ -208,7 +209,7 @@ async def get_posts_api(
     offset = (page - 1) * limit
     
     try:
-        posts_data = post_service.get_group_posts(
+        posts_data = await post_service.get_group_posts(
             group_id, current_user.id, post_type, limit, offset
         )
         return posts_data

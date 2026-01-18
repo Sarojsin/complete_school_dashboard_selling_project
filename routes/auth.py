@@ -1,22 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from database.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.core.database import get_async_db
 from repositories.user_repository import UserRepository
 from services.auth_service import AuthService
 from tables.tables import Token, LoginRequest, UserResponse, StudentCreate, TeacherCreate, AuthorityCreate, ParentCreate
 from models.models import User, UserRole
-from config.config import settings
+from app.core.config import settings
 
 router = APIRouter()
 
 @router.post("/login")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
-    user = UserRepository.authenticate(db, form_data.username, form_data.password)
+    user = await UserRepository.authenticate(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -61,9 +62,9 @@ async def login(
 @router.post("/login-json", response_model=Token)
 async def login_json(
     login_data: LoginRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
-    user = UserRepository.authenticate(db, login_data.username, login_data.password)
+    user = await UserRepository.authenticate(db, login_data.username, login_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -88,7 +89,7 @@ async def login_json(
 @router.post("/refresh")
 async def refresh_token(
     request: Request,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
@@ -104,7 +105,7 @@ async def refresh_token(
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    user = UserRepository.get_by_id(db, user_id)
+    user = await UserRepository.get_by_id(db, user_id)
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
 
@@ -137,26 +138,26 @@ async def refresh_token(
 @router.post("/signup/student")
 async def signup_student(
     student_data: StudentCreate,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Public student registration"""
     # Check if user already exists
-    existing_user = UserRepository.get_by_email(db, student_data.email)
+    existing_user = await UserRepository.get_by_email(db, student_data.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    existing_username = UserRepository.get_by_username(db, student_data.username)
+    existing_username = await UserRepository.get_by_username(db, student_data.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Check if student_id exists
     from repositories.student_repository import StudentRepository
-    existing_student = StudentRepository.get_by_student_id(db, student_data.student_id)
+    existing_student = await StudentRepository.get_by_student_id(db, student_data.student_id)
     if existing_student:
         raise HTTPException(status_code=400, detail="Student ID already exists")
     
     # Create user
-    user = UserRepository.create(
+    user = await UserRepository.create(
         db=db,
         email=student_data.email,
         username=student_data.username,
@@ -179,7 +180,7 @@ async def signup_student(
         "section": student_data.section
     }
     
-    created_student = StudentRepository.create(db, student_profile_data)
+    await StudentRepository.create(db, student_profile_data)
     
     return {
         "message": "Student account created successfully",
@@ -189,26 +190,26 @@ async def signup_student(
 @router.post("/signup/teacher")
 async def signup_teacher(
     teacher_data: TeacherCreate,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Public teacher registration"""
     # Check if user already exists
-    existing_user = UserRepository.get_by_email(db, teacher_data.email)
+    existing_user = await UserRepository.get_by_email(db, teacher_data.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    existing_username = UserRepository.get_by_username(db, teacher_data.username)
+    existing_username = await UserRepository.get_by_username(db, teacher_data.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Check if employee_id exists
     from repositories.teacher_repository import TeacherRepository
-    existing_teacher = TeacherRepository.get_by_employee_id(db, teacher_data.employee_id)
+    existing_teacher = await TeacherRepository.get_by_employee_id(db, teacher_data.employee_id)
     if existing_teacher:
         raise HTTPException(status_code=400, detail="Employee ID already exists")
     
     # Create user
-    user = UserRepository.create(
+    user = await UserRepository.create(
         db=db,
         email=teacher_data.email,
         username=teacher_data.username,
@@ -228,7 +229,7 @@ async def signup_teacher(
         "specialization": teacher_data.specialization
     }
     
-    created_teacher = TeacherRepository.create(db, teacher_profile_data)
+    await TeacherRepository.create(db, teacher_profile_data)
     
     return {
         "message": "Teacher account created successfully",
@@ -238,7 +239,7 @@ async def signup_teacher(
 @router.post("/signup/authority")
 async def signup_authority(
     authority_data: AuthorityCreate,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Public authority registration"""
     # Verify secret key
@@ -246,16 +247,16 @@ async def signup_authority(
         raise HTTPException(status_code=403, detail="Invalid authority secret key")
 
     # Check if user already exists
-    existing_user = UserRepository.get_by_email(db, authority_data.email)
+    existing_user = await UserRepository.get_by_email(db, authority_data.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    existing_username = UserRepository.get_by_username(db, authority_data.username)
+    existing_username = await UserRepository.get_by_username(db, authority_data.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Create user
-    user = UserRepository.create(
+    user = await UserRepository.create(
         db=db,
         email=authority_data.email,
         username=authority_data.username,
@@ -274,8 +275,8 @@ async def signup_authority(
         phone=authority_data.phone
     )
     db.add(authority_profile)
-    db.commit()
-    db.refresh(authority_profile)
+    await db.commit()
+    await db.refresh(authority_profile)
     
     return {
         "message": "Authority account created successfully",
@@ -285,21 +286,21 @@ async def signup_authority(
 @router.post("/signup/parent")
 async def signup_parent(
     parent_data: ParentCreate,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Public parent registration"""
     # Check if user already exists
-    existing_user = UserRepository.get_by_email(db, parent_data.email)
+    existing_user = await UserRepository.get_by_email(db, parent_data.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    existing_username = UserRepository.get_by_username(db, parent_data.username)
+    existing_username = await UserRepository.get_by_username(db, parent_data.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Verify student exists
     from repositories.student_repository import StudentRepository
-    student = StudentRepository.get_by_student_id(db, parent_data.student_id)
+    student = await StudentRepository.get_by_student_id(db, parent_data.student_id)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
@@ -308,7 +309,7 @@ async def signup_parent(
         raise HTTPException(status_code=400, detail="Student already has a linked parent")
     
     # Create user
-    user = UserRepository.create(
+    user = await UserRepository.create(
         db=db,
         email=parent_data.email,
         username=parent_data.username,
@@ -327,10 +328,10 @@ async def signup_parent(
         "occupation": parent_data.occupation
     }
     
-    created_parent = ParentRepository.create(db, parent_profile_data)
+    created_parent = await ParentRepository.create(db, parent_profile_data)
     
     # Link student to parent
-    ParentRepository.link_child(db, created_parent.id, student.id)
+    await ParentRepository.link_child(db, created_parent.id, student.id)
     
     return {
         "message": "Parent account created successfully",

@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import List, Optional
 from datetime import datetime
 import os
 import shutil
-from database.database import get_db
+from app.core.database import get_async_db
 from dependencies import get_current_user, get_current_teacher, get_current_student
-from models.models import User, UserRole
+from models.models import User, UserRole, AssignmentSubmission
 from repositories.assignment_repository import AssignmentRepository
 from repositories.teacher_repository import TeacherRepository
 from repositories.student_repository import StudentRepository
@@ -14,7 +15,7 @@ from tables.tables import (
     AssignmentCreate, AssignmentUpdate, AssignmentResponse,
     AssignmentSubmissionCreate, AssignmentSubmissionUpdate, AssignmentSubmissionResponse
 )
-from config.config import settings
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -24,17 +25,17 @@ router = APIRouter()
 async def create_assignment(
     assignment: AssignmentCreate,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Create a new assignment (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
     assignment_data = assignment.dict()
     assignment_data['teacher_id'] = teacher.id
     
-    created_assignment = AssignmentRepository.create(db, assignment_data)
+    created_assignment = await AssignmentRepository.create(db, assignment_data)
     return created_assignment
 
 @router.post("/{assignment_id}/upload")
@@ -42,14 +43,14 @@ async def upload_assignment_file(
     assignment_id: int,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Upload file for assignment (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    assignment = await AssignmentRepository.get_by_id(db, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     
@@ -71,42 +72,42 @@ async def upload_assignment_file(
         shutil.copyfileobj(file.file, buffer)
     
     # Update assignment
-    updated_assignment = AssignmentRepository.update(db, assignment, file_path=file_path)
+    updated_assignment = await AssignmentRepository.update(db, assignment, file_path=file_path)
     
     return {"message": "File uploaded successfully", "file_path": file_path}
 
 @router.get("/teacher/my-assignments", response_model=List[AssignmentResponse])
 async def get_my_assignments(
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all assignments created by current teacher"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    assignments = AssignmentRepository.get_all(db, teacher_id=teacher.id)
+    assignments = await AssignmentRepository.get_all(db, teacher_id=teacher.id)
     return assignments
 
 @router.get("/{assignment_id}/submissions")
 async def get_assignment_submissions(
     assignment_id: int,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all submissions for an assignment (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    assignment = await AssignmentRepository.get_by_id(db, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     
     if assignment.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    submissions = AssignmentRepository.get_submissions(db, assignment_id)
+    submissions = await AssignmentRepository.get_submissions(db, assignment_id)
     
     return {
         "assignment": assignment,
@@ -121,22 +122,23 @@ async def grade_submission(
     submission_id: int,
     grade_data: AssignmentSubmissionUpdate,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Grade an assignment submission (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    submission = db.query(AssignmentRepository.get_by_id.__self__).get(submission_id)
+    res = await db.execute(select(AssignmentSubmission).filter(AssignmentSubmission.id == submission_id))
+    submission = res.scalars().first()
     if not submission:
         raise HTTPException(status_code=404, detail="Submission not found")
     
-    assignment = AssignmentRepository.get_by_id(db, submission.assignment_id)
+    assignment = await AssignmentRepository.get_by_id(db, submission.assignment_id)
     if assignment.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    updated_submission = AssignmentRepository.update_submission(
+    updated_submission = await AssignmentRepository.update_submission(
         db, submission, **grade_data.dict(exclude_unset=True)
     )
     
@@ -147,21 +149,21 @@ async def update_assignment(
     assignment_id: int,
     assignment_update: AssignmentUpdate,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Update assignment (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    assignment = await AssignmentRepository.get_by_id(db, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     
     if assignment.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    updated_assignment = AssignmentRepository.update(
+    updated_assignment = await AssignmentRepository.update(
         db, assignment, **assignment_update.dict(exclude_unset=True)
     )
     return updated_assignment
@@ -170,21 +172,21 @@ async def update_assignment(
 async def delete_assignment(
     assignment_id: int,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Delete assignment (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    assignment = await AssignmentRepository.get_by_id(db, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     
     if assignment.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    AssignmentRepository.delete(db, assignment)
+    await AssignmentRepository.delete(db, assignment)
     return {"message": "Assignment deleted successfully"}
 
 # STUDENT ENDPOINTS
@@ -193,10 +195,10 @@ async def delete_assignment(
 async def get_assignment(
     assignment_id: int,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get assignment details (Student)"""
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    assignment = await AssignmentRepository.get_by_id(db, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     
@@ -208,19 +210,19 @@ async def submit_assignment(
     file: Optional[UploadFile] = File(None),
     submission_text: Optional[str] = Form(None),
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Submit an assignment (Student)"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    assignment = AssignmentRepository.get_by_id(db, assignment_id)
+    assignment = await AssignmentRepository.get_by_id(db, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     
     # Check if already submitted
-    existing = AssignmentRepository.get_submission_by_student(db, assignment_id, student.id)
+    existing = await AssignmentRepository.get_submission_by_student(db, assignment_id, student.id)
     if existing:
         raise HTTPException(status_code=400, detail="Assignment already submitted")
     
@@ -248,7 +250,7 @@ async def submit_assignment(
         "submitted_at": datetime.utcnow()
     }
     
-    submission = AssignmentRepository.create_submission(db, submission_data)
+    submission = await AssignmentRepository.create_submission(db, submission_data)
     
     return {"message": "Assignment submitted successfully", "submission": submission}
 
@@ -256,14 +258,14 @@ async def submit_assignment(
 async def get_my_submission(
     assignment_id: int,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's submission for an assignment"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    submission = AssignmentRepository.get_submission_by_student(db, assignment_id, student.id)
+    submission = await AssignmentRepository.get_submission_by_student(db, assignment_id, student.id)
     
     if not submission:
         return {"submitted": False, "submission": None}
