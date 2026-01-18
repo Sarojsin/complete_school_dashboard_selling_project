@@ -1,17 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 import os
 import shutil
-from database.database import get_db
+from app.core.database import get_async_db
 from dependencies import get_current_teacher, get_current_user
 from models.models import User
 from repositories.videos_repository import VideosRepository
 from repositories.teacher_repository import TeacherRepository
 from repositories.student_repository import StudentRepository
 from tables.tables import VideoResponse
-from config.config import settings
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -24,10 +24,10 @@ async def upload_video(
     description: Optional[str] = Form(None),
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Upload course video (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
@@ -66,35 +66,56 @@ async def upload_video(
         "file_size": file_size
     }
     
-    video = VideosRepository.create(db, video_data)
+    video = await VideosRepository.create(db, video_data)
     
     return video
 
 @router.get("/teacher/my-videos")
 async def get_my_videos(
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all videos uploaded by current teacher"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    videos = VideosRepository.get_by_teacher(db, teacher.id)
+    videos = await VideosRepository.get_by_teacher(db, teacher.id)
     return videos
+
+@router.get("/{video_id}")
+async def get_video(
+    video_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Get video details"""
+    video = await VideosRepository.get_by_id(db, video_id)
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # If student, verify enrollment
+    if current_user.role.value == "student":
+        student = await StudentRepository.get_by_user_id(db, current_user.id)
+        if student:
+            enrolled_courses = await StudentRepository.get_enrolled_courses(db, student.id)
+            if not any(c.id == video.course_id for c in enrolled_courses):
+                raise HTTPException(status_code=403, detail="Not enrolled in this course")
+    
+    return video
 
 @router.delete("/{video_id}")
 async def delete_video(
     video_id: int,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Delete a video (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    video = VideosRepository.get_by_id(db, video_id)
+    video = await VideosRepository.get_by_id(db, video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
@@ -105,7 +126,7 @@ async def delete_video(
     if os.path.exists(video.file_path):
         os.remove(video.file_path)
     
-    VideosRepository.delete(db, video)
+    await VideosRepository.delete(db, video)
     return {"message": "Video deleted successfully"}
 
 # STUDENT/PUBLIC ENDPOINTS
@@ -114,57 +135,36 @@ async def delete_video(
 async def get_course_videos(
     course_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all videos for a course"""
     # If student, verify enrollment
     if current_user.role.value == "student":
-        student = StudentRepository.get_by_user_id(db, current_user.id)
+        student = await StudentRepository.get_by_user_id(db, current_user.id)
         if student:
-            enrolled_courses = StudentRepository.get_enrolled_courses(db, student.id)
+            enrolled_courses = await StudentRepository.get_enrolled_courses(db, student.id)
             if not any(c.id == course_id for c in enrolled_courses):
                 raise HTTPException(status_code=403, detail="Not enrolled in this course")
     
-    videos = VideosRepository.get_by_course(db, course_id)
+    videos = await VideosRepository.get_by_course(db, course_id)
     return videos
-
-@router.get("/{video_id}", response_model=VideoResponse)
-async def get_video(
-    video_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get video details"""
-    video = VideosRepository.get_by_id(db, video_id)
-    if not video:
-        raise HTTPException(status_code=404, detail="Video not found")
-    
-    # If student, verify enrollment
-    if current_user.role.value == "student":
-        student = StudentRepository.get_by_user_id(db, current_user.id)
-        if student:
-            enrolled_courses = StudentRepository.get_enrolled_courses(db, student.id)
-            if not any(c.id == video.course_id for c in enrolled_courses):
-                raise HTTPException(status_code=403, detail="Not enrolled in this course")
-    
-    return video
 
 @router.get("/{video_id}/stream")
 async def stream_video(
     video_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Stream video file"""
-    video = VideosRepository.get_by_id(db, video_id)
+    video = await VideosRepository.get_by_id(db, video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
     # If student, verify enrollment
     if current_user.role.value == "student":
-        student = StudentRepository.get_by_user_id(db, current_user.id)
+        student = await StudentRepository.get_by_user_id(db, current_user.id)
         if student:
-            enrolled_courses = StudentRepository.get_enrolled_courses(db, student.id)
+            enrolled_courses = await StudentRepository.get_enrolled_courses(db, student.id)
             if not any(c.id == video.course_id for c in enrolled_courses):
                 raise HTTPException(status_code=403, detail="Not enrolled in this course")
     
@@ -182,16 +182,17 @@ async def search_videos(
     query: str,
     course_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Search videos"""
-    videos = VideosRepository.search_videos(db, query, course_id)
+    videos = await VideosRepository.search_videos(db, query, course_id)
     
     # Filter by enrollment if student
     if current_user.role.value == "student":
-        student = StudentRepository.get_by_user_id(db, current_user.id)
+        student = await StudentRepository.get_by_user_id(db, current_user.id)
         if student:
-            enrolled_course_ids = [c.id for c in StudentRepository.get_enrolled_courses(db, student.id)]
+            ec = await StudentRepository.get_enrolled_courses(db, student.id)
+            enrolled_course_ids = [c.id for c in ec]
             videos = [v for v in videos if v.course_id in enrolled_course_ids]
     
     return videos
@@ -200,16 +201,17 @@ async def search_videos(
 async def get_recent_videos(
     limit: int = 10,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get recently uploaded videos"""
-    videos = VideosRepository.get_recent_videos(db, limit=limit)
+    videos = await VideosRepository.get_recent_videos(db, limit=limit)
     
     # Filter by enrollment if student
     if current_user.role.value == "student":
-        student = StudentRepository.get_by_user_id(db, current_user.id)
+        student = await StudentRepository.get_by_user_id(db, current_user.id)
         if student:
-            enrolled_course_ids = [c.id for c in StudentRepository.get_enrolled_courses(db, student.id)]
+            ec = await StudentRepository.get_enrolled_courses(db, student.id)
+            enrolled_course_ids = [c.id for c in ec]
             videos = [v for v in videos if v.course_id in enrolled_course_ids]
     
     return videos

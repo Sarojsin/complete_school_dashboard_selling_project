@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import datetime
-from database.database import get_db
+from app.core.database import get_async_db
 from dependencies import get_current_student, get_current_teacher, get_current_user
 from models.models import User
 from repositories.test_repository import TestRepository
@@ -22,10 +22,10 @@ router = APIRouter()
 async def create_test(
     test_data: TestCreate,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Create a new test (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
@@ -37,7 +37,7 @@ async def create_test(
         raise HTTPException(status_code=400, detail="Start time cannot be in the past")
     
     # Create test with questions
-    test = TestRepository.create(
+    test = await TestRepository.create(
         db,
         test_data={
             "title": test_data.title,
@@ -59,28 +59,28 @@ async def create_test(
 @router.get("/teacher/my-tests", response_model=List[TestResponse])
 async def get_my_tests(
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all tests created by current teacher"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    tests = TestRepository.get_all(db, teacher_id=teacher.id)
+    tests = await TestRepository.get_all(db, teacher_id=teacher.id)
     return tests
 
 @router.get("/teacher/{test_id}", response_model=TestResponse)
 async def get_test_for_teacher(
     test_id: int,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get test details with answers (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
@@ -94,14 +94,14 @@ async def update_test(
     test_id: int,
     test_update: TestUpdate,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Update test details (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
@@ -115,49 +115,49 @@ async def update_test(
             detail="Cannot update test after it has started"
         )
     
-    updated_test = TestRepository.update(db, test, **test_update.dict(exclude_unset=True))
+    updated_test = await TestRepository.update(db, test, **test_update.dict(exclude_unset=True))
     return updated_test
 
 @router.delete("/{test_id}")
 async def delete_test(
     test_id: int,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Delete test (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
     if test.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized to delete this test")
     
-    TestRepository.delete(db, test)
+    await TestRepository.delete(db, test)
     return {"message": "Test deleted successfully"}
 
 @router.get("/{test_id}/results")
 async def get_test_results(
     test_id: int,
     current_user: User = Depends(get_current_teacher),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all submissions for a test (Teacher only)"""
-    teacher = TeacherRepository.get_by_user_id(db, current_user.id)
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
     if test.teacher_id != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized to view results")
     
-    submissions = TestRepository.get_test_results(db, test_id)
+    submissions = await TestRepository.get_test_results(db, test_id)
     
     # Calculate statistics
     total_submissions = len(submissions)
@@ -180,28 +180,28 @@ async def get_test_results(
 @router.get("/student/available", response_model=List[TestForStudent])
 async def get_available_tests(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get available tests for student"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    tests = TestRepository.get_available_tests_for_student(db, student.id, section=student.section, grade_level=student.grade_level)
+    tests = await TestRepository.get_available_tests_for_student(db, student.id, section=student.section, grade_level=student.grade_level)
     return tests
 
 @router.get("/student/{test_id}", response_model=TestForStudent)
 async def get_test_for_student(
     test_id: int,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get test details without answers (Student view)"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
@@ -221,14 +221,14 @@ async def get_test_for_student(
 async def start_test(
     test_id: int,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Start taking a test"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
@@ -237,11 +237,11 @@ async def start_test(
         raise HTTPException(status_code=400, detail="Test is not currently available")
     
     # Check if already submitted
-    if TestService.has_student_submitted(db, test_id, student.id):
+    if await TestService.has_student_submitted(db, test_id, student.id):
         raise HTTPException(status_code=400, detail="Test already submitted")
     
     # Get or create submission
-    submission = TestService.get_or_create_submission(db, test_id, student.id)
+    submission = await TestService.get_or_create_submission(db, test_id, student.id)
     
     # Calculate remaining time
     time_remaining = TestService.calculate_time_remaining(test)
@@ -257,19 +257,19 @@ async def submit_test(
     test_id: int,
     submission_data: TestSubmissionCreate,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Submit test answers"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
     # Get existing submission
-    submission = TestRepository.get_submission(db, test_id, student.id)
+    submission = await TestRepository.get_submission(db, test_id, student.id)
     if not submission:
         raise HTTPException(status_code=404, detail="Test not started")
     
@@ -278,7 +278,7 @@ async def submit_test(
     
     # Update submission
     time_taken = (datetime.utcnow() - submission.started_at).total_seconds()
-    submission = TestRepository.update_submission(
+    submission = await TestRepository.update_submission(
         db,
         submission,
         answers=submission_data.answers,
@@ -287,7 +287,7 @@ async def submit_test(
     )
     
     # Grade the submission
-    TestService.grade_submission(db, submission, test)
+    await TestService.grade_submission(db, submission, test)
     
     return submission
 
@@ -295,18 +295,18 @@ async def submit_test(
 async def get_test_result(
     test_id: int,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get test result"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    test = TestRepository.get_by_id(db, test_id)
+    test = await TestRepository.get_by_id(db, test_id)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
-    submission = TestRepository.get_submission(db, test_id, student.id)
+    submission = await TestRepository.get_submission(db, test_id, student.id)
     if not submission or not submission.submitted_at:
         raise HTTPException(status_code=404, detail="Test not submitted")
     
@@ -337,12 +337,12 @@ async def get_test_result(
 @router.get("/student/my-results")
 async def get_my_results(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all test results for student"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    results = TestRepository.get_student_results(db, student.id)
+    results = await TestRepository.get_student_results(db, student.id)
     return results

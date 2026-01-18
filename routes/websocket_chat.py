@@ -1,17 +1,18 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
 from jose import jwt, JWTError
-from database.database import get_db
+from app.core.database import get_async_db
 from models.models import User
 from models.chat_models import ChatMessage
 from utils.websocket_manager import manager
-from config.config import settings
+from app.core.config import settings
 from datetime import datetime
 import json
 
 router = APIRouter()
 
-async def get_user_from_token(token: str, db: Session) -> User:
+async def get_user_from_token(token: str, db: AsyncSession) -> User:
     """Authenticate user from WebSocket token"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -21,7 +22,8 @@ async def get_user_from_token(token: str, db: Session) -> User:
         if not user_id:
             return None
         
-        user = db.query(User).filter(User.id == user_id).first()
+        res = await db.execute(select(User).filter(User.id == user_id))
+        user = res.scalars().first()
         return user
     except JWTError:
         return None
@@ -30,7 +32,7 @@ async def get_user_from_token(token: str, db: Session) -> User:
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str = Query(...),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     user = await get_user_from_token(token, db)
     
@@ -60,8 +62,8 @@ async def websocket_endpoint(
                     content=message_data["content"]
                 )
                 db.add(chat_message)
-                db.commit()
-                db.refresh(chat_message)
+                await db.commit()
+                await db.refresh(chat_message)
                 
                 # Send to receiver if online
                 await manager.send_personal_message({
@@ -91,11 +93,13 @@ async def websocket_endpoint(
             elif message_data.get("type") == "mark_read":
                 # Mark messages as read
                 message_ids = message_data.get("message_ids", [])
-                db.query(ChatMessage).filter(
-                    ChatMessage.id.in_(message_ids),
-                    ChatMessage.receiver_id == user.id
-                ).update({"is_read": True}, synchronize_session=False)
-                db.commit()
+                await db.execute(
+                    update(ChatMessage).filter(
+                        ChatMessage.id.in_(message_ids),
+                        ChatMessage.receiver_id == user.id
+                    ).values(is_read=True)
+                )
+                await db.commit()
                 
     except WebSocketDisconnect:
         manager.disconnect(user.id)

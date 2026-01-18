@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import List, Optional
 import os
 import shutil
-from database.database import get_db
+from app.core.database import get_async_db
 from dependencies import get_current_authority, get_current_user
-from models.models import User, Authority
+from models.models import User, Authority, Notice
 from repositories.notice_repository import NoticeRepository
 from tables.tables import NoticeCreate, NoticeUpdate, NoticeResponse
-from config.config import settings
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -18,17 +19,18 @@ router = APIRouter()
 async def create_notice(
     notice: NoticeCreate,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Create a new notice (Authority only)"""
-    authority = db.query(Authority).filter(Authority.user_id == current_user.id).first()
+    res = await db.execute(select(Authority).filter(Authority.user_id == current_user.id))
+    authority = res.scalars().first()
     if not authority:
         raise HTTPException(status_code=404, detail="Authority profile not found")
     
     notice_data = notice.dict()
     notice_data['authority_id'] = authority.id
     
-    created_notice = NoticeRepository.create(db, notice_data)
+    created_notice = await NoticeRepository.create(db, notice_data)
     return created_notice
 
 @router.post("/{notice_id}/upload")
@@ -36,10 +38,10 @@ async def upload_notice_file(
     notice_id: int,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Upload file attachment for notice (Authority only)"""
-    notice = NoticeRepository.get_by_id(db, notice_id)
+    notice = await NoticeRepository.get_by_id(db, notice_id)
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     
@@ -58,7 +60,7 @@ async def upload_notice_file(
         shutil.copyfileobj(file.file, buffer)
     
     # Update notice
-    updated_notice = NoticeRepository.update(db, notice, file_path=file_path)
+    updated_notice = await NoticeRepository.update(db, notice, file_path=file_path)
     
     return {"message": "File uploaded successfully", "file_path": file_path}
 
@@ -67,14 +69,14 @@ async def update_notice(
     notice_id: int,
     notice_update: NoticeUpdate,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Update notice (Authority only)"""
-    notice = NoticeRepository.get_by_id(db, notice_id)
+    notice = await NoticeRepository.get_by_id(db, notice_id)
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     
-    updated_notice = NoticeRepository.update(
+    updated_notice = await NoticeRepository.update(
         db, notice, **notice_update.dict(exclude_unset=True)
     )
     return updated_notice
@@ -83,14 +85,14 @@ async def update_notice(
 async def delete_notice(
     notice_id: int,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Delete notice (Authority only)"""
-    notice = NoticeRepository.get_by_id(db, notice_id)
+    notice = await NoticeRepository.get_by_id(db, notice_id)
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     
-    NoticeRepository.delete(db, notice)
+    await NoticeRepository.delete(db, notice)
     return {"message": "Notice deleted successfully"}
 
 @router.get("/all")
@@ -99,17 +101,17 @@ async def get_all_notices_admin(
     limit: int = 100,
     priority: str = None,
     current_user: User = Depends(get_current_authority),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get all notices including expired (Authority only)"""
-    from models.models import Notice
-    
-    query = db.query(Notice)
+    query = select(Notice)
     
     if priority:
         query = query.filter(Notice.priority == priority)
     
-    notices = query.order_by(Notice.created_at.desc()).offset(skip).limit(limit).all()
+    query = query.order_by(Notice.created_at.desc()).offset(skip).limit(limit)
+    res = await db.execute(query)
+    notices = res.scalars().all()
     
     return notices
 
@@ -121,10 +123,10 @@ async def get_notices(
     limit: int = 100,
     priority: str = None,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get active notices for current user"""
-    notices = NoticeRepository.get_all(
+    notices = await NoticeRepository.get_all(
         db, 
         skip=skip, 
         limit=limit, 
@@ -136,30 +138,30 @@ async def get_notices(
 @router.get("/urgent", response_model=List[NoticeResponse])
 async def get_urgent_notices(
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get urgent notices"""
-    notices = NoticeRepository.get_urgent_notices(db, current_user.role.value)
+    notices = await NoticeRepository.get_urgent_notices(db, current_user.role.value)
     return notices
 
 @router.get("/recent", response_model=List[NoticeResponse])
 async def get_recent_notices(
     days: int = 7,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get recent notices from last N days"""
-    notices = NoticeRepository.get_recent_notices(db, days, current_user.role.value)
+    notices = await NoticeRepository.get_recent_notices(db, days, current_user.role.value)
     return notices
 
 @router.get("/{notice_id}", response_model=NoticeResponse)
 async def get_notice(
     notice_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get specific notice"""
-    notice = NoticeRepository.get_by_id(db, notice_id)
+    notice = await NoticeRepository.get_by_id(db, notice_id)
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     
@@ -173,8 +175,8 @@ async def get_notice(
 async def search_notices(
     query: str,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Search notices"""
-    notices = NoticeRepository.search_notices(db, query, current_user.role.value)
+    notices = await NoticeRepository.search_notices(db, query, current_user.role.value)
     return notices

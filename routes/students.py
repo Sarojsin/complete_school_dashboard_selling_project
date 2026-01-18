@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 from typing import List
-from database.database import get_db
+from app.core.database import get_async_db
 from dependencies import get_current_student, get_current_user
 from models.models import User
 from repositories.student_repository import StudentRepository
@@ -9,17 +10,19 @@ from repositories.course_repository import CourseRepository
 from repositories.test_repository import TestRepository
 from tables.tables import StudentResponse, StudentUpdate, CourseResponse
 from tables.test_tables import TestForStudent
-from models.models import Assignment, Grade, Attendance, FeeRecord
+from models.models import Assignment, Grade, Attendance, FeeRecord, AssignmentSubmission, Note, Video, Schedule
+from datetime import datetime, timedelta
+from collections import defaultdict
 
 router = APIRouter()
 
 @router.get("/me", response_model=StudentResponse)
 async def get_my_profile(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get current student's profile"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     return student
@@ -28,14 +31,14 @@ async def get_my_profile(
 async def update_my_profile(
     student_update: StudentUpdate,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Update current student's profile"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    updated_student = StudentRepository.update(
+    updated_student = await StudentRepository.update(
         db, student, **student_update.dict(exclude_unset=True)
     )
     return updated_student
@@ -43,49 +46,51 @@ async def update_my_profile(
 @router.get("/dashboard")
 async def get_dashboard(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student dashboard data"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
     # Get enrolled courses
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    courses = await StudentRepository.get_enrolled_courses(db, student.id)
     course_ids = [c.id for c in courses]
     
     # Get upcoming assignments
-    from datetime import datetime, timedelta
-    upcoming_assignments = db.query(Assignment).filter(
+    res_a = await db.execute(select(Assignment).filter(
         Assignment.course_id.in_(course_ids),
         Assignment.due_date >= datetime.utcnow(),
         Assignment.due_date <= datetime.utcnow() + timedelta(days=7)
-    ).order_by(Assignment.due_date).limit(5).all()
+    ).order_by(Assignment.due_date).limit(5))
+    upcoming_assignments = res_a.scalars().all()
     
     # Get recent grades
-    recent_grades = db.query(Grade).filter(
+    res_g = await db.execute(select(Grade).filter(
         Grade.student_id == student.id
-    ).order_by(Grade.date.desc()).limit(5).all()
+    ).order_by(Grade.date.desc()).limit(5))
+    recent_grades = res_g.scalars().all()
     
     # Get available tests
-    available_tests = TestRepository.get_available_tests_for_student(
+    available_tests = await TestRepository.get_available_tests_for_student(
         db, student.id, course_ids
     )
     
     # Get attendance summary
-    from sqlalchemy import func
-    attendance_summary = db.query(
+    res_att = await db.execute(select(
         Attendance.status,
         func.count(Attendance.id).label('count')
     ).filter(
         Attendance.student_id == student.id
-    ).group_by(Attendance.status).all()
+    ).group_by(Attendance.status))
+    attendance_summary = res_att.all()
     
     # Get pending fees
-    pending_fees = db.query(FeeRecord).filter(
+    res_f = await db.execute(select(FeeRecord).filter(
         FeeRecord.student_id == student.id,
         FeeRecord.status == 'pending'
-    ).all()
+    ))
+    pending_fees = res_f.scalars().all()
     
     return {
         "student": student,
@@ -101,56 +106,61 @@ async def get_dashboard(
 @router.get("/courses", response_model=List[CourseResponse])
 async def get_my_courses(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's enrolled courses"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    courses = await StudentRepository.get_enrolled_courses(db, student.id)
     return courses
 
 @router.get("/courses/{course_id}")
 async def get_course_details(
     course_id: int,
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get detailed information about a specific course"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
     # Check if student is enrolled in the course
-    enrolled_courses = StudentRepository.get_enrolled_courses(db, student.id)
+    enrolled_courses = await StudentRepository.get_enrolled_courses(db, student.id)
     if not any(c.id == course_id for c in enrolled_courses):
         raise HTTPException(status_code=403, detail="Not enrolled in this course")
     
-    course = CourseRepository.get_by_id(db, course_id)
+    course = await CourseRepository.get_by_id(db, course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     
     # Get course materials
-    assignments = db.query(Assignment).filter(
+    res_a = await db.execute(select(Assignment).filter(
         Assignment.course_id == course_id
-    ).order_by(Assignment.due_date.desc()).all()
+    ).order_by(Assignment.due_date.desc()))
+    assignments = res_a.scalars().all()
     
-    from models.models import Note, Video
-    notes = db.query(Note).filter(Note.course_id == course_id).all()
-    videos = db.query(Video).filter(Video.course_id == course_id).all()
+    res_n = await db.execute(select(Note).filter(Note.course_id == course_id))
+    notes = res_n.scalars().all()
+    
+    res_v = await db.execute(select(Video).filter(Video.course_id == course_id))
+    videos = res_v.scalars().all()
     
     # Get grades for this course
-    grades = db.query(Grade).filter(
+    res_g = await db.execute(select(Grade).filter(
         Grade.student_id == student.id,
         Grade.course_id == course_id
-    ).all()
+    ))
+    grades = res_g.scalars().all()
     
     # Get attendance for this course
-    attendance = db.query(Attendance).filter(
+    res_att = await db.execute(select(Attendance).filter(
         Attendance.student_id == student.id,
         Attendance.course_id == course_id
-    ).order_by(Attendance.date.desc()).all()
+    ).order_by(Attendance.date.desc()))
+    attendance = res_att.scalars().all()
     
     return {
         "course": course,
@@ -164,25 +174,26 @@ async def get_course_details(
 @router.get("/assignments")
 async def get_my_assignments(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's assignments"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    courses = await StudentRepository.get_enrolled_courses(db, student.id)
     course_ids = [c.id for c in courses]
     
-    assignments = db.query(Assignment).filter(
+    res_a = await db.execute(select(Assignment).filter(
         Assignment.course_id.in_(course_ids)
-    ).order_by(Assignment.due_date.desc()).all()
+    ).order_by(Assignment.due_date.desc()))
+    assignments = res_a.scalars().all()
     
     # Get submission status for each assignment
-    from models.models import AssignmentSubmission
-    submissions = db.query(AssignmentSubmission).filter(
+    res_s = await db.execute(select(AssignmentSubmission).filter(
         AssignmentSubmission.student_id == student.id
-    ).all()
+    ))
+    submissions = res_s.scalars().all()
     
     submission_map = {s.assignment_id: s for s in submissions}
     
@@ -199,19 +210,19 @@ async def get_my_assignments(
 @router.get("/grades")
 async def get_my_grades(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's grades"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    grades = db.query(Grade).filter(
+    res_g = await db.execute(select(Grade).filter(
         Grade.student_id == student.id
-    ).order_by(Grade.date.desc()).all()
+    ).order_by(Grade.date.desc()))
+    grades = res_g.scalars().all()
     
     # Group by course
-    from collections import defaultdict
     grades_by_course = defaultdict(list)
     for grade in grades:
         grades_by_course[grade.course_id].append(grade)
@@ -224,25 +235,26 @@ async def get_my_grades(
 @router.get("/attendance")
 async def get_my_attendance(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's attendance records"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    attendance = db.query(Attendance).filter(
+    res_att = await db.execute(select(Attendance).filter(
         Attendance.student_id == student.id
-    ).order_by(Attendance.date.desc()).all()
+    ).order_by(Attendance.date.desc()))
+    attendance = res_att.scalars().all()
     
     # Calculate statistics
-    from sqlalchemy import func
-    stats = db.query(
+    res_stats = await db.execute(select(
         Attendance.status,
         func.count(Attendance.id).label('count')
     ).filter(
         Attendance.student_id == student.id
-    ).group_by(Attendance.status).all()
+    ).group_by(Attendance.status))
+    stats = res_stats.all()
     
     total = sum(s[1] for s in stats)
     present_count = next((s[1] for s in stats if s[0] == 'present'), 0)
@@ -258,16 +270,17 @@ async def get_my_attendance(
 @router.get("/fees")
 async def get_my_fees(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's fee records"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    fees = db.query(FeeRecord).filter(
+    res_f = await db.execute(select(FeeRecord).filter(
         FeeRecord.student_id == student.id
-    ).order_by(FeeRecord.due_date.desc()).all()
+    ).order_by(FeeRecord.due_date.desc()))
+    fees = res_f.scalars().all()
     
     # Calculate totals
     total_amount = sum(f.amount for f in fees)
@@ -284,92 +297,90 @@ async def get_my_fees(
 @router.get("/tests", response_model=List[TestForStudent])
 async def get_available_tests(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get available tests for student"""
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    courses = await StudentRepository.get_enrolled_courses(db, student.id)
     course_ids = [c.id for c in courses]
     
-    tests = TestRepository.get_available_tests_for_student(db, student.id, course_ids)
+    tests = await TestRepository.get_available_tests_for_student(db, student.id, course_ids)
     return tests
 
 @router.get("/notices")
 async def get_my_notices(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get notices for student"""
     from models.models import Notice
     
-    notices = db.query(Notice).filter(
+    res_n = await db.execute(select(Notice).filter(
         (Notice.target_role == 'student') | (Notice.target_role == 'all')
-    ).order_by(Notice.created_at.desc()).all()
+    ).order_by(Notice.created_at.desc()))
+    notices = res_n.scalars().all()
     
     return notices
 
 @router.get("/timetable")
 async def get_my_timetable(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get student's class schedule"""
-    from models.models import Schedule
-    
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    courses = await StudentRepository.get_enrolled_courses(db, student.id)
     course_ids = [c.id for c in courses]
     
-    schedules = db.query(Schedule).filter(
+    res_s = await db.execute(select(Schedule).filter(
         Schedule.course_id.in_(course_ids)
-    ).order_by(Schedule.day_of_week, Schedule.start_time).all()
+    ).order_by(Schedule.day_of_week, Schedule.start_time))
+    schedules = res_s.scalars().all()
     
     return schedules
 
 @router.get("/notes")
 async def get_my_notes(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get course notes for enrolled courses"""
-    from models.models import Note
-    
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    courses = await StudentRepository.get_enrolled_courses(db, student.id)
     course_ids = [c.id for c in courses]
     
-    notes = db.query(Note).filter(
+    res_n = await db.execute(select(Note).filter(
         Note.course_id.in_(course_ids)
-    ).order_by(Note.uploaded_at.desc()).all()
+    ).order_by(Note.uploaded_at.desc()))
+    notes = res_n.scalars().all()
     
     return notes
 
 @router.get("/videos")
 async def get_my_videos(
     current_user: User = Depends(get_current_student),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Get course videos for enrolled courses"""
-    from models.models import Video
-    
-    student = StudentRepository.get_by_user_id(db, current_user.id)
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
     
-    courses = StudentRepository.get_enrolled_courses(db, student.id)
+    courses = await StudentRepository.get_enrolled_courses(db, student.id)
     course_ids = [c.id for c in courses]
     
-    videos = db.query(Video).filter(
+    res_v = await db.execute(select(Video).filter(
         Video.course_id.in_(course_ids)
-    ).order_by(Video.uploaded_at.desc()).all()
+    ).order_by(Video.uploaded_at.desc()))
+    videos = res_v.scalars().all()
     
     return videos
