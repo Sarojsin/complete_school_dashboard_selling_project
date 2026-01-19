@@ -4,4 +4,261 @@ in different classes than he should be seeing the
 all the students which he is teaching .
 and
 authoirty must add the teacher to that classes.
+ day = 4 not done 
+ ✅ FINAL PROJECT-WIDE ARCHITECTURE RULEBOOK
 
+(Apply this to ALL modules: student, teacher, authority, admin, fees, exams, chat, calendar, etc.)
+
+1️⃣ ROUTES (routes/ or web/routes/)
+🎯 Purpose
+
+HTTP only. NOTHING else.
+
+✅ Allowed
+
+URL definitions
+
+HTTP methods (GET/POST/PUT/DELETE)
+
+Dependency injection
+
+Auth & role checks
+
+Calling services
+
+Returning:
+
+TemplateResponse
+
+JSONResponse
+
+RedirectResponse
+
+❌ Not Allowed
+
+SQLAlchemy queries
+
+Calculations
+
+Business rules
+
+Complex condition logic
+
+Aggregation of multiple tables
+
+✅ Correct Pattern
+@router.get("/dashboard")
+async def dashboard(
+    current_user=Depends(get_current_student),
+    db=Depends(get_db)
+):
+    service = StudentService(db)
+    return await service.get_dashboard(current_user.id)
+
+
+✔ Thin
+✔ Clean
+✔ Testable
+
+2️⃣ SERVICES (services/)
+🎯 Purpose
+
+ALL business logic lives here
+
+✅ Allowed
+
+Calculations
+
+Combining multiple repositories
+
+Validation logic
+
+Permission rules
+
+State decisions (active/inactive)
+
+Domain logic
+
+❌ Not Allowed
+
+FastAPI decorators
+
+Request, Response
+
+Template rendering
+
+HTTP status codes (except custom exceptions)
+
+✅ Correct Pattern
+class StudentService:
+    async def get_dashboard(self, student_id: int):
+        attendance = await AttendanceRepository.stats(...)
+        grades = await GradeRepository.get(...)
+        return {...}
+
+
+✔ Reusable
+✔ Framework-agnostic
+✔ Easy to unit test
+
+3️⃣ REPOSITORIES (repositories/)
+🎯 Purpose
+
+Database access ONLY
+
+✅ Allowed
+
+ORM queries
+
+select, join, where
+
+CRUD operations
+
+Pagination queries
+
+❌ Not Allowed
+
+Business rules
+
+Calculations
+
+HTTP logic
+
+Template logic
+
+✅ Correct Pattern
+class StudentRepository:
+    async def get_by_user_id(db, user_id):
+        return await db.execute(select(Student).where(...))
+
+4️⃣ SCHEMAS (schemas/)
+🎯 Purpose
+
+Data validation & serialization
+
+✅ Allowed
+
+BaseModel
+
+Input validation
+
+Response shaping
+
+Nested schemas
+
+❌ Not Allowed
+
+DB calls
+
+Services
+
+Logic
+
+Rule
+
+Every POST/PUT endpoint must use a schema
+
+5️⃣ WEB ROUTES (web/routes/)
+🎯 Purpose
+
+HTML pages (Jinja)
+
+✅ Allowed
+
+TemplateResponse
+
+Minimal form parsing
+
+Calling services
+
+Redirects
+
+❌ Not Allowed
+
+Heavy logic
+
+SQL
+
+Calculations
+
+Pattern
+return templates.TemplateResponse(
+    "student/dashboard.html",
+    {"request": request, "data": data}
+)
+
+6️⃣ API ROUTES (api/routes/)
+🎯 Purpose
+
+JSON APIs (Frontend / Mobile)
+
+Rule
+
+Same as web routes, just return JSON
+
+7️⃣ MODELS (models/)
+🎯 Purpose
+
+Database schema
+
+✅ Allowed
+
+SQLAlchemy models
+
+Relationships
+
+Constraints
+
+❌ Not Allowed
+
+Logic
+
+API code
+
+8️⃣ MIDDLEWARE (middleware/)
+🎯 Purpose
+
+Cross-cutting concerns
+
+Examples
+
+Auth
+
+CSRF
+
+IP whitelist
+
+Security headers
+
+Rate limiting
+
+No business logic here
+
+9️⃣ UTILS / HELPERS (utils/)
+🎯 Purpose
+
+Pure reusable helpers
+
+Examples:
+
+Date helpers
+
+Token helpers
+
+Slug generators
+
+OTP generators
+
+Must be stateless
+
+🔟 FILE-BY-FILE QUICK CHECK (Use This)
+
+For ANY file, ask:
+
+Question	If YES
+Does it talk HTTP?	Route
+Does it calculate or decide?	Service
+Does it touch DB?	Repository
+Does it validate data?	Schema
+Does it render HTML?	Web route
+Does it protect app?	Middleware
