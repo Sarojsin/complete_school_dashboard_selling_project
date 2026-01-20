@@ -16,24 +16,24 @@
     <!-- Custom CSS -->
     <style>
         :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --success: #4cc9f0;
-            --info: #4895ef;
-            --warning: #f72585;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gradient: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --primary: #111356;
+            --secondary: #302a93;
+            --success: #10b981;
+            --info: #38bdf8;
+            --warning: #f43f5e;
+            --light: #ffffff;
+            --dark: #020617;
+            --gradient: linear-gradient(90deg, #2B32B2, #074694);
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f1f1f1;
             color: #334155;
         }
 
         .navbar-brand {
-            font-weight: 700;
+            font-weight: 800;
             font-size: 1.5rem;
         }
 
@@ -142,6 +142,56 @@
         .badge-offline {
             background: #6b7280;
         }
+
+        /* Footer */
+        .edu-footer {
+            background: linear-gradient(180deg, #121c33, #040d31);
+        }
+
+        .edu-footer h5,
+        .edu-footer h6 {
+            font-weight: 600;
+        }
+
+        .edu-footer p {
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .edu-footer a {
+            color: #cbd5e1;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .edu-footer a:hover {
+            color: #38bdf8;
+            transform: translateX(4px);
+        }
+
+        .edu-footer .d-flex a {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .edu-footer .d-flex a:hover {
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        .edu-footer hr {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .edu-footer .text-center p {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+
+
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -156,7 +206,7 @@
                 saroj_EduManage
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -206,47 +256,44 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-light py-5 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5 class="mb-3"><i class="bi bi-mortarboard-fill me-2"></i>EduManage</h5>
-                    <p class="text-light">Comprehensive school management system for modern educational institutions.
-                    </p>
-                </div>
-                <div class="col-md-2">
-                    <h6 class="mb-3">Platform</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-light text-decoration-none">For Students</a></li>
-                        <li><a href="#" class="text-light text-decoration-none">For Teachers</a></li>
-                        <li><a href="#" class="text-light text-decoration-none">For Schools</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-2">
-                    <h6 class="mb-3">Support</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-light text-decoration-none">Help Center</a></li>
-                        <li><a href="#" class="text-light text-decoration-none">Contact Us</a></li>
-                        <li><a href="#" class="text-light text-decoration-none">Documentation</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="mb-3">Stay Connected</h6>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="text-light"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="text-light"><i class="bi bi-twitter"></i></a>
-                        <a href="#" class="text-light"><i class="bi bi-linkedin"></i></a>
-                        <a href="#" class="text-light"><i class="bi bi-github"></i></a>
+        <!-- FOOTER -->
+        <footer class="edu-footer text-light py-5">
+            <div class="container">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <h5><i class="bi bi-mortarboard-fill me-2"></i>EduManage</h5>
+                        <p>Modern school management system for educational institutions.</p>
+                    </div>
+                    <div class="col-md-2">
+                        <h6>Platform</h6>
+                        <ul class="list-unstyled">
+                            <li><a href="#">Students</a></li>
+                            <li><a href="#">Teachers</a></li>
+                            <li><a href="#">Schools</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-2">
+                        <h6>Support</h6>
+                        <ul class="list-unstyled">
+                            <li><a href="#">Help</a></li>
+                            <li><a href="#">Contact</a></li>
+                            <li><a href="#">Docs</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Connect</h6>
+                        <div class="d-flex gap-3 social">
+                            <a href="#"><i class="bi bi-facebook"></i></a>
+                            <a href="#"><i class="bi bi-twitter"></i></a>
+                            <a href="#"><i class="bi bi-linkedin"></i></a>
+                            <a href="#"><i class="bi bi-github"></i></a>
+                        </div>
                     </div>
                 </div>
+                <hr class="my-4">
+                <p class="text-center mb-0">&copy; 2024 EduManage. All rights reserved.</p>
             </div>
-            <hr class="my-4">
-            <div class="text-center">
-                <p class="mb-0">&copy; 2024 EduManage. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+        </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
