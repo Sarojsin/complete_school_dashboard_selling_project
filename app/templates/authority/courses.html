@@ -31,7 +31,7 @@
 
 {% block page_actions %}
 <div class="d-flex gap-2">
-    <a href="/authority/add-course" class="btn btn-sm btn-primary">
+    <a href="/authority/courses/add" class="btn btn-sm btn-primary">
         <i class="bi bi-plus-circle me-1"></i>Add Course
     </a>
     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
@@ -272,12 +272,28 @@
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Assign Student - {{ course.name }}</h5>
+                                    <h5 class="modal-title">Assign Student to {{ course.name }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="modal-body">
-                                    <p>Assign student functionality coming soon.</p>
-                                </div>
+                                <form method="POST" action="/authority/courses/{{ course.id }}/enroll">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Select Student</label>
+                                            <select class="form-select" name="student_id" required>
+                                                <option value="">Select student...</option>
+                                                {% for student in students %}
+                                                <option value="{{ student.id }}">{{ student.user.full_name }} ({{ student.grade_level }}) - {{ student.student_id }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="form-text">Choose a student to enroll in this course.</div>
+                                        </div>
+                                        <input type="hidden" name="redirect_url" value="/authority/courses">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Enroll Student</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -374,6 +390,10 @@
                                             class="btn btn-outline-success">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        <button class="btn btn-outline-info" data-bs-toggle="modal"
+                                            data-bs-target="#assignModal{{ course.id }}">
+                                            <i class="bi bi-person-plus"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>

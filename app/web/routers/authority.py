@@ -153,6 +153,9 @@ async def authority_courses(request: Request, search: str = None, current_user: 
     res = await db.execute(query)
     courses_data = res.scalars().unique().all()
     
+    # Get all students for the assignment modal
+    all_students = await StudentRepository.get_all(db)
+    
     dept_colors = {"Mathematics": "primary", "Science": "success", "English": "info", "History": "warning", "Arts": "danger", "Physical Education": "secondary", "General": "secondary"}
     formatted_courses = []
     for course in courses_data:
@@ -167,7 +170,14 @@ async def authority_courses(request: Request, search: str = None, current_user: 
         {"name": "Science", "color": "success", "course_count": 10, "student_count": 380, "teacher_count": 6, "avg_grade": 82, "utilization": 90},
         {"name": "English", "color": "info", "course_count": 8, "student_count": 410, "teacher_count": 5, "avg_grade": 80, "utilization": 75}
     ]
-    return templates.TemplateResponse("authority/courses.html", {"request": request, "current_user": current_user, "courses": formatted_courses, "departments": departments, "search_query": search})
+    return templates.TemplateResponse("authority/courses.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "courses": formatted_courses, 
+        "departments": departments, 
+        "students": all_students,
+        "search_query": search
+    })
 
 @router.get("/authority/fees")
 async def authority_fees(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
@@ -423,8 +433,9 @@ async def authority_course_detail(request: Request, id: int, current_user: User 
 async def authority_enroll_student(id: int, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     form_data = await request.form()
     student_id = int(form_data.get("student_id"))
+    redirect_url = form_data.get("redirect_url") or f"/authority/courses/{id}"
     await CourseRepository.enroll_student(db, id, student_id)
-    return RedirectResponse(url=f"/authority/courses/{id}?success=enrolled", status_code=303)
+    return RedirectResponse(url=f"{redirect_url}?success=enrolled", status_code=303)
 
 @router.post("/authority/courses/{id}/unenroll")
 async def authority_unenroll_student(id: int, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
