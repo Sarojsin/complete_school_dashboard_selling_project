@@ -10,9 +10,9 @@ async def authority_students(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    from repositories.student_repository import StudentRepository
-    from repositories.user_repository import UserRepository
-    from models.models import UserRole
+    from app.repositories.student_repository import StudentRepository
+    from app.repositories.user_repository import UserRepository
+    from app.models.models import UserRole
     
     if search:
         students_data = StudentRepository.search(db, search)
@@ -55,9 +55,9 @@ async def authority_add_student_post(
 ):
     from fastapi import Form
     from datetime import datetime
-    from repositories.student_repository import StudentRepository
-    from repositories.user_repository import UserRepository
-    from models.models import UserRole
+    from app.repositories.student_repository import StudentRepository
+    from app.repositories.user_repository import UserRepository
+    from app.models.models import UserRole
     import string
     import random
     
@@ -112,7 +112,7 @@ async def authority_teachers(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    from repositories.teacher_repository import TeacherRepository
+    from app.repositories.teacher_repository import TeacherRepository
     
     if search:
         teachers_data = TeacherRepository.search(db, search)
@@ -154,7 +154,7 @@ async def authority_courses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    from repositories.course_repository import CourseRepository
+    from app.repositories.course_repository import CourseRepository
     
     if search:
         courses_data = CourseRepository.search(db, search)

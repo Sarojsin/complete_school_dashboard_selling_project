@@ -1,7 +1,7 @@
 
 from database.database import SessionLocal
-from models.models import User, Student, Teacher # Import these to ensure relationships work
-from models.test_models import Test, TestQuestion
+from app.models.models import User, Student, Teacher # Import these to ensure relationships work
+from app.models.test_models import Test, TestQuestion
 import json
 
 def debug_test(test_id):

@@ -1,7 +1,7 @@
 
 from database.database import SessionLocal
-from models.models import Student, User, Course, CourseEnrollment
-from models.test_models import Test
+from app.models.models import Student, User, Course, CourseEnrollment
+from app.models.test_models import Test
 import sys
 
 def debug_enrollments():
