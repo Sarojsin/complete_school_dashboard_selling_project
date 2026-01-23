@@ -11,15 +11,15 @@ from app.core.config import settings
 from app.core.database import engine, Base
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.csrf import CSRFMiddleware
-from app.web.routers import (
-    common_router,
-    student_router,
-    teacher_router,
-    parent_router,
-    authority_router,
-    groups_router,
-)
-from services.chat_cleanup_service import cleanup_expired_messages
+from app.web.routers.common import router as common_router
+from app.web.routers.student import router as student_router
+from app.web.routers.teacher import router as teacher_router
+from app.web.routers.parent import router as parent_router
+from app.web.routers.authority import router as authority_router
+from app.web.routers.groups import router as groups_router
+from app.web.routers.group_posts import router as group_posts_router
+from app.websocket.router import router as ws_router
+from app.services.chat_cleanup_service import cleanup_expired_messages
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,12 +40,15 @@ def create_app() -> FastAPI:
         version="1.0.0",
         lifespan=lifespan
     )
+    
+    from app.core.templates import templates
+    app.state.templates = templates
 
-    # Security Middleware first
+    # 1. Security & CSRF Middleware
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(CSRFMiddleware)
 
-    # CORS Middleware
+    # 2. CORS Middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins_list,
@@ -54,7 +57,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Session Middleware
+    # 3. Session Middleware (MUST BE OUTERMOST for CSRF to access request.session)
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.SECRET_KEY,
@@ -63,13 +66,13 @@ def create_app() -> FastAPI:
 
     # Static files mounting
     # Make sure static directories exist
-    os.makedirs("static/uploads/avatars", exist_ok=True)
-    os.makedirs("static/uploads/assignments", exist_ok=True)
-    os.makedirs("static/uploads/notes", exist_ok=True)
-    os.makedirs("static/uploads/videos", exist_ok=True)
+    os.makedirs("app/static/uploads/avatars", exist_ok=True)
+    os.makedirs("app/static/uploads/assignments", exist_ok=True)
+    os.makedirs("app/static/uploads/notes", exist_ok=True)
+    os.makedirs("app/static/uploads/videos", exist_ok=True)
     
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-    app.mount("/media", StaticFiles(directory="media"), name="media")
+    app.mount("/static", StaticFiles(directory="app/static"), name="static")
+    app.mount("/media", StaticFiles(directory="app/media"), name="media")
 
     # Exception Handlers
     @app.exception_handler(HTTPException)
@@ -93,20 +96,21 @@ def create_app() -> FastAPI:
     app.include_router(parent_router)
     app.include_router(authority_router)
     app.include_router(groups_router)
+    app.include_router(group_posts_router)
+    app.include_router(ws_router)
 
     # Include API Routes (Legacy and New)
-    # We will eventually move these into app/api/v1/endpoints
-    from routes import auth, students, teachers, authority, tests, websocket_chat, parents
-    from routes import courses, assignments, attendance, grades, fees
-    from routes import notices, notes, videos, chat
-    from routes import groups, group_posts
+    # These are relocated from the root 'routes' folder
+    from app.api.endpoints import auth, students, teachers, authority, tests, parents
+    from app.api.endpoints import courses, assignments, attendance, grades, fees
+    from app.api.endpoints import notices, notes, videos, chat
+    from app.api.endpoints import groups, group_posts
 
     app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
     app.include_router(students.router, prefix="/api/students", tags=["Students"])
     app.include_router(teachers.router, prefix="/api/teachers", tags=["Teachers"])
     app.include_router(authority.router, prefix="/api/authority", tags=["Authority"])
     app.include_router(tests.router, prefix="/api/tests", tags=["Tests"])
-    app.include_router(websocket_chat.router, prefix="/api/ws", tags=["WebSocket Chat"])
     app.include_router(parents.router, prefix="/api/parents", tags=["Parents"])
     app.include_router(courses.router, prefix="/api/courses", tags=["Courses"])
     app.include_router(assignments.router, prefix="/api/assignments", tags=["Assignments"])
