@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Student Grades - {{ student.full_name }}{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Student Grades{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <a href="/teacher/students" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Students
+    </a>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGradeModal">
+        <i class="bi bi-plus-lg me-1"></i>Add Grade
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Student Info Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <img src="https://ui-avatars.com/api/?name={{ student.full_name.replace(' ', '+') }}&background=random"
+                    class="rounded-circle mb-3" width="100" height="100" alt="{{ student.full_name }}">
+                <h5 class="card-title mb-1">{{ student.full_name }}</h5>
+                <p class="text-muted mb-3">{{ student.student_id }}</p>
+
+                <div class="d-flex justify-content-around text-start">
+                    <div>
+                        <small class="text-muted d-block">Grade</small>
+                        <span class="fw-bold">{{ student.grade_level }}</span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Section</small>
+                        <span class="fw-bold">{{ student.section }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Performance -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0">Academic Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Overall Average</h6>
+                        <h2 class="display-4 fw-bold text-primary mb-0">85%</h2>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Attendance</h6>
+                        <h2 class="display-4 fw-bold text-success mb-0">92%</h2>
+                    </div>
+                </div>
+                <!-- Placeholder for chart -->
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>Detailed performance chart coming soon.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Grades Table -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0">Recent Grades</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Subject</th>
+                                <th>Assessment</th>
+                                <th>Date</th>
+                                <th>Score</th>
+                                <th>Grade</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in grades %}
+                            <tr>
+                                <td>{{ grade.subject }}</td>
+                                <td>{{ grade.assessment_name }}</td>
+                                <td>{{ grade.date }}</td>
+                                <td>{{ grade.score }}/{{ grade.max_score }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'success' if grade.percentage >= 90 else 'primary' if grade.percentage >= 80 else 'warning' if grade.percentage >= 60 else 'danger' }}">
+                                        {{ grade.letter_grade }}
+                                    </span>
+                                </td>
+                                <td>{{ grade.remarks }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    No grades recorded yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Grade Modal -->
+<div class="modal fade" id="addGradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Grade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/teacher/students/{{ student.id }}/grades" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <select class="form-select" name="subject" required>
+                            <option value="">Select Subject</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Science">Science</option>
+                            <option value="English">English</option>
+                            <option value="History">History</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assessment Type</label>
+                        <select class="form-select" name="assessment_type" required>
+                            <option value="Generic">Generic</option>
+                            <option value="Quiz">Quiz</option>
+                            <option value="Midterm">Midterm</option>
+                            <option value="Final">Final</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title/Topic</label>
+                        <input type="text" class="form-control" name="title" required placeholder="e.g. Algebra I">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Score Obtained</label>
+                            <input type="number" class="form-control" name="score" required min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Max Score</label>
+                            <input type="number" class="form-control" name="max_score" required min="1" value="100">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        <textarea class="form-control" name="remarks" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Grade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
