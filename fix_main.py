@@ -21,7 +21,7 @@ async def teacher_create_assignment(request: Request, current_user: User = Depen
     # Define the new block for teacher_create_assignment GET
     new_get_route = """@app.get("/teacher/assignments/create")
 async def teacher_create_assignment(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from models.models import Course 
+    from app.models.models import Course 
     courses = db.query(Course).all()
     return templates.TemplateResponse("teacher/create_assignment.html", {
         "request": request,

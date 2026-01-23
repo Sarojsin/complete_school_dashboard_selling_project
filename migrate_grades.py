@@ -1,7 +1,7 @@
 
 from database.database import SessionLocal
-from models.models import Student, Course
-from models.test_models import Test
+from app.models.models import Student, Course
+from app.models.test_models import Test
 from sqlalchemy import text
 
 def migrate_grades():
