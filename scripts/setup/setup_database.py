@@ -1,129 +1,153 @@
 """
-Database setup script
-Creates tables and adds initial data
+Database setup script for Render deployment
+Ensures tables exist and runs custom migrations
 """
+import os
+import sys
+import logging
+from sqlalchemy import text
+
+# Add current directory to path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from database.database import engine, Base
-from models.models import User, Student, Teacher, Authority, UserRole
-from models.chat_models import ChatMessage
+# Import all models to ensure they are registered with Base.metadata
+from models.models import (
+    User, Student, Teacher, Parent, Authority, 
+    Course, CourseEnrollment, Assignment, AssignmentSubmission, 
+    Grade, Attendance, FeeRecord, Notice, Note, Video, Message, Schedule
+)
 from models.test_models import Test, TestQuestion, TestSubmission
-from repositories.user_repository import UserRepository
-from database.database import SessionLocal
-from datetime import datetime
+from models import group_models
 
-def init_db():
-    """Create all database tables"""
-    print("Creating database tables...")
-    Base.metadata.create_all(bind=engine)
-    print("✓ Tables created successfully")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def create_default_users():
-    """Create default admin, teacher, and student accounts"""
-    db = SessionLocal()
+def ensure_columns_exist():
+    """Manually check and add missing columns for critical tables"""
+    logger.info("Checking for missing columns...")
     
+    # 1. Check 'assignments' table for 'target_classes'
+    with engine.connect() as conn:
+        try:
+            # PostgreSQL check
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='assignments' AND column_name='target_classes';"
+            ))
+            if not result.first():
+                logger.info("Adding 'target_classes' column to 'assignments' table...")
+                conn.execute(text("ALTER TABLE assignments ADD COLUMN target_classes VARCHAR(255);"))
+                conn.commit()
+                logger.info("Added 'target_classes' column successfully.")
+            else:
+                logger.info("'target_classes' column already exists in 'assignments'.")
+        except Exception as e:
+            logger.warning(f"Failed to check/add 'target_classes' column: {e}")
+
+    # 2. Check 'tests' table for 'target_section'
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='tests' AND column_name='target_section';"
+            ))
+            if not result.first():
+                logger.info("Adding 'target_section' column to 'tests' table...")
+                conn.execute(text("ALTER TABLE tests ADD COLUMN target_section VARCHAR(50);"))
+                conn.commit()
+                logger.info("Added 'target_section' column successfully.")
+            else:
+                logger.info("'target_section' column already exists in 'tests'.")
+        except Exception as e:
+            logger.warning(f"Failed to check/add 'target_section' column: {e}")
+
+    # 3. Check 'tests' table for 'subject_name' and 'grade_level'
+    with engine.connect() as conn:
+        try:
+            # Check subject_name
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='tests' AND column_name='subject_name';"
+            ))
+            if not result.first():
+                logger.info("Adding 'subject_name' column to 'tests' table...")
+                conn.execute(text("ALTER TABLE tests ADD COLUMN subject_name VARCHAR(255);"))
+                conn.commit()
+            
+            # Check grade_level
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='tests' AND column_name='grade_level';"
+            ))
+            if not result.first():
+                logger.info("Adding 'grade_level' column to 'tests' table...")
+                conn.execute(text("ALTER TABLE tests ADD COLUMN grade_level VARCHAR(50);"))
+                conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to check/add subject/grade columns: {e}")
+
+    # 3. Check 'test_questions' table for 'explanation'
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='test_questions' AND column_name='explanation';"
+            ))
+            if not result.first():
+                logger.info("Adding 'explanation' column to 'test_questions' table...")
+                conn.execute(text("ALTER TABLE test_questions ADD COLUMN explanation TEXT;"))
+                conn.commit()
+                logger.info("Added 'explanation' column successfully.")
+            else:
+                logger.info("'explanation' column already exists in 'test_questions'.")
+        except Exception as e:
+            logger.warning(f"Failed to check/add 'explanation' column: {e}")
+
+def setup_database():
+    """Ensure tables exist and run migrations"""
     try:
-        # Check if admin exists
-        existing_admin = db.query(User).filter(User.role == UserRole.AUTHORITY).first()
-        if existing_admin:
-            print("✓ Admin user already exists")
-            return
+        logger.info("Starting database setup...")
         
-        print("Creating default users...")
+        # 1. Create all tables if they don't exist
+        logger.info("Creating tables...")
+        Base.metadata.create_all(bind=engine)
+        logger.info("Tables created successfully (or already exist).")
         
-        # Create Authority user
-        admin_user = UserRepository.create(
-            db=db,
-            email="admin@school.com",
-            username="admin",
-            password="admin123",
-            full_name="School Administrator",
-            role=UserRole.AUTHORITY
-        )
+        # 2. Sync schema (add missing columns to existing tables)
+        ensure_columns_exist()
         
-        authority = Authority(
-            user_id=admin_user.id,
-            position="Principal",
-            department="Administration",
-            phone="1234567890"
-        )
-        db.add(authority)
+        # 3. Run custom migrations if they exist
+        migrations_dir = os.path.join(os.path.dirname(__file__), "migrations")
+        if os.path.exists(migrations_dir):
+            import subprocess
+            
+            # Example: Run add_parent_id_to_students.py
+            migration_script = os.path.join(migrations_dir, "add_parent_id_to_students.py")
+            if os.path.exists(migration_script):
+                logger.info(f"Running migration: {migration_script}")
+                subprocess.run([sys.executable, migration_script], check=False)
+            
+            # Check for SQL migrations
+            for file in os.listdir(migrations_dir):
+                if file.endswith(".sql"):
+                    sql_path = os.path.join(migrations_dir, file)
+                    logger.info(f"Running SQL migration: {sql_path}")
+                    with open(sql_path, "r") as f:
+                        sql_content = f.read()
+                        with engine.begin() as conn:
+                            # Split by semicolon and filter out empty/comment-only statements
+                            for statement in sql_content.split(";"):
+                                clean_statement = statement.strip()
+                                if clean_statement and not clean_statement.startswith("--"):
+                                    conn.execute(text(clean_statement))
         
-        # Create Teacher user
-        teacher_user = UserRepository.create(
-            db=db,
-            email="teacher@school.com",
-            username="teacher",
-            password="teacher123",
-            full_name="John Teacher",
-            role=UserRole.TEACHER
-        )
-        
-        teacher = Teacher(
-            user_id=teacher_user.id,
-            employee_id="T001",
-            phone="1234567891",
-            department="Mathematics",
-            qualification="M.Sc Mathematics",
-            specialization="Algebra"
-        )
-        db.add(teacher)
-        
-        # Create Student user
-        student_user = UserRepository.create(
-            db=db,
-            email="student@school.com",
-            username="student",
-            password="student123",
-            full_name="Jane Student",
-            role=UserRole.STUDENT
-        )
-        
-        student = Student(
-            user_id=student_user.id,
-            student_id="S001",
-            grade_level="10",
-            section="A",
-            phone="1234567892",
-            parent_name="Parent Name",
-            parent_phone="1234567893"
-        )
-        db.add(student)
-        
-        db.commit()
-        
-        print("✓ Default users created successfully")
-        print("\n" + "="*50)
-        print("DEFAULT LOGIN CREDENTIALS")
-        print("="*50)
-        print("\nAdmin/Authority:")
-        print("  Username: admin")
-        print("  Password: admin123")
-        print("\nTeacher:")
-        print("  Username: teacher")
-        print("  Password: teacher123")
-        print("\nStudent:")
-        print("  Username: student")
-        print("  Password: student123")
-        print("\n" + "="*50)
-        print("\n⚠️  IMPORTANT: Change these passwords in production!")
-        print("="*50 + "\n")
+        logger.info("Database setup completed successfully!")
         
     except Exception as e:
-        print(f"✗ Error creating default users: {e}")
-        db.rollback()
-    finally:
-        db.close()
-
-def main():
-    print("\n" + "="*50)
-    print("School Management System - Database Setup")
-    print("="*50 + "\n")
-    
-    init_db()
-    create_default_users()
-    
-    print("\n✓ Database setup complete!")
-    print("You can now run the application with:")
-    print("  uvicorn app.main:app --reload\n")
+        logger.error(f"Database setup failed: {e}")
+        # Continue anyway, as the app might still work
+        logger.warning("Continuing despite setup errors...")
 
 if __name__ == "__main__":
-    main()
+    setup_database()
