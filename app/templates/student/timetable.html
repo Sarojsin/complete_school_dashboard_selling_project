@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}My Timetable{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link" href="/student/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/attendance">
+            <i class="bi bi-calendar-check me-2"></i>Attendance
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/student/timetable">
+            <i class="bi bi-calendar-week me-2"></i>Timetable
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/student/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}My Timetable{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-calendar me-1"></i>Week View
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="?view=week">Week View</a></li>
+        <li><a class="dropdown-item" href="?view=day">Day View</a></li>
+        <li><a class="dropdown-item" href="?view=list">List View</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Current Week Info -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-1">Weekly Schedule</h5>
+                        <p class="text-muted mb-0">Week of {{ week_start }} to {{ week_end }}</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary btn-sm" id="prevWeek">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" id="currentWeek">
+                                Current Week
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" id="nextWeek">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Timetable -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0 timetable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 100px;">Time</th>
+                                <th>Monday<br><small class="text-muted">{{ dates.monday }}</small></th>
+                                <th>Tuesday<br><small class="text-muted">{{ dates.tuesday }}</small></th>
+                                <th>Wednesday<br><small class="text-muted">{{ dates.wednesday }}</small></th>
+                                <th>Thursday<br><small class="text-muted">{{ dates.thursday }}</small></th>
+                                <th>Friday<br><small class="text-muted">{{ dates.friday }}</small></th>
+                                <th>Saturday<br><small class="text-muted">{{ dates.saturday }}</small></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for period in periods %}
+                            <tr>
+                                <td class="text-center fw-bold bg-light">
+                                    {{ period.time }}
+                                </td>
+                                {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] %}
+                                <td class="timetable-cell {% if timetable[day][period.id] %}has-class{% endif %}">
+                                    {% if timetable[day][period.id] %}
+                                    {% set class = timetable[day][period.id] %}
+                                    <div class="class-card bg-{{ class.type_color }} text-white">
+                                        <div class="class-header">
+                                            <strong>{{ class.subject }}</strong>
+                                            <span class="badge bg-dark">{{ class.type }}</span>
+                                        </div>
+                                        <div class="class-details">
+                                            <small>
+                                                <i class="bi bi-person"></i> {{ class.teacher }}
+                                            </small>
+                                            <br>
+                                            <small>
+                                                <i class="bi bi-geo-alt"></i> {{ class.room }}
+                                            </small>
+                                        </div>
+                                        {% if class.is_current %}
+                                        <div class="class-live">
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-circle-fill"></i> Live
+                                            </span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Classes -->
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-event me-2"></i>Today's Classes - {{ today_date }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if todays_classes %}
+                <div class="list-group list-group-flush">
+                    {% for class in todays_classes %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div class="d-flex align-items-center">
+                            <div class="class-time me-4 text-center">
+                                <div class="fw-bold text-primary">{{ class.start_time }}</div>
+                                <small class="text-muted">{{ class.end_time }}</small>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ class.subject }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-person me-1"></i>{{ class.teacher }} 
+                                    • <i class="bi bi-geo-alt me-1"></i>{{ class.room }}
+                                    • <span class="badge bg-{{ class.type_color }}">{{ class.type }}</span>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            {% if class.status == 'ongoing' %}
+                            <span class="badge bg-success">In Progress</span>
+                            {% elif class.status == 'upcoming' %}
+                            <span class="badge bg-primary">Upcoming</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Completed</span>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">{{ class.duration }} mins</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-emoji-smile display-4 text-muted"></i>
+                    <h5 class="text-muted mt-3">No classes today!</h5>
+                    <p class="text-muted">Enjoy your day off.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Info -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Schedule Info</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Weekly Summary</h6>
+                    <ul class="list-unstyled">
+                        <li class="d-flex justify-content-between">
+                            <span>Total Classes:</span>
+                            <strong>{{ total_classes }}</strong>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span>Teaching Hours:</span>
+                            <strong>{{ teaching_hours }} hrs</strong>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span>Different Subjects:</span>
+                            <strong>{{ subject_count }}</strong>
+                        </li>
+                    </ul>
+                </div>
+                <hr>
+                <div class="mb-3">
+                    <h6>Upcoming Changes</h6>
+                    <div class="alert alert-warning">
+                        <small>
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <strong>Notice:</strong> Schedule changes for next week due to exams.
+                        </small>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary">
+                        <i class="bi bi-download me-1"></i>Download Schedule
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="bi bi-printer me-1"></i>Print Timetable
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subject Teachers -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Subject Teachers</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for subject in subjects %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="subject-icon me-3">
+                                        <span class="badge bg-{{ subject.color }} p-2 rounded-circle">
+                                            <i class="bi bi-{{ subject.icon }}"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ subject.name }}</h6>
+                                        <p class="mb-1 text-muted">{{ subject.teacher }}</p>
+                                        <small class="text-muted">
+                                            {{ subject.weekly_classes }} classes/week
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timetable {
+        font-size: 0.875rem;
+    }
+    
+    .timetable th {
+        text-align: center;
+        vertical-align: middle;
+        font-weight: 600;
+    }
+    
+    .timetable-cell {
+        height: 100px;
+        vertical-align: top;
+        padding: 4px !important;
+        transition: background-color 0.2s;
+    }
+    
+    .timetable-cell.has-class:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .class-card {
+        border-radius: 6px;
+        padding: 8px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .class-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .class-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 4px;
+    }
+    
+    .class-details {
+        font-size: 0.75rem;
+        opacity: 0.9;
+    }
+    
+    .class-live {
+        text-align: center;
+        margin-top: 4px;
+    }
+    
+    .class-time {
+        min-width: 80px;
+    }
+    
+    /* Color coding for different subject types */
+    .bg-lecture { background: linear-gradient(135deg, #4e73df, #224abe); }
+    .bg-lab { background: linear-gradient(135deg, #1cc88a, #13855c); }
+    .bg-tutorial { background: linear-gradient(135deg, #36b9cc, #258391); }
+    .bg-workshop { background: linear-gradient(135deg, #f6c23e, #dda20a); }
+    .bg-sports { background: linear-gradient(135deg, #e74a3b, #be2617); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Week navigation
+    document.getElementById('prevWeek').addEventListener('click', function() {
+        // Logic to load previous week
+        console.log('Loading previous week...');
+    });
+    
+    document.getElementById('currentWeek').addEventListener('click', function() {
+        // Logic to load current week
+        console.log('Loading current week...');
+    });
+    
+    document.getElementById('nextWeek').addEventListener('click', function() {
+        // Logic to load next week
+        console.log('Loading next week...');
+    });
+    
+    // Add click handlers to class cards
+    document.querySelectorAll('.class-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const subject = this.querySelector('strong').textContent;
+            alert(`Showing details for: ${subject}`);
+            // You can implement modal or redirect to class details
+        });
+    });
+    
+    // Auto-refresh for live classes
+    function updateLiveStatus() {
+        const now = new Date();
+        document.querySelectorAll('.class-card').forEach(card => {
+            // Logic to update live status based on current time
+        });
+    }
+    
+    // Update every minute
+    setInterval(updateLiveStatus, 60000);
+</script>
+{% endblock %}
