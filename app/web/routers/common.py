@@ -9,23 +9,23 @@ from datetime import datetime
 
 from app.core.database import get_async_db
 from app.core.templates import templates
-from dependencies import get_current_user
-from models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
-from models.chat_models import ChatMessage
-from repositories.student_repository import StudentRepository
-from repositories.teacher_repository import TeacherRepository
-from repositories.message_repository import MessageRepository
-from repositories.notice_repository import NoticeRepository
-from repositories.course_repository import CourseRepository
-from repositories.assignment_repository import AssignmentRepository
-from repositories.notes_repository import NotesRepository
-from repositories.videos_repository import VideosRepository
-from repositories.test_repository import TestRepository
-from repositories.fee_repository import FeeRepository
-from repositories.fee_structure_repository import FeeStructureRepository
-from repositories.chat_repository import ChatRepository
-from services.test_service import TestService
-from utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS, WEEKDAYS
+from app.dependencies.auth import get_current_user
+from app.models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
+from app.models.chat_models import ChatMessage
+from app.repositories.student_repository import StudentRepository
+from app.repositories.teacher_repository import TeacherRepository
+from app.repositories.message_repository import MessageRepository
+from app.repositories.notice_repository import NoticeRepository
+from app.repositories.course_repository import CourseRepository
+from app.repositories.assignment_repository import AssignmentRepository
+from app.repositories.notes_repository import NotesRepository
+from app.repositories.videos_repository import VideosRepository
+from app.repositories.test_repository import TestRepository
+from app.repositories.fee_repository import FeeRepository
+from app.repositories.fee_structure_repository import FeeStructureRepository
+from app.repositories.chat_repository import ChatRepository
+from app.services.test_service import TestService
+from app.utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS, WEEKDAYS
 
 router = APIRouter()
 

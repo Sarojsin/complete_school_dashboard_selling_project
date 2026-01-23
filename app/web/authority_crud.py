@@ -6,14 +6,14 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.templates import templates
-from dependencies import get_current_user
-from models.models import User
-from repositories.student_repository import StudentRepository
-from repositories.teacher_repository import TeacherRepository
-from repositories.course_repository import CourseRepository
-from repositories.notice_repository import NoticeRepository
-from repositories.fee_repository import FeeRepository
-from utils.constants import GRADE_LEVELS, DEPARTMENTS
+from app.dependencies.auth import get_current_user
+from app.models.models import User
+from app.repositories.student_repository import StudentRepository
+from app.repositories.teacher_repository import TeacherRepository
+from app.repositories.course_repository import CourseRepository
+from app.repositories.notice_repository import NoticeRepository
+from app.repositories.fee_repository import FeeRepository
+from app.utils.constants import GRADE_LEVELS, DEPARTMENTS
 
 router = APIRouter()
 

@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, Request, Depends, HTTPException, File, UploadFile, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 from typing import Optional, List
 import os
 import shutil
@@ -9,98 +10,143 @@ from datetime import datetime
 
 from app.core.database import get_async_db
 from app.core.templates import templates
-from dependencies import get_current_user
-from models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
-from models.chat_models import ChatMessage
-from repositories.student_repository import StudentRepository
-from repositories.teacher_repository import TeacherRepository
-from repositories.message_repository import MessageRepository
-from repositories.notice_repository import NoticeRepository
-from repositories.course_repository import CourseRepository
-from repositories.assignment_repository import AssignmentRepository
-from repositories.notes_repository import NotesRepository
-from repositories.videos_repository import VideosRepository
-from repositories.test_repository import TestRepository
-from repositories.fee_repository import FeeRepository
-from repositories.fee_structure_repository import FeeStructureRepository
-from repositories.chat_repository import ChatRepository
-from services.test_service import TestService
-from utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS, WEEKDAYS
+from app.dependencies.auth import get_current_user
+from app.models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
+from app.models.chat_models import ChatMessage
+from app.models.group_models import Group, GroupMember
+from app.repositories.student_repository import StudentRepository
+from app.repositories.teacher_repository import TeacherRepository
+from app.repositories.message_repository import MessageRepository
+from app.repositories.notice_repository import NoticeRepository
+from app.repositories.course_repository import CourseRepository
+from app.repositories.assignment_repository import AssignmentRepository
+from app.repositories.notes_repository import NotesRepository
+from app.repositories.videos_repository import VideosRepository
+from app.repositories.test_repository import TestRepository
+from app.repositories.fee_repository import FeeRepository
+from app.repositories.fee_structure_repository import FeeStructureRepository
+from app.repositories.chat_repository import ChatRepository
+from app.repositories.group_repository import GroupRepository
+from app.services.student_service import StudentService
+from app.services.group_service import GroupService
+from app.services.test_service import TestService
+from app.utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS, WEEKDAYS
 
 router = APIRouter()
 
 # ------------------ STUDENT PAGES ------------------
 @router.get("/student/dashboard")
 async def student_dashboard(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    data = await StudentService.get_dashboard_data(db, current_user.id)
+    if not data:
+        return RedirectResponse("/login")
+        
     unread_count = await MessageRepository.get_unread_count(db, current_user.id)
+    
     return templates.TemplateResponse("student/dashboard.html", {
-        "request": request, "current_user": current_user, "student": current_user,
-        "unread_count": unread_count, "assignments": [], "recent_grades": []
+        "request": request, 
+        "current_user": current_user, 
+        "student": data["student"], 
+        "courses": data["courses"], 
+        "assignments": data["assignments"], 
+        "recent_grades": data["recent_grades"], 
+        "stats": data["stats"], 
+        "latest_notice": data["latest_notice"],
+        "attendance_overview": data["attendance_overview"],
+        "attendance_grid": data["attendance_grid"],
+        "days_labels": data["days_labels"],
+        "unread_count": unread_count
     })
 
 @router.get("/student/profile")
 async def student_profile(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     student = await StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+        
     student_data = {
-        "name": current_user.full_name, "id": student.student_id if student else "N/A",
-        "grade": student.grade_level if student else "N/A", "section": student.section if student else "N/A",
-        "email": current_user.email, "phone": student.phone if student else "N/A",
-        "dob": student.date_of_birth.strftime('%Y-%m-%d') if student and student.date_of_birth else "",
-        "address": student.address if student else "", "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png",
-        "roll_number": student.student_id if student else "N/A", "admission_date": student.enrollment_date.strftime('%Y-%m-%d') if student and student.enrollment_date else "N/A"
+        "name": current_user.full_name, "id": student.student_id,
+        "grade": student.grade_level, "section": student.section,
+        "email": current_user.email, "phone": student.phone,
+        "dob": student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else "",
+        "address": student.address, "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png",
+        "roll_number": student.student_id, "admission_date": student.enrollment_date.strftime('%Y-%m-%d') if student.enrollment_date else "N/A"
     }
     return templates.TemplateResponse("student/profile.html", {"request": request, "current_user": current_user, "student": student_data})
 
 @router.post("/student/profile")
 async def student_update_profile(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     form_data = await request.form()
-    if "profile_pic" in form_data and form_data["profile_pic"].filename:
-        profile_pic = form_data["profile_pic"]
-        ext = os.path.splitext(profile_pic.filename)[1]
-        filename = f"{uuid.uuid4()}{ext}"
-        filepath = os.path.join("static/uploads/avatars", filename)
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, "wb") as buffer: shutil.copyfileobj(profile_pic.file, buffer)
-        current_user.profile_picture = f"/static/uploads/avatars/{filename}"
-    if "email" in form_data: current_user.email = form_data["email"]
-    if "full_name" in form_data: current_user.full_name = form_data["full_name"]
     student = await StudentRepository.get_by_user_id(db, current_user.id)
-    if student:
-        if "full_name" in form_data: student.full_name = form_data["full_name"]
-        if "phone" in form_data: student.phone = form_data["phone"]
-        if "address" in form_data: student.address = form_data["address"]
-        if "dob" in form_data and form_data["dob"]:
-            try: student.date_of_birth = datetime.strptime(form_data["dob"], '%Y-%m-%d').date()
-            except ValueError: pass
-        db.add(student)
-    db.add(current_user)
-    await db.commit()
-    return RedirectResponse(url="/student/profile?success=1", status_code=303)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+    
+    avatar_file = form_data.get("profile_pic") if "profile_pic" in form_data and form_data["profile_pic"].filename else None
+    
+    await StudentService.update_profile(
+        db=db,
+        student_id=student.id,
+        full_name=form_data.get("full_name"),
+        email=form_data.get("email"),
+        phone=form_data.get("phone"),
+        address=form_data.get("address"),
+        dob_str=form_data.get("dob"), # Pass dob as string for service to parse
+        avatar_file=avatar_file,
+        user=current_user # Pass current_user to update its fields
+    )
+    return RedirectResponse(url="/student/profile", status_code=303)
 
 @router.get("/student/courses")
-async def student_courses(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("student/courses.html", {"request": request, "current_user": current_user, "student": current_user, "courses": []})
+async def student_courses(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
+    if not student: return RedirectResponse("/student/dashboard")
+    
+    courses = await StudentService.get_student_courses_detailed(db, student.id)
+    
+    return templates.TemplateResponse("student/courses.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "student": current_user, 
+        "current_courses": courses,
+        "completed_courses": []
+    })
 
 @router.get("/student/assignments")
 async def student_assignments(request: Request, status: str = "all", current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     student = await StudentRepository.get_by_user_id(db, current_user.id)
-    if not student: return RedirectResponse("/student/dashboard")
-    courses = await StudentRepository.get_enrolled_courses(db, student.id)
-    course_ids = [c.id for c in courses]
-    all_assignments = await AssignmentRepository.get_student_assignments(db, student.id, course_ids, student_grade=student.grade_level, student_section=student.section)
-    stats = {"total": len(all_assignments), "pending": sum(1 for a in all_assignments if a["status"] == "pending"), "submitted": sum(1 for a in all_assignments if a["status"] == "submitted"), "graded": sum(1 for a in all_assignments if a["status"] == "graded"), "overdue": sum(1 for a in all_assignments if a["status"] == "overdue")}
-    filtered = [a for a in all_assignments if status == "all" or a["status"] == status]
-    return templates.TemplateResponse("student/assignments.html", {"request": request, "current_user": current_user, "student": current_user, "assignments": filtered, "stats": stats, "current_filter": status})
+    if not student:
+        return RedirectResponse("/student/dashboard")
+        
+    assignments_data = await StudentService.get_assignments_data(db, student.id, status)
+    
+    return templates.TemplateResponse("student/assignments.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "student": current_user, 
+        "assignments": assignments_data["filtered_assignments"], 
+        "stats": assignments_data["stats"], 
+        "current_filter": status
+    })
 
 @router.get("/student/fees")
 async def student_fees(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     student = await StudentRepository.get_by_user_id(db, current_user.id)
-    if not student: return RedirectResponse("/student/dashboard")
-    fees = await FeeRepository.get_student_fees(db, student.id)
-    summary = await FeeRepository.get_fee_summary(db, student.id)
-    payment_history = await FeeRepository.get_payment_history(db, student.id)
-    formatted_history = [{"date": p.payment_date, "amount": p.paid_amount, "method": "Online", "transaction_id": f"TXN-{p.id}", "status": "completed", "receipt_url": "#"} for p in payment_history]
-    return templates.TemplateResponse("student/fees.html", {"request": request, "current_user": current_user, "student": current_user, "fee_structure": fees, "payment_history": formatted_history, "total_fees": summary['total_amount'], "paid_amount": summary['total_paid'], "pending_amount": summary['total_pending'], "fee_status": "paid" if summary['total_pending'] == 0 else "pending"})
+    if not student: 
+        return RedirectResponse("/student/dashboard")
+        
+    data = await StudentService.get_fee_summary(db, student.id)
+    
+    return templates.TemplateResponse("student/fees.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "student": current_user, 
+        "fee_structure": data["fee_structure"], 
+        "payment_history": data["payment_history"], 
+        "total_fees": data["total_fees"], 
+        "paid_amount": data["paid_amount"], 
+        "pending_amount": data["pending_amount"], 
+        "fee_status": data["fee_status"]
+    })
 
 @router.get("/student/assignments/{assignment_id}")
 async def student_assignment_detail(request: Request, assignment_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
@@ -198,8 +244,29 @@ async def student_test_result(request: Request, test_id: int, current_user: User
 
 @router.get("/student/notices")
 async def student_notices(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
-    notices_data = await NoticeRepository.get_active_notices(db, target_role="students")
-    notices = [{"id": n.id, "title": n.title, "content": n.content, "excerpt": n.content[:100] + "..." if len(n.content) > 100 else n.content, "priority": n.priority, "date": n.created_at.strftime('%Y-%m-%d'), "time": n.created_at.strftime('%H:%M'), "author": n.authority.full_name if n.authority else "School Authority"} for n in notices_data]
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
+    grade = student.grade_level if student else None
+    
+    notices_data = await NoticeRepository.get_active_notices(db, target_role="student", target_grade=grade)
+    
+    notices = []
+    for n in notices_data:
+        author = "School Authority"
+        if n.teacher:
+            author = f"Teacher: {n.teacher.user.full_name}"
+        elif n.authority:
+            author = n.authority.user.full_name
+            
+        notices.append({
+            "id": n.id, 
+            "title": n.title, 
+            "content": n.content, 
+            "excerpt": n.content[:100] + "..." if len(n.content) > 100 else n.content, 
+            "priority": n.priority, 
+            "date": n.created_at.strftime('%Y-%m-%d'), 
+            "time": n.created_at.strftime('%H:%M'), 
+            "author": author
+        })
     return templates.TemplateResponse("student/notices.html", {"request": request, "current_user": current_user, "student": current_user, "notices": notices, "important_notices": [n for n in notices if n["priority"] in ["high", "urgent"]], "current_page": 1, "total_pages": 1})
 
 @router.get("/student/timetable")
@@ -221,12 +288,44 @@ async def student_notes(request: Request, current_user: User = Depends(get_curre
 async def student_videos(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     student = await StudentRepository.get_by_user_id(db, current_user.id)
     videos = []
+    watched_ids = []
     if student:
+        watched_ids = await VideosRepository.get_student_watched_ids(db, student.id)
         enrollments = await StudentRepository.get_enrolled_courses(db, student.id)
         if not enrollments and student.grade_level: enrollments = await CourseRepository.get_all(db, grade_level=student.grade_level)
         for cid in [c.id for c in enrollments]: videos.extend(await VideosRepository.get_by_course(db, cid))
-    formatted_videos = [{"id": v.id, "title": v.title, "description": v.description or "", "subject": v.course.course_name if v.course else "Unknown", "teacher": v.teacher.full_name if v.teacher else "Unknown", "upload_date": v.uploaded_at.strftime("%Y-%m-%d"), "video_url": v.file_path, "thumbnail": "https://via.placeholder.com/300x200?text=Video", "duration": f"{v.duration // 60}:{v.duration % 60:02d}" if v.duration else "0:00"} for v in videos]
-    return templates.TemplateResponse("student/videos.html", {"request": request, "current_user": current_user, "student": current_user, "videos": formatted_videos, "progress_stats": {"total_watched": 0, "total_videos": len(formatted_videos), "completion_rate": 0, "total_time": "0h 0m", "by_subject": {}}, "subjects": list(set(v["subject"] for v in formatted_videos))})
+    
+    formatted_videos = [{
+        "id": v.id, 
+        "title": v.title, 
+        "description": v.description or "", 
+        "subject": v.course.course_name if v.course else "Unknown", 
+        "teacher": v.teacher.user.full_name if v.teacher and v.teacher.user else "Unknown", 
+        "upload_date": v.uploaded_at.strftime("%Y-%m-%d"), 
+        "video_url": v.file_path, 
+        "thumbnail": "https://via.placeholder.com/300x200?text=Video", 
+        "duration": f"{v.duration // 60}:{v.duration % 60:02d}" if v.duration else "0:00",
+        "watched": v.id in watched_ids
+    } for v in videos]
+    
+    total_watched = len(watched_ids)
+    total_videos = len(formatted_videos)
+    completion_rate = round((total_watched / total_videos * 100)) if total_videos > 0 else 0
+    
+    return templates.TemplateResponse("student/videos.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "student": current_user, 
+        "videos": formatted_videos, 
+        "progress_stats": {
+            "total_watched": total_watched, 
+            "total_videos": total_videos, 
+            "completion_rate": completion_rate, 
+            "total_time": "0h 0m", 
+            "by_subject": {}
+        }, 
+        "subjects": list(set(v["subject"] for v in formatted_videos))
+    })
 
 @router.get("/student/forum")
 async def student_forum(request: Request, current_user: User = Depends(get_current_user)):
@@ -258,15 +357,155 @@ async def student_contact_teacher(teacher_id: int, request: Request, current_use
 
 @router.get("/student/groups")
 async def student_groups(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
-    from repositories.group_repository import GroupRepository
-    from services.group_service import GroupService
+    from app.repositories.group_repository import GroupRepository
+    from app.services.group_service import GroupService
     groups = await GroupService(GroupRepository(db)).get_user_groups(current_user.id, current_user.role)
     return templates.TemplateResponse("student/groups.html", {"request": request, "current_user": current_user, "groups": groups})
 
 @router.get("/student/grades")
-async def student_grades(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("student/grades.html", {"request": request, "current_user": current_user, "student": current_user, "grades": [], "gpa": 0.0})
+async def student_grades(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+        
+    grades_data = await StudentService.get_grades_data(db, student.id)
+    return templates.TemplateResponse("student/grades.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "student": current_user, 
+        "grades": grades_data["grades"], 
+        "gpa": grades_data["gpa"],
+        "stats": grades_data["stats"]
+    })
 
 @router.get("/student/attendance")
-async def student_attendance(request: Request, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("student/attendance.html", {"request": request, "current_user": current_user, "student": current_user, "attendance": []})
+async def student_attendance(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+        
+    data = await StudentService.get_attendance_data(db, student.id)
+    return templates.TemplateResponse("student/attendance.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "student": current_user, 
+        "stats": data
+    })
+
+@router.post("/student/mark-video-watched/{video_id}")
+async def mark_video_watched(video_id: int, db: AsyncSession = Depends(get_async_db), current_user: User = Depends(get_current_user)):
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
+    if not student: raise HTTPException(status_code=404, detail="Student not found")
+    await VideosRepository.mark_as_watched(db, video_id, student.id)
+    return {"success": True}
+
+@router.get("/student/groups")
+async def student_groups(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    data = await group_service.get_groups_list(current_user.id)
+    return templates.TemplateResponse("student/groups.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "groups": data["user_groups"]
+    })
+
+@router.get("/student/groups/{group_id}")
+async def student_group_detail(request: Request, group_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    data = await group_service.get_group_detail(group_id, current_user.id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Group not found")
+        
+    return templates.TemplateResponse("groups/group_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "group": data["group"],
+        "is_member": data["is_member"],
+        "is_creator": data["is_creator"],
+        "posts": data["posts"],
+        "member_count": data["member_count"],
+        "is_teacher": False
+    })
+
+@router.post("/student/groups/join")
+async def student_join_group(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    form_data = await request.form()
+    code = form_data.get("code")
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    
+    # Needs a method to join by code
+    res = await db.execute(select(Group).filter(Group.code == code, Group.is_active == True))
+    group = res.scalars().first()
+    if not group:
+        return RedirectResponse(url="/student/groups?error=invalid_code", status_code=303)
+        
+    # Check if already member
+    res_m = await db.execute(select(GroupMember).filter(GroupMember.group_id == group.id, GroupMember.user_id == current_user.id))
+    if res_m.scalars().first():
+        return RedirectResponse(url=f"/student/groups/{group.id}", status_code=303)
+        
+    member = GroupMember(group_id=group.id, user_id=current_user.id, role="student")
+    db.add(member); await db.commit()
+    return RedirectResponse(url=f"/student/groups/{group.id}?success=joined", status_code=303)
+
+@router.get("/student/groups/{group_id}/posts")
+async def student_group_posts(
+    request: Request,
+    group_id: int,
+    post_type: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    from app.repositories.group_post_repository import GroupPostRepository
+    from app.services.group_post_service import GroupPostService
+    post_repo = GroupPostRepository(db)
+    group_repo = GroupRepository(db)
+    post_service = GroupPostService(post_repo, group_repo)
+    
+    limit = 20
+    offset = (page - 1) * limit
+    
+    posts_data = await post_service.get_group_posts(group_id, current_user.id, post_type, limit, offset)
+    
+    return templates.TemplateResponse("groups/group_posts.html", {
+        "request": request,
+        "current_user": current_user,
+        "group": {"id": group_id, "name": posts_data["group_name"]},
+        "posts": posts_data["posts"],
+        "post_type": post_type,
+        "page": page,
+        "has_more": posts_data["has_more"],
+        "is_teacher": False,
+        "post_types": ["notice", "note", "link"]
+    })
+
+@router.get("/student/groups/{group_id}/posts/{post_id}")
+async def student_view_post(
+    request: Request,
+    group_id: int,
+    post_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    from app.repositories.group_post_repository import GroupPostRepository
+    post_repo = GroupPostRepository(db)
+    group_repo = GroupRepository(db)
+    
+    is_member = await group_repo.is_group_member(group_id, current_user.id)
+    if not is_member: raise HTTPException(status_code=403, detail="Not a member of this group")
+    
+    post = await post_repo.get_post_by_id(post_id)
+    if not post or post.group_id != group_id: raise HTTPException(status_code=404, detail="Post not found")
+    
+    return templates.TemplateResponse("groups/view_post.html", {
+        "request": request,
+        "current_user": current_user,
+        "post": post,
+        "group_id": group_id,
+        "is_teacher": False,
+        "is_author": post.author_id == current_user.id
+    })

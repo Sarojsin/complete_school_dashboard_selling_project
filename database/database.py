@@ -8,15 +8,16 @@ if settings.DATABASE_URL_FIXED.startswith("sqlite"):
     engine = create_engine(
         settings.DATABASE_URL_FIXED,
         connect_args={"check_same_thread": False},
-        echo=settings.DEBUG
-    )
+        echo=settings.DEBUG # Enable SQL query logging for debugging purposes.
+    ) #we can use echo=false in production to disable logging
 else:
     engine = create_engine(
         settings.DATABASE_URL_FIXED,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=20,
-        echo=settings.DEBUG
+        echo=settings.DEBUG # yeta pani same #we can use 
+        #echo=false in production to disable logging
     )
 
 # Create session factory

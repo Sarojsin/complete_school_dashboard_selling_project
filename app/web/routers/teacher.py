@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, Request, Depends, HTTPException, File, UploadFile, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy import select, func, delete, update, desc, and_
 from sqlalchemy.orm import joinedload
@@ -11,66 +11,93 @@ from datetime import datetime
 
 from app.core.database import get_async_db
 from app.core.templates import templates
-from dependencies import get_current_user
-from models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
-from models.chat_models import ChatMessage
-from repositories.student_repository import StudentRepository
-from repositories.teacher_repository import TeacherRepository
-from repositories.message_repository import MessageRepository
-from repositories.notice_repository import NoticeRepository
-from repositories.course_repository import CourseRepository
-from repositories.assignment_repository import AssignmentRepository
-from repositories.notes_repository import NotesRepository
-from repositories.videos_repository import VideosRepository
-from repositories.test_repository import TestRepository
-from repositories.fee_repository import FeeRepository
-from repositories.fee_structure_repository import FeeStructureRepository
-from repositories.chat_repository import ChatRepository
-from services.test_service import TestService
-from utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS, WEEKDAYS
+from app.dependencies.auth import get_current_user
+from app.models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, CourseEnrollment, FeeRecord, Notice, Attendance, Grade, Note, Video
+from app.models.chat_models import ChatMessage
+from app.models.group_models import Group, GroupMember, GroupPost
+from app.repositories.student_repository import StudentRepository
+from app.repositories.teacher_repository import TeacherRepository
+from app.repositories.message_repository import MessageRepository
+from app.repositories.notice_repository import NoticeRepository
+from app.repositories.course_repository import CourseRepository
+from app.repositories.assignment_repository import AssignmentRepository
+from app.repositories.notes_repository import NotesRepository
+from app.repositories.videos_repository import VideosRepository
+from app.repositories.test_repository import TestRepository
+from app.repositories.grade_repository import GradeRepository
+from app.repositories.attendance_repository import AttendanceRepository
+from app.repositories.fee_repository import FeeRepository
+from app.repositories.fee_structure_repository import FeeStructureRepository
+from app.repositories.chat_repository import ChatRepository
+from app.repositories.group_repository import GroupRepository
+from app.repositories.group_post_repository import GroupPostRepository
+from app.services.teacher_service import TeacherService
+from app.services.group_service import GroupService
+from app.services.test_service import TestService
+from app.utils.constants import GRADE_LEVELS, DEPARTMENTS, SECTIONS, WEEKDAYS
 
 router = APIRouter()
 
 # ------------------ TEACHER PAGES ------------------
 @router.get("/teacher/dashboard")
 async def teacher_dashboard(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
-    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
-    if not teacher: return templates.TemplateResponse("teacher/dashboard.html", {"request": request, "current_user": current_user, "teacher": current_user, "unread_count": 0})
-    courses = await CourseRepository.get_all(db, teacher_id=teacher.id)
-    
-    # Simple query for assignments
-    res = await db.execute(select(Assignment).filter(Assignment.teacher_id == teacher.id).limit(5))
-    assignments = res.scalars().all()
-    
+    data = await TeacherService.get_dashboard_data(db, current_user.id)
+    if not data:
+        return RedirectResponse("/login")
+        
     unread_count = await MessageRepository.get_unread_count(db, current_user.id)
-    return templates.TemplateResponse("teacher/dashboard.html", {"request": request, "current_user": current_user, "teacher": teacher, "courses": courses, "assignments": assignments, "stats": {"student_count": sum(len(c.enrollments) for c in courses), "course_count": len(courses), "assignment_count": len(assignments), "submission_count": 0}, "unread_count": unread_count, "recent_messages": []})
+    
+    return templates.TemplateResponse("teacher/dashboard.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "teacher": data["teacher"], 
+        "courses": data["courses"], 
+        "assignments": data["recent_assignments"], 
+        "stats": data["stats"], 
+        "unread_count": unread_count, 
+        "recent_messages": []
+    })
 
 @router.get("/teacher/profile")
 async def teacher_profile(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
-    teacher_data = {"name": current_user.full_name, "email": current_user.email, "id": teacher.employee_id if teacher else "N/A", "department": teacher.department if teacher else "N/A", "phone": teacher.phone if teacher else "N/A", "qualification": teacher.qualification if teacher else "N/A", "specialization": teacher.specialization if teacher else "N/A", "joining_date": teacher.joining_date.strftime('%Y-%m-%d') if teacher and teacher.joining_date else "N/A", "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png"}
+    if not teacher:
+        return RedirectResponse("/teacher/dashboard")
+        
+    teacher_data = {
+        "name": current_user.full_name, 
+        "email": current_user.email, 
+        "id": teacher.employee_id, 
+        "department": teacher.department, 
+        "phone": teacher.phone, 
+        "qualification": teacher.qualification, 
+        "specialization": teacher.specialization, 
+        "joining_date": teacher.joining_date.strftime('%Y-%m-%d') if teacher.joining_date else "N/A", 
+        "profile_pic": current_user.profile_picture or "/static/images/default-avatar.png"
+    }
     return templates.TemplateResponse("teacher/profile.html", {"request": request, "current_user": current_user, "teacher_data": teacher_data})
 
 @router.post("/teacher/profile")
 async def teacher_update_profile(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     form_data = await request.form()
-    if "profile_pic" in form_data and form_data["profile_pic"].filename:
-        profile_pic = form_data["profile_pic"]
-        ext = os.path.splitext(profile_pic.filename)[1]
-        filename = f"{uuid.uuid4()}{ext}"
-        filepath = os.path.join("static/uploads/avatars", filename)
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, "wb") as buffer: shutil.copyfileobj(profile_pic.file, buffer)
-        current_user.profile_picture = f"/static/uploads/avatars/{filename}"
-    if "full_name" in form_data: current_user.full_name = form_data["full_name"]
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
-    if teacher:
-        if "full_name" in form_data: teacher.full_name = form_data["full_name"]
-        if "phone" in form_data: teacher.phone = form_data["phone"]
-        db.add(teacher)
-    db.add(current_user)
-    await db.commit()
-    return RedirectResponse(url="/teacher/profile?success=1", status_code=303)
+    if not teacher:
+        return RedirectResponse("/teacher/dashboard")
+        
+    avatar_file = form_data.get("profile_pic") if "profile_pic" in form_data and form_data["profile_pic"].filename else None
+    
+    await TeacherService.update_profile(
+        db=db,
+        teacher_id=teacher.id,
+        full_name=form_data.get("full_name"),
+        email=form_data.get("email"),
+        phone=form_data.get("phone"),
+        qualification=form_data.get("qualification"),
+        specialization=form_data.get("specialization"),
+        avatar_file=avatar_file,
+        user=current_user
+    )
+    return RedirectResponse(url="/teacher/profile", status_code=303)
 
 @router.get("/teacher/students")
 async def teacher_students(request: Request, grade: str = None, section: str = None, search: str = None, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
@@ -131,21 +158,21 @@ async def teacher_mark_message_read(message_id: int, db: AsyncSession = Depends(
 @router.get("/teacher/assignments")
 async def teacher_assignments(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
-    assignments_data = await AssignmentRepository.get_all(db, teacher_id=teacher.id) if teacher else []
+    if not teacher:
+        return RedirectResponse("/teacher/dashboard")
+        
+    data = await TeacherService.get_assignments_data(db, teacher.id)
     
-    formatted = []
-    for a in assignments_data:
-        res = await db.execute(select(func.count(AssignmentSubmission.id)).filter(AssignmentSubmission.assignment_id == a.id))
-        submitted_count = res.scalar() or 0
-        total_students = len(a.course.enrollments) if a.course else 0
-        is_overdue = a.due_date < datetime.utcnow()
-        
-        formatted.append({
-            "id": a.id, "title": a.title, "description": a.description, "subject": a.course.course_name if a.course else "N/A", "class": a.course.grade_level if a.course else "N/A", "due_date": a.due_date.strftime("%Y-%m-%d %H:%M"), "due_in": "Overdue" if is_overdue else "Active", "submitted": submitted_count, "total_students": total_students, "submission_rate": (submitted_count / total_students * 100) if total_students > 0 else 0, "status": "completed" if is_overdue else "active", "status_color": "secondary" if is_overdue else "success", "is_urgent": not is_overdue and (a.due_date - datetime.utcnow()).days < 2, "is_overdue": is_overdue
-        })
-        
-    stats = {"total_assignments": len(formatted), "submitted": sum(a["submitted"] for a in formatted), "pending": sum(a["total_students"] - a["submitted"] for a in formatted), "overdue": sum(1 for a in formatted if a["is_overdue"])}
-    return templates.TemplateResponse("teacher/assignments.html", {"request": request, "current_user": current_user, "teacher": current_user, "assignments": formatted, "stats": stats, "subjects": DEPARTMENTS, "classes": GRADE_LEVELS, "upcoming_deadlines": [a for a in formatted if not a["is_overdue"]][:3]})
+    return templates.TemplateResponse("teacher/assignments.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "teacher": current_user, 
+        "assignments": data["assignments"], 
+        "stats": data["stats"], 
+        "subjects": DEPARTMENTS, 
+        "classes": GRADE_LEVELS, 
+        "upcoming_deadlines": [a for a in data["assignments"] if not a["is_overdue"]][:3]
+    })
 
 @router.get("/teacher/assignments/{id}/edit")
 async def teacher_edit_assignment(request: Request, id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
@@ -171,14 +198,59 @@ async def teacher_edit_assignment_post(request: Request, id: int, current_user: 
 async def teacher_create_assignment(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     courses = await CourseRepository.get_all(db, teacher_id=teacher.id) if teacher else []
-    return templates.TemplateResponse("teacher/create_assignment.html", {"request": request, "current_user": current_user, "teacher": current_user, "courses": courses})
+    return templates.TemplateResponse("teacher/create_assignment.html", {"request": request, "current_user": current_user, "teacher": current_user, "courses": courses, "subjects": DEPARTMENTS, "classes": GRADE_LEVELS, "sections": SECTIONS})
 
 @router.post("/teacher/assignments/create")
 async def teacher_create_assignment_post(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     form_data = await request.form()
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     if not teacher: raise HTTPException(status_code=403, detail="Only teachers can create assignments")
-    assignment_data = {"title": form_data.get("title"), "description": form_data.get("description"), "course_id": int(form_data.get("course_id")), "teacher_id": teacher.id, "due_date": datetime.fromisoformat(form_data.get("due_date")), "max_score": float(form_data.get("max_score", 100))}
+    
+    subject = form_data.get("subject")
+    grade = form_data.get("grade")
+    section = form_data.get("section")
+    
+    # Find linking course
+    result = await db.execute(select(Course).filter(
+        Course.teacher_id == teacher.id,
+        Course.course_name == subject,
+        Course.grade_level == grade
+    ))
+    course = result.scalars().first()
+    
+    if not course:
+        # Try to find any course with this subject to attach to (fallback)
+        result = await db.execute(select(Course).filter(
+            Course.teacher_id == teacher.id,
+            Course.course_name == subject
+        ))
+        course = result.scalars().first()
+    
+    if not course:
+        # Auto-create course if it doesn't exist
+        # Generate a unique course code
+        course_code = f"{subject[:3].upper()}-{grade.replace(' ', '')}-{uuid.uuid4().hex[:6].upper()}"
+        
+        course_data = {
+            "course_name": subject,
+            "course_code": course_code,
+            "grade_level": grade,
+            "teacher_id": teacher.id,
+            "description": f"{subject} course for {grade}",
+            "credits": 3 # Default credits
+        }
+        
+        course = await CourseRepository.create(db, course_data)
+
+    assignment_data = {
+        "title": form_data.get("title"), 
+        "description": form_data.get("description"), 
+        "course_id": course.id, 
+        "teacher_id": teacher.id, 
+        "due_date": datetime.fromisoformat(form_data.get("due_date")), 
+        "max_score": float(form_data.get("total_marks", 100)),
+        "target_classes": section
+    }
     await AssignmentRepository.create(db, assignment_data)
     return RedirectResponse(url="/teacher/assignments?success=1", status_code=303)
 
@@ -233,33 +305,167 @@ async def teacher_course_detail(request: Request, id: int, current_user: User = 
 
 @router.get("/teacher/courses/{id}/students")
 async def teacher_course_students(request: Request, id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
-    course = await CourseRepository.get_by_id(db, id)
-    students = await CourseRepository.get_enrolled_students(db, id)
-    formatted = []
-    for s in students:
-        formatted.append({
-            "id": s.id, "name": s.user.full_name if s.user else "Unknown student", "email": s.user.email if s.user else "N/A", "grade": s.grade_level, "section": s.section, "attendance": 100, "average_grade": 0, "pending_assignments": 0, "avatar": f"https://ui-avatars.com/api/?name={s.user.full_name.replace(' ', '+') if s.user else 'User'}&background=random"
-        })
-    return templates.TemplateResponse("teacher/students.html", {"request": request, "current_user": current_user, "teacher": current_user, "students": formatted, "filters": {"grade": course.grade_level if course else None, "section": course.section if course and hasattr(course, 'section') else None}})
+    data = await TeacherService.get_course_students(db, id)
+    return templates.TemplateResponse("teacher/students.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "teacher": current_user, 
+        "students": data["students"], 
+        "filters": data["filters"]
+    })
 
 @router.get("/teacher/attendance/take")
-async def teacher_take_attendance(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+async def teacher_take_attendance(request: Request, course_id: Optional[int] = None, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     courses = await CourseRepository.get_all(db, teacher_id=teacher.id) if teacher else []
-    return templates.TemplateResponse("teacher/take_attendance.html", {"request": request, "current_user": current_user, "teacher": current_user, "courses": courses, "class_info": {"id": 0, "course_name": "Select a course", "grade": "", "section": "", "period": "", "time": "", "room": ""}, "students": []})
+    
+    students = []
+    class_info = {"id": 0, "course_name": "Select a course", "grade": "", "section": "", "period": "", "time": "", "room": ""}
+    
+    if course_id:
+        course = await CourseRepository.get_by_id(db, course_id)
+        if course:
+            class_info = {
+                "id": course.id,
+                "course_name": course.course_name,
+                "grade": course.grade_level,
+                "section": "", 
+                "period": "", "time": "", "room": ""
+            }
+            # Fetch students via enrollment
+            stmt = select(Student).join(CourseEnrollment).join(User).filter(CourseEnrollment.course_id == course_id).options(joinedload(Student.user))
+            result = await db.execute(stmt)
+            students_list = result.scalars().unique().all()
+            
+            for s in students_list:
+                students.append({
+                    "id": s.id,
+                    "name": s.user.full_name,
+                    "roll_number": s.student_id,
+                    "email": s.user.email,
+                    "avatar": s.user.profile_picture or "/static/images/default_avatar.png"
+                })
+
+    return templates.TemplateResponse("teacher/take_attendance.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "teacher": current_user, 
+        "courses": courses, 
+        "class_info": class_info, 
+        "students": students,
+        "today_date": datetime.now().strftime("%Y-%m-%d")
+    })
+
+@router.post("/teacher/attendance/save")
+async def teacher_save_attendance(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    form_data = await request.form()
+    class_id = int(form_data.get("class_id"))
+    attendance_date_str = form_data.get("attendance_date")
+    
+    try:
+        attendance_date = datetime.strptime(attendance_date_str, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        attendance_date = datetime.utcnow().date()
+        
+    for key in form_data:
+        if key.startswith("attendance["):
+             try:
+                 student_id = int(key.split("[")[1].split("]")[0])
+                 status = form_data[key]
+                 remarks = form_data.get(f"remarks[{student_id}]")
+                 arrival_time_str = form_data.get(f"arrival_time[{student_id}]")
+                 
+                 arrival_time = None
+                 if arrival_time_str:
+                     try:
+                         arrival_time = datetime.strptime(arrival_time_str, "%H:%M").time()
+                     except ValueError:
+                         pass
+
+                 existing = await AttendanceRepository.get_by_date(db, student_id, class_id, attendance_date)
+                 if existing:
+                     existing.status = status
+                     existing.remarks = remarks
+                     existing.arrival_time = arrival_time
+                     db.add(existing)
+                 else:
+                     new_record = Attendance(
+                         student_id=student_id,
+                         course_id=class_id,
+                         date=attendance_date,
+                         status=status,
+                         remarks=remarks,
+                         arrival_time=arrival_time
+                     )
+                     db.add(new_record)
+             except Exception:
+                 continue
+                 
+    await db.commit()
+    return RedirectResponse(url=f"/teacher/attendance/take?course_id={class_id}&success=1", status_code=303)
 
 @router.get("/teacher/attendance")
 async def teacher_attendance_list(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
-    courses = await CourseRepository.get_all(db, teacher_id=teacher.id) if teacher else []
-    stats = {"total_students": 150, "present_today": 135, "absent_today": 10, "overall_percentage": 92}
-    monthly_stats = {"present_percentage": 90, "absent_percentage": 7, "late_percentage": 3}
-    return templates.TemplateResponse("teacher/attendance.html", {"request": request, "current_user": current_user, "teacher": current_user, "courses": courses, "classes": GRADE_LEVELS, "subjects": DEPARTMENTS, "stats": stats, "current_month": datetime.now().strftime("%B %Y"), "monthly_overview": [], "monthly_stats": monthly_stats, "attendance_records": []})
+    if not teacher: raise HTTPException(status_code=403)
+    
+    courses = await CourseRepository.get_all(db, teacher_id=teacher.id)
+    stats = await AttendanceRepository.get_overall_stats(db, teacher.id)
+    attendance_records = await AttendanceRepository.get_teacher_attendance_history(db, teacher.id)
+    
+    return templates.TemplateResponse("teacher/attendance.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "teacher": current_user, 
+        "courses": courses, 
+        "classes": GRADE_LEVELS, 
+        "subjects": DEPARTMENTS, 
+        "stats": stats, 
+        "current_month": datetime.now().strftime("%B %Y"), 
+        "monthly_overview": [], # Could be implemented if needed
+        "monthly_stats": stats, 
+        "attendance_records": attendance_records
+    })
 
-@router.get("/teacher/attendance/{id}")
-async def teacher_view_attendance(request: Request, id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
-    course = await CourseRepository.get_by_id(db, id)
-    return templates.TemplateResponse("teacher/attendance.html", {"request": request, "current_user": current_user, "teacher": current_user, "course": course, "classes": GRADE_LEVELS, "subjects": DEPARTMENTS, "stats": {"total_students": 30, "present_today": 0, "absent_today": 0, "overall_percentage": 0}, "current_month": datetime.now().strftime("%B %Y"), "monthly_overview": [], "monthly_stats": {"present_percentage": 0, "absent_percentage": 0, "late_percentage": 0}, "attendance_records": []})
+@router.get("/teacher/attendance/view/{id}")
+async def teacher_view_attendance(request: Request, id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    try:
+        course_id_str, date_str = id.split("_")
+        course_id = int(course_id_str)
+        session_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid session ID")
+        
+    course = await CourseRepository.get_by_id(db, course_id)
+    if not course: raise HTTPException(status_code=404)
+    
+    # Get all attendance records for this course and date
+    stmt = select(Attendance).filter(
+        Attendance.course_id == course_id,
+        Attendance.date == session_date
+    ).options(joinedload(Attendance.student).joinedload(Student.user))
+    
+    result = await db.execute(stmt)
+    records = result.scalars().unique().all()
+    
+    formatted_records = []
+    for r in records:
+        formatted_records.append({
+            "student_name": r.student.user.full_name,
+            "roll_number": r.student.student_id,
+            "status": r.status,
+            "arrival_time": r.arrival_time.strftime("%H:%M") if r.arrival_time else "-",
+            "remarks": r.remarks or "-"
+        })
+
+    return templates.TemplateResponse("teacher/view_attendance_session.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "teacher": current_user, 
+        "course": course, 
+        "session_date": session_date,
+        "records": formatted_records
+    })
 
 @router.get("/teacher/grades")
 async def teacher_grades(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
@@ -271,16 +477,76 @@ async def teacher_grades(request: Request, current_user: User = Depends(get_curr
 async def teacher_grades_add(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     courses = await CourseRepository.get_all(db, teacher_id=teacher.id) if teacher else []
-    return templates.TemplateResponse("teacher/add_grade.html", {"request": request, "current_user": current_user, "teacher": current_user, "courses": courses, "students": [], "assessments": []})
+    
+    # Fetch all students for the dropdown
+    # In a real app, this should probably be filtered via AJAX based on selected course/class
+    students = await StudentRepository.get_all(db, limit=1000)
+    
+    # Format students for template
+    student_list = []
+    for s in students:
+        student_list.append({
+            "id": s.id,
+            "name": s.user.full_name,
+            "student_id": s.student_id
+        })
+        
+    return templates.TemplateResponse("teacher/add_grade.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "teacher": current_user, 
+        "courses": courses, 
+        "students": student_list, 
+        "assessments": []
+    })
 
 @router.post("/teacher/grades/add")
 async def teacher_grades_add_post(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     form_data = await request.form()
-    return RedirectResponse(url="/teacher/grades?success=1", status_code=303)
+    
+    try:
+        student_id = int(form_data.get("student_id"))
+        course_id = int(form_data.get("course_id"))
+        score = float(form_data.get("score"))
+        max_score = float(form_data.get("max_score"))
+        
+        grading_date_str = form_data.get("grading_date")
+        if grading_date_str:
+            grading_date = datetime.strptime(grading_date_str, "%Y-%m-%d")
+        else:
+            grading_date = datetime.utcnow()
+            
+        grade_data = {
+            "student_id": student_id,
+            "course_id": course_id,
+            "grade_type": form_data.get("grade_type"),
+            "score": score,
+            "max_score": max_score,
+            "grade": form_data.get("letter_grade"),
+            "remarks": form_data.get("teacher_comments"),
+            "date": grading_date
+        }
+        
+        await GradeRepository.create(db, grade_data)
+        
+        action = form_data.get("action")
+        if action == "save_and_new":
+            return RedirectResponse(url="/teacher/grades/add?success=1", status_code=303)
+            
+        return RedirectResponse(url="/teacher/grades?success=1", status_code=303)
+        
+    except Exception as e:
+        # Log error or handle it
+        print(f"Error adding grade: {e}")
+        return RedirectResponse(url="/teacher/grades/add?error=Invalid data", status_code=303)
 
 @router.get("/teacher/attendance/{id}/edit")
-async def teacher_edit_attendance(request: Request, id: int, current_user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("teacher/take_attendance.html", {"request": request, "current_user": current_user, "teacher": current_user, "students": []})
+async def teacher_edit_attendance(request: Request, id: str, current_user: User = Depends(get_current_user)):
+    try:
+        course_id_str, date_str = id.split("_")
+        return RedirectResponse(url=f"/teacher/attendance/take?course_id={course_id_str}", status_code=303)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid session ID")
 
 @router.get("/teacher/tests")
 async def teacher_tests(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
@@ -314,8 +580,75 @@ async def teacher_edit_test(request: Request, id: int, current_user: User = Depe
 async def teacher_create_test_post(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
     form_data = await request.form()
-    test_data = {"title": form_data.get("title"), "subject_name": form_data.get("subject"), "grade_level": form_data.get("grade"), "teacher_id": teacher.id, "duration": int(form_data.get("duration", 60)), "start_time": datetime.fromisoformat(form_data.get("start_time")), "end_time": datetime.fromisoformat(form_data.get("end_time")), "total_points": float(form_data.get("total_marks", 100)), "target_section": form_data.get("section")}
-    await TestRepository.create(db, test_data, [])
+    
+    # Parse questions
+    questions = []
+    q_indices = set()
+    for key in form_data.keys():
+        if key.startswith("questions["):
+            try:
+                # format: questions[index][field]
+                idx = int(key.split("[")[1].split("]")[0])
+                q_indices.add(idx)
+            except (IndexError, ValueError):
+                continue
+    
+    sorted_indices = sorted(list(q_indices))
+    
+    for idx in sorted_indices:
+        q_prefix = f"questions[{idx}]"
+        q_type = form_data.get(f"{q_prefix}[type]")
+        text = form_data.get(f"{q_prefix}[text]")
+        if not text: continue
+        
+        points = float(form_data.get(f"{q_prefix}[marks]", 1.0))
+        explanation = form_data.get(f"{q_prefix}[explanation]")
+        correct_answer = form_data.get(f"{q_prefix}[correct_answer]")
+        
+        options = []
+        if q_type == "multiple_choice":
+            # Extract options
+            opt_indices = []
+            for key in form_data.keys():
+                if key.startswith(f"{q_prefix}[options]["):
+                    try:
+                        oidx = int(key.split("options][")[1].split("]")[0])
+                        opt_indices.append(oidx)
+                    except (IndexError, ValueError):
+                        continue
+            opt_indices.sort()
+            for oidx in opt_indices:
+                val = form_data.get(f"{q_prefix}[options][{oidx}]")
+                if val: options.append(val)
+            
+            # Map index to value for correct answer
+            if correct_answer and correct_answer.isdigit():
+                c_idx = int(correct_answer)
+                if 0 <= c_idx < len(options):
+                    correct_answer = options[c_idx]
+        
+        questions.append({
+            "question_text": text,
+            "question_type": q_type,
+            "points": points,
+            "explanation": explanation,
+            "options": options,
+            "correct_answer": correct_answer,
+            "order": idx
+        })
+
+    test_data = {
+        "title": form_data.get("title"), 
+        "subject_name": form_data.get("subject"), 
+        "grade_level": form_data.get("grade"), 
+        "teacher_id": teacher.id, 
+        "duration": int(form_data.get("duration", 60)), 
+        "start_time": datetime.fromisoformat(form_data.get("start_time")), 
+        "end_time": datetime.fromisoformat(form_data.get("end_time")), 
+        "total_points": float(form_data.get("total_marks", 100)), 
+        "target_section": form_data.get("section")
+    }
+    await TestRepository.create(db, test_data, questions)
     return RedirectResponse(url="/teacher/tests?success=1", status_code=303)
 
 @router.delete("/teacher/tests/delete/{id}")
@@ -339,7 +672,7 @@ async def teacher_upload_videos_post(request: Request, title: str = Form(...), c
     ext = os.path.splitext(video_file.filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
     file_path = f"/static/uploads/videos/{filename}"
-    save_path = f"{file_path.lstrip('/')}"
+    save_path = os.path.join("app", "static", "uploads", "videos", filename)
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     with open(save_path, "wb") as buffer: shutil.copyfileobj(video_file.file, buffer)
     await VideosRepository.create(db, {"title": title, "description": description, "course_id": course_id, "teacher_id": teacher.id, "file_path": file_path})
@@ -361,15 +694,230 @@ async def teacher_create_notice(request: Request, current_user: User = Depends(g
 
 @router.post("/teacher/notices/create")
 async def teacher_create_notice_post(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher: raise HTTPException(status_code=403, detail="Only teachers can create notices.")
+    
     form_data = await request.form()
+    target = form_data.get("target")
+    notice_data = {
+        "title": form_data.get("title"),
+        "content": form_data.get("content"),
+        "target_role": "student" if target != "all" else "all",
+        "target_grade": target if target != "all" else None,
+        "priority": form_data.get("priority", "normal"),
+        "teacher_id": teacher.id,
+        "created_at": datetime.utcnow()
+    }
+    
+    # If target is specific grade, we might want to store that, but Notice model only has target_role (all, student, teacher).
+    # For now, we'll stick to target_role.
+    
+    await NoticeRepository.create(db, notice_data)
     return RedirectResponse(url="/teacher/dashboard?success=notice_created", status_code=303)
 
 @router.get("/teacher/groups")
 async def teacher_groups(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
-    from repositories.group_repository import GroupRepository
-    from services.group_service import GroupService
-    groups = await GroupService(GroupRepository(db)).get_user_groups(current_user.id, current_user.role)
-    return templates.TemplateResponse("teacher/groups.html", {"request": request, "current_user": current_user, "teacher": current_user, "groups": groups})
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    data = await group_service.get_groups_list(current_user.id)
+    return templates.TemplateResponse("teacher/groups.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "groups": data["user_groups"]
+    })
+
+@router.get("/teacher/groups/{group_id}")
+async def teacher_group_detail(request: Request, group_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    group_repo = GroupRepository(db)
+    group_service = GroupService(group_repo)
+    data = await group_service.get_group_detail(group_id, current_user.id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Group not found")
+        
+    return templates.TemplateResponse("groups/group_detail.html", {
+        "request": request,
+        "current_user": current_user,
+        "group": data["group"],
+        "is_member": data["is_member"],
+        "is_creator": data["is_creator"],
+        "posts": data["posts"],
+        "member_count": data["member_count"],
+        "is_teacher": True # For template logic
+    })
+
+@router.get("/teacher/groups/{group_id}/posts/create")
+async def teacher_create_post_form(
+    request: Request,
+    group_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    result = await db.execute(
+        select(Group).options(joinedload(Group.members)).filter(Group.id == group_id)
+    )
+    group = result.scalars().first()
+    if not group: raise HTTPException(status_code=404, detail="Group not found")
+    
+    is_member = any(m.user_id == current_user.id for m in group.members)
+    if not is_member: raise HTTPException(status_code=403, detail="Must be a group member to post")
+    
+    return templates.TemplateResponse("groups/new_post.html", {
+        "request": request,
+        "current_user": current_user,
+        "group": group,
+        "role_prefix": "teacher",
+        "post_types": ["notice", "note", "link"]
+    })
+
+@router.post("/teacher/groups/{group_id}/posts/create")
+async def teacher_create_post(
+    group_id: int,
+    title: str = Form(...),
+    content: Optional[str] = Form(None),
+    post_type: str = Form("notice"),
+    link_url: Optional[str] = Form(None),
+    link_description: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    result = await db.execute(
+        select(Group).options(joinedload(Group.members)).filter(Group.id == group_id)
+    )
+    group = result.scalars().first()
+    if not group: raise HTTPException(status_code=404, detail="Group not found")
+    
+    is_member = any(m.user_id == current_user.id for m in group.members)
+    if not is_member: raise HTTPException(status_code=403, detail="Must be a group member to post")
+    
+    post = GroupPost(
+        group_id=group_id, 
+        author_id=current_user.id, 
+        title=title, 
+        content=content, 
+        post_type=post_type,
+        link_url=link_url,
+        link_description=link_description
+    )
+    db.add(post); await db.commit()
+    return RedirectResponse(url=f"/teacher/groups/{group_id}/posts", status_code=303)
+
+@router.get("/teacher/groups/{group_id}/edit")
+async def teacher_edit_group_form(request: Request, group_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    result = await db.execute(select(Group).filter(Group.id == group_id))
+    group = result.scalars().first()
+    if not group: raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check if creator or teacher
+    from app.models.group_models import GroupMember
+    res = await db.execute(select(GroupMember).filter(GroupMember.group_id == group_id, GroupMember.user_id == current_user.id))
+    member = res.scalars().first()
+    if not member or member.role not in ['creator', 'teacher']:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this group")
+        
+    return templates.TemplateResponse("groups/edit_group.html", {
+        "request": request,
+        "current_user": current_user,
+        "group": group,
+        "role_prefix": "teacher"
+    })
+
+@router.post("/teacher/groups/{group_id}/edit")
+async def teacher_edit_group(
+    group_id: int,
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    result = await db.execute(select(Group).filter(Group.id == group_id))
+    group = result.scalars().first()
+    if not group: raise HTTPException(status_code=404, detail="Group not found")
+    
+    from app.models.group_models import GroupMember
+    res = await db.execute(select(GroupMember).filter(GroupMember.group_id == group_id, GroupMember.user_id == current_user.id))
+    member = res.scalars().first()
+    if not member or member.role not in ['creator', 'teacher']:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this group")
+        
+    group.name = name
+    group.description = description
+    await db.commit()
+    return RedirectResponse(url=f"/teacher/groups/{group_id}?success=updated", status_code=303)
+
+@router.get("/teacher/groups/{group_id}/posts")
+async def teacher_group_posts(
+    request: Request,
+    group_id: int,
+    post_type: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    from app.services.group_post_service import GroupPostService
+    post_repo = GroupPostRepository(db)
+    group_repo = GroupRepository(db)
+    post_service = GroupPostService(post_repo, group_repo)
+    
+    limit = 20
+    offset = (page - 1) * limit
+    
+    posts_data = await post_service.get_group_posts(group_id, current_user.id, post_type, limit, offset)
+    
+    return templates.TemplateResponse("groups/group_posts.html", {
+        "request": request,
+        "current_user": current_user,
+        "group": {"id": group_id, "name": posts_data["group_name"]},
+        "posts": posts_data["posts"],
+        "post_type": post_type,
+        "page": page,
+        "has_more": posts_data["has_more"],
+        "is_teacher": True,
+        "post_types": ["notice", "note", "link"]
+    })
+
+@router.get("/teacher/groups/{group_id}/posts/{post_id}")
+async def teacher_view_post(
+    request: Request,
+    group_id: int,
+    post_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    post_repo = GroupPostRepository(db)
+    group_repo = GroupRepository(db)
+    
+    is_member = await group_repo.is_group_member(group_id, current_user.id)
+    if not is_member: raise HTTPException(status_code=403, detail="Not a member of this group")
+    
+    post = await post_repo.get_post_by_id(post_id)
+    if not post or post.group_id != group_id: raise HTTPException(status_code=404, detail="Post not found")
+    
+    return templates.TemplateResponse("groups/view_post.html", {
+        "request": request,
+        "current_user": current_user,
+        "post": post,
+        "group_id": group_id,
+        "is_teacher": True,
+        "is_author": post.author_id == current_user.id
+    })
+
+@router.post("/teacher/groups/{group_id}/posts/{post_id}/delete")
+async def teacher_delete_post(
+    group_id: int,
+    post_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    from app.services.group_post_service import GroupPostService
+    post_repo = GroupPostRepository(db)
+    group_repo = GroupRepository(db)
+    post_service = GroupPostService(post_repo, group_repo)
+    
+    try:
+        await post_service.delete_post(post_id, current_user.id)
+        return RedirectResponse(url=f"/teacher/groups/{group_id}/posts?success=deleted", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 @router.get("/teacher/chat")
 async def teacher_chat(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
@@ -408,3 +956,15 @@ async def teacher_timetable(request: Request, current_user: User = Depends(get_c
     for d in days:
         week_days.append({"name": d, "date": "Jan 12", "is_today": d == datetime.now().strftime("%A"), "classes": {slot: [] for slot in time_slots}})
     return templates.TemplateResponse("teacher/timetable.html", {"request": request, "current_user": current_user, "teacher": current_user, "current_week": "Jan 12 - Jan 16, 2026", "prev_week": "prev", "next_week": "next", "week_days": week_days, "time_slots": time_slots, "todays_schedule": [], "upcoming_classes": [], "subjects": DEPARTMENTS, "classes": GRADE_LEVELS})
+
+@router.post("/teacher/timetable")
+async def teacher_timetable_post(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    teacher = await TeacherRepository.get_by_user_id(db, current_user.id)
+    if not teacher:
+        raise HTTPException(status_code=403, detail="Only teachers can update timetable")
+    
+    form_data = await request.form()
+    # Handle timetable updates here
+    # For now, just redirect back with success
+    return RedirectResponse(url="/teacher/timetable?success=1", status_code=303)
+
