@@ -51,7 +51,9 @@ school_management_system/
 ├── 🗃️ migrations/
 │   ├── add_name_columns.sql
 │   ├── add_parent_id_to_students.py
-│   └── add_parent_to_enum.sql
+│   ├── add_parent_to_enum.sql
+│   ├── migrate_grades.py
+│   └── migrate_profile_pic.py
 ├── 🗄️ models/
 │   ├── __init__.py
 │   ├── chat_models.py
@@ -348,8 +350,6 @@ school_management_system/
 ├── main.py
 ├── main.py.backup
 ├── makefile
-├── migrate_grades.py
-├── migrate_profile_pic.py
 ├── models_backup.py
 ├── old_fee_routes.py
 ├── plan_implemented.md

@@ -68,7 +68,7 @@ In scripts/verify/ and scripts/check/, there are utility scripts.
 The Role: They check if the system is "healthy." For example, verify_endpoints.py tests all your API links to make sure none of them return a 404 error after a code change.
 Why it's there: If something breaks, running debug_access.py can tell you exactly which permission setting is blocking a user, saving you hours of manual debugging.
 4. One-Time "Fix" Tasks
-Sometimes code changes require moving data around (like migrate_profile_pic.py).
+Sometimes code changes require moving data around (like migrations/migrate_profile_pic.py).
 
 The Role: These are "run once" tools to clean up old data formats.
 Why it's there: They ensure that when you upgrade the project, the existing data stays compatible with the new code.
