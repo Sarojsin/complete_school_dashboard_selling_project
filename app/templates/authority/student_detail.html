@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Student Details - {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/authority/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/authority/students">Students</a></li>
+            <li class="breadcrumb-item active">{{ student.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Student Profile Card -->
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="{{ student.profile_pic }}" alt="{{ student.name }}"
+                        class="rounded-circle img-fluid border border-3 border-primary mb-3"
+                        style="width: 150px; height: 150px; object-fit: cover;">
+                    <h4 class="mb-1">{{ student.name }}</h4>
+                    <p class="text-muted mb-3">{{ student.email }}</p>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <span class="badge bg-primary">Grade {{ student.grade }}-{{ student.section }}</span>
+                        <span class="badge bg-{{ 'success' if student.status == 'active' else 'danger' }}">
+                            {{ student.status|title }}
+                        </span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="/authority/students/{{ student.id }}/edit" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-2"></i>Edit Profile
+                        </a>
+                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            <i class="bi bi-envelope me-2"></i>Contact Student
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold">Student Phone</label>
+                        <div>{{ student.phone or 'Not provided' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold">Address</label>
+                        <div>{{ student.address or 'Not provided' }}</div>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold">Father's Name</label>
+                        <div>{{ student.father_name or 'Not provided' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold">Parent Phone</label>
+                        <div>{{ student.parent_phone or 'Not provided' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Information -->
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Academic Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4 mb-4">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small mb-1">Roll Number</div>
+                                <div class="fw-bold">{{ student.roll_number }}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small mb-1">Date of Birth</div>
+                                <div class="fw-bold">{{ student.dob }}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small mb-1">Admission Date</div>
+                                <div class="fw-bold">{{ student.admission_date }}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <div class="text-muted small mb-1">Attendance</div>
+                                <div class="fw-bold text-success">{{ student.attendance }}%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3">Recent Performance</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Exam/Asg</th>
+                                    <th>Score</th>
+                                    <th>Grade</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Placeholder for grades -->
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No recent grades available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Fee Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <span class="text-muted">Status:</span>
+                            <span class="badge bg-success ms-2">Paid</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary">View History</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contact {{ student.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" class="form-control" name="subject">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" name="message" rows="4"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Send Message</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
