@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}My Groups - EduManage{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Groups</h2>
+        {% if current_user.role.value in ['AUTHORITY', 'ADMIN'] %}
+        <a href="/groups/create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Create Group
+        </a>
+        {% endif %}
+    </div>
+
+    {% if groups %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for group in groups %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title text-primary">{{ group.name }}</h5>
+                        {% if group.is_teacher %}
+                        <span class="badge bg-primary">Teacher</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Student</span>
+                        {% endif %}
+                    </div>
+                    <p class="card-text text-muted mb-3">{{ group.description or 'No description available.' }}</p>
+
+                    <div class="d-flex justify-content-between text-small text-muted mb-3">
+                        <span title="Members"><i class="bi bi-people me-1"></i>{{ group.member_count }}</span>
+                        <span title="Group Code"><i class="bi bi-key me-1"></i>{{ group.code }}</span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="/groups/{{ group.id }}" class="btn btn-outline-primary btn-sm">View Details</a>
+                        <a href="/groups/{{ group.id }}/posts" class="btn btn-outline-secondary btn-sm">View Posts</a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0 text-muted small">
+                    Created {{ group.created_at.strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="bi bi-people display-1 text-muted"></i>
+        </div>
+        <h4 class="text-muted">No groups found</h4>
+        <p class="text-muted mb-4">You haven't joined any groups yet.</p>
+        {% if current_user.role.value in ['AUTHORITY', 'ADMIN'] %}
+        <a href="/groups/create" class="btn btn-primary">Create Your First Group</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
