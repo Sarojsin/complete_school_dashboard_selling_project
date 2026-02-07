@@ -8,7 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
 
 from app.core.config import settings
-from app.core.database import engine, Base
+from app.core.database import engine
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.csrf import CSRFMiddleware
 from app.web.routers.common import router as common_router
@@ -124,6 +124,23 @@ def create_app() -> FastAPI:
     app.include_router(groups.router, prefix="/api/groups", tags=["Groups"])
     app.include_router(group_posts.router, prefix="/api/group-posts", tags=["Group Posts"])
 
+
+    # Add these imports
+    from app.api.endpoints import hod, exam_section, library, account
+    from app.web.routers import hod as web_hod, exam_section as web_exam_section, library as web_library, account as web_account
+
+    # Register API routes
+    app.include_router(hod.router)
+    app.include_router(exam_section.router)
+    app.include_router(library.router)
+    app.include_router(account.router)
+
+    # Register web routes
+    app.include_router(web_hod.router, prefix="/hod", tags=["HOD Web"])
+    app.include_router(web_exam_section.router, prefix="/exam-section", tags=["Exam Section Web"])
+    app.include_router(web_library.router, prefix="/library", tags=["Library Web"])
+    app.include_router(web_account.router, prefix="/account", tags=["Account Web"])
     return app
+
 
 app = create_app()

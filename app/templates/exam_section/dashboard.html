@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Section Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Exam Section Dashboard</h2>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h5>Recent Results Published</h5>
+                    <a href="/exam-section/post-result" class="btn btn-primary btn-sm">
+                        Publish New Result
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if results %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Course</th>
+                                        <th>Marks</th>
+                                        <th>Grade</th>
+                                        <th>Published</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in results %}
+                                    <tr>
+                                        <td>{{ result.student_name }}</td>
+                                        <td>{{ result.course_name }}</td>
+                                        <td>{{ result.marks }}</td>
+                                        <td><span class="badge bg-info">{{ result.grade }}</span></td>
+                                        <td>{{ result.published_at.strftime('%Y-%m-%d') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No results published yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Total Results Published</h6>
+                        <h3>{{ results|length }}</h3>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Today's Results</h6>
+                        <h3>0</h3>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Pending Results</h6>
+                        <h3>0</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/exam-section/post-result" class="btn btn-success btn-block mb-2">
+                        Publish Result
+                    </a>
+                    <a href="#" class="btn btn-info btn-block mb-2">
+                        View All Results
+                    </a>
+                    <a href="#" class="btn btn-warning btn-block">
+                        Post Exam Notice
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -338,6 +338,179 @@ async def signup_parent(
         "user": UserResponse.from_orm(user)
     }
 
+@router.post("/signup/hod")
+async def signup_hod(
+    teacher_data: TeacherCreate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Public HOD registration"""
+    # Check if user already exists
+    existing_user = await UserRepository.get_by_email(db, teacher_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    existing_username = await UserRepository.get_by_username(db, teacher_data.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    # Check if employee_id exists
+    from app.repositories.teacher_repository import TeacherRepository
+    existing_teacher = await TeacherRepository.get_by_employee_id(db, teacher_data.employee_id)
+    if existing_teacher:
+        raise HTTPException(status_code=400, detail="Employee ID already exists")
+    
+    # Create user
+    user = await UserRepository.create(
+        db=db,
+        email=teacher_data.email,
+        username=teacher_data.username,
+        password=teacher_data.password,
+        full_name=teacher_data.full_name,
+        role=UserRole.HOD
+    )
+    
+    # Create teacher profile
+    teacher_profile_data = {
+        "user_id": user.id,
+        "employee_id": teacher_data.employee_id,
+        "full_name": teacher_data.full_name,
+        "phone": teacher_data.phone,
+        "department": teacher_data.department,
+        "qualification": teacher_data.qualification,
+        "specialization": teacher_data.specialization
+    }
+    
+    await TeacherRepository.create(db, teacher_profile_data)
+    
+    return {
+        "message": "HOD account created successfully",
+        "user": UserResponse.from_orm(user)
+    }
+
+@router.post("/signup/exam-section")
+async def signup_exam_section(
+    authority_data: AuthorityCreate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Public exam section registration"""
+    if authority_data.secret_key != settings.AUTHORITY_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Invalid secret key")
+
+    existing_user = await UserRepository.get_by_email(db, authority_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    existing_username = await UserRepository.get_by_username(db, authority_data.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    user = await UserRepository.create(
+        db=db,
+        email=authority_data.email,
+        username=authority_data.username,
+        password=authority_data.password,
+        full_name=authority_data.full_name,
+        role=UserRole.EXAM_SECTION
+    )
+    
+    from app.models.models import Authority
+    authority_profile = Authority(
+        user_id=user.id,
+        position=authority_data.position,
+        department=authority_data.department,
+        phone=authority_data.phone
+    )
+    db.add(authority_profile)
+    await db.commit()
+    
+    return {
+        "message": "Exam Section account created successfully",
+        "user": UserResponse.from_orm(user)
+    }
+
+@router.post("/signup/library")
+async def signup_library(
+    authority_data: AuthorityCreate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Public library registration"""
+    if authority_data.secret_key != settings.AUTHORITY_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Invalid secret key")
+
+    existing_user = await UserRepository.get_by_email(db, authority_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    existing_username = await UserRepository.get_by_username(db, authority_data.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    user = await UserRepository.create(
+        db=db,
+        email=authority_data.email,
+        username=authority_data.username,
+        password=authority_data.password,
+        full_name=authority_data.full_name,
+        role=UserRole.LIBRARY_MANAGER
+    )
+    
+    from app.models.models import Authority
+    authority_profile = Authority(
+        user_id=user.id,
+        position=authority_data.position,
+        department=authority_data.department,
+        phone=authority_data.phone
+    )
+    db.add(authority_profile)
+    await db.commit()
+    
+    return {
+        "message": "Library account created successfully",
+        "user": UserResponse.from_orm(user)
+    }
+
+@router.post("/signup/account")
+async def signup_account(
+    authority_data: AuthorityCreate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Public account section registration"""
+    if authority_data.secret_key != settings.AUTHORITY_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Invalid secret key")
+
+    existing_user = await UserRepository.get_by_email(db, authority_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    existing_username = await UserRepository.get_by_username(db, authority_data.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    user = await UserRepository.create(
+        db=db,
+        email=authority_data.email,
+        username=authority_data.username,
+        password=authority_data.password,
+        full_name=authority_data.full_name,
+        role=UserRole.ACCOUNT_SECTION
+    )
+    
+    from app.models.models import Authority
+    authority_profile = Authority(
+        user_id=user.id,
+        position=authority_data.position,
+        department=authority_data.department,
+        phone=authority_data.phone
+    )
+    db.add(authority_profile)
+    await db.commit()
+    
+    return {
+        "message": "Account Section account created successfully",
+        "user": UserResponse.from_orm(user)
+    }
+
+
 @router.post("/logout")
 async def logout(response: Response):
     response.delete_cookie("access_token", path="/")

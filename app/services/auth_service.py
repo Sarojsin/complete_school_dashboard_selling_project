@@ -36,6 +36,19 @@ class AuthService:
         }
 
     @staticmethod
+    def verify_token(token: str) -> Optional[int]:
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            if payload.get("type") != "access":
+                return None
+            user_id: str = payload.get("sub")
+            if user_id is None:
+                return None
+            return int(user_id)
+        except Exception:
+            return None
+
+    @staticmethod
     def verify_refresh_token(token: str) -> Optional[int]:
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])

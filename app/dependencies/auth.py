@@ -99,3 +99,42 @@ async def get_current_parent(current_user: User = Depends(get_current_user)) -> 
             detail="Not authorized. Parent access required."
         )
     return current_user
+
+async def get_current_user_web(request: Request, db: AsyncSession = Depends(get_async_db)) -> User:
+    """Dependency to get current authenticated user for web routes"""
+    token = request.cookies.get("access_token")
+    if not token or not token.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    token = token.split(" ")[1]
+    from app.services.auth_service import AuthService
+    from app.repositories.user_repository import UserRepository
+    
+    user_id = AuthService.verify_token(token)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+    
+    user = await UserRepository.get_by_id(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+        
+    return user
+
+def hasattr_filter(obj, attr):
+    return hasattr(obj, attr)

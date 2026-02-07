@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Library Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Library Dashboard</h2>
+    
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Books Issued</h5>
+                    <h2>{{ loans|length }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Overdue Books</h5>
+                    <h2>{{ overdue_count }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Books Returned</h5>
+                    <h2>{{ loans|selectattr('status', 'equalto', 'returned')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Active Loans</h5>
+                    <h2>{{ loans|selectattr('status', 'equalto', 'borrowed')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h5>Recent Book Loans</h5>
+                    <a href="/library/issue-book" class="btn btn-primary btn-sm">
+                        Issue New Book
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if loans %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Book Title</th>
+                                        <th>Issued Date</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for loan in loans %}
+                                    <tr>
+                                        <td>{{ loan.student_name }}</td>
+                                        <td>{{ loan.book_title }}</td>
+                                        <td>{{ loan.taken_date }}</td>
+                                        <td>{{ loan.due_date }}</td>
+                                        <td>
+                                            {% if loan.status == 'borrowed' %}
+                                                <span class="badge bg-warning">Borrowed</span>
+                                            {% elif loan.status == 'returned' %}
+                                                <span class="badge bg-success">Returned</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Overdue</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No book loans recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/library/issue-book" class="btn btn-success btn-block mb-2">
+                        Issue Book
+                    </a>
+                    <a href="#" class="btn btn-info btn-block mb-2">
+                        Return Book
+                    </a>
+                    <a href="#" class="btn btn-warning btn-block">
+                        View Overdue Books
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

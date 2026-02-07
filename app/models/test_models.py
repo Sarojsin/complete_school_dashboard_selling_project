@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Floa
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-from database.database import Base
+from .models import Base
 
 class QuestionType(str, enum.Enum):
     MCQ = "multiple_choice"
@@ -12,6 +12,7 @@ class QuestionType(str, enum.Enum):
 
 class Test(Base):
     __tablename__ = "tests"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
@@ -36,6 +37,7 @@ class Test(Base):
 
 class TestQuestion(Base):
     __tablename__ = "test_questions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     test_id = Column(Integer, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False)
@@ -52,6 +54,7 @@ class TestQuestion(Base):
 
 class TestSubmission(Base):
     __tablename__ = "test_submissions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     test_id = Column(Integer, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False)

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Issue Book{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Issue Book to Student</h4>
+                </div>
+                <div class="card-body">
+                    {% if success %}
+                        <div class="alert alert-success">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post" action="/library/issue-book">
+                        <div class="mb-3">
+                            <label for="student_id" class="form-label">Student</label>
+                            <select class="form-control" id="student_id" name="student_id" required>
+                                <option value="">Select Student</option>
+                                {% for student in students %}
+                                    <option value="{{ student.id }}">{{ student.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="book_title" class="form-label">Book Title</label>
+                            <input type="text" class="form-control" id="book_title" 
+                                   name="book_title" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="book_author" class="form-label">Author</label>
+                            <input type="text" class="form-control" id="book_author" 
+                                   name="book_author" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="book_isbn" class="form-label">ISBN (Optional)</label>
+                            <input type="text" class="form-control" id="book_isbn" 
+                                   name="book_isbn">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="due_days" class="form-label">Loan Period (Days)</label>
+                            <input type="number" class="form-control" id="due_days" 
+                                   name="due_days" value="15" min="1" max="30">
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Issue Book</button>
+                            <a href="/library/dashboard" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

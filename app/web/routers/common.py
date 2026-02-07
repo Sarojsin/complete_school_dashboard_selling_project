@@ -66,6 +66,23 @@ async def signup_authority_page(request: Request):
 async def signup_parent_page(request: Request):
     return templates.TemplateResponse("auth/signup_parent.html", {"request": request})
 
+@router.get("/signup/hod", response_class=HTMLResponse)
+async def signup_hod_page(request: Request):
+    return templates.TemplateResponse("auth/signup_hod.html", {"request": request, "departments": DEPARTMENTS})
+
+@router.get("/signup/exam-section", response_class=HTMLResponse)
+async def signup_exam_section_page(request: Request):
+    return templates.TemplateResponse("auth/signup_exam_section.html", {"request": request})
+
+@router.get("/signup/library", response_class=HTMLResponse)
+async def signup_library_page(request: Request):
+    return templates.TemplateResponse("auth/signup_library.html", {"request": request})
+
+@router.get("/signup/account", response_class=HTMLResponse)
+async def signup_account_page(request: Request):
+    return templates.TemplateResponse("auth/signup_account.html", {"request": request})
+
+
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     return templates.TemplateResponse("auth/signup.html", {"request": request})

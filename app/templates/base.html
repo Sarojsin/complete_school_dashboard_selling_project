@@ -166,9 +166,55 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     {% if current_user %}
-                    <li class="nav-item"><a class="nav-link"
-                            href="/{{ current_user.role.value if hasattr(current_user.role, 'value') else current_user.role }}/dashboard">Dashboard</a>
+                    <li class="nav-item">
+                        {% set role_val = (current_user.role.value if hasattr(current_user.role, 'value') else
+                        current_user.role)|lower %}
+                        {% if role_val == 'student' %}
+                        <a class="nav-link" href="/student/dashboard">Dashboard</a>
+                        {% elif role_val == 'teacher' %}
+                        <a class="nav-link" href="/teacher/dashboard">Dashboard</a>
+                        {% elif role_val == 'authority' %}
+                        <a class="nav-link" href="/authority/dashboard">Dashboard</a>
+                        {% elif role_val == 'parent' %}
+                        <a class="nav-link" href="/parent/dashboard">Dashboard</a>
+                        {% elif role_val == 'hod' %}
+                        <a class="nav-link" href="/hod/dashboard">Dashboard</a>
+                        {% elif role_val == 'exam_section' %}
+                        <a class="nav-link" href="/exam-section/dashboard">Dashboard</a>
+                        {% elif role_val == 'library_manager' %}
+                        <a class="nav-link" href="/library/dashboard">Dashboard</a>
+                        {% elif role_val == 'account_section' %}
+                        <a class="nav-link" href="/account/dashboard">Dashboard</a>
+                        {% else %}
+                        <a class="nav-link" href="/">Dashboard</a>
+                        {% endif %}
                     </li>
+
+                    <!-- Role Base Navigation -->
+                    {% if role_val == "hod" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hod/dashboard">HOD Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    {% if role_val == "exam_section" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/exam-section/dashboard">Exam Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    {% if role_val == "library_manager" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/library/dashboard">Library Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    {% if role_val == "account_section" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/account/dashboard">Account Dashboard</a>
+                    </li>
+                    {% endif %}
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
                             data-bs-toggle="dropdown">

@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timedelta
-from database.database import Base
-from config.config import settings
+from .models import Base
+from app.core.config import settings
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

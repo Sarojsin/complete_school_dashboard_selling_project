@@ -3,54 +3,69 @@
 {% block title %}Login - School Management System{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-5">
-            <div class="card shadow border-0">
+            <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <h2 class="fw-bold text-primary">Welcome Back</h2>
-                        <p class="text-muted">Sign in to your account</p>
+                        <div class="user-avatar mx-auto mb-3" style="width: 70px; height: 70px; font-size: 2rem;">
+                            <i class="bi bi-person-lock"></i>
+                        </div>
+                        <h3 class="fw-bold">Welcome Back</h3>
+                        <p class="text-muted">Sign in to your EduManage account</p>
                     </div>
 
                     <form id="loginForm">
                         <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
+                            <label for="username" class="form-label fw-medium">Username</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" class="form-control" id="username" name="username" required>
+                                <span class="input-group-text bg-light border-end-0"><i
+                                        class="bi bi-person text-muted"></i></span>
+                                <input type="text" class="form-control bg-light border-start-0" id="username"
+                                    name="username" placeholder="Enter your username" required>
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label for="password" class="form-label">Password</label>
+                            <div class="d-flex justify-content-between mb-1">
+                                <label for="password" class="form-label fw-medium mb-0">Password</label>
+                                <a href="#" class="text-primary text-decoration-none small">Forgot Password?</a>
+                            </div>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                                <span class="input-group-text bg-light border-end-0"><i
+                                        class="bi bi-shield-lock text-muted"></i></span>
+                                <input type="password" class="form-control bg-light border-start-0" id="password"
+                                    name="password" placeholder="••••••••" required>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                                <label class="form-check-label" for="remember">Remember me</label>
-                            </div>
-                            <a href="#" class="text-decoration-none">Forgot password?</a>
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label text-muted small" for="rememberMe">Remember me on this
+                                device</label>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                        <button type="submit" id="loginBtn" class="btn btn-primary w-100 py-2 fw-bold mb-3">
+                            Sign In
                         </button>
-
-                        <div class="text-center">
-                            <p class="text-muted">Don't have an account? <a href="/signup"
-                                    class="text-decoration-none">Sign up here</a></p>
-                        </div>
                     </form>
+
+                    <div class="text-center">
+                        <p class="text-muted small mb-0">Don't have an account? <a href="/signup"
+                                class="text-primary text-decoration-none fw-medium">Create Account</a></p>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Demo Login Info -->
+            <div class="alert alert-info mt-4 border-0 shadow-sm">
+                <h6 class="fw-bold mb-2"><i class="bi bi-info-circle-fill me-2"></i>Demo Accounts:</h6>
+                <ul class="small mb-0 list-unstyled">
+                    <li><strong>saroj / 123</strong> (Teacher/Student)</li>
+                    <li><strong>library_admin / 123</strong> (Library)</li>
+                    <li><strong>account_admin / 123</strong> (Accounts)</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -59,53 +74,50 @@
 
 {% block extra_js %}
 <script>
-    // Toggle password visibility
-    document.getElementById('togglePassword').addEventListener('click', function () {
-        const passwordInput = document.getElementById('password');
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-    });
-
-    // Handle Login Submission
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const formData = new FormData(this);
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
+        const loginBtn = document.getElementById('loginBtn');
+        const originalText = loginBtn.innerHTML;
 
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+
+        const formData = new FormData(this);
 
         try {
+            // Using OAuth2 compatible endpoint
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 body: formData
             });
 
-            const data = await response.json();
+            const result = await response.json();
 
             if (response.ok) {
-                // Store user info if needed
-                localStorage.setItem('user', JSON.stringify(data.user));
+                // Determine redirect path based on role
+                const role = result.user.role.toLowerCase();
+                let redirectPath = '/';
 
-                // Redirect based on role
-                const role = data.user.role;
-                if (role === 'student') window.location.href = '/student/dashboard';
-                else if (role === 'teacher') window.location.href = '/teacher/dashboard';
-                else if (role === 'authority') window.location.href = '/authority/dashboard';
-                else if (role === 'parent') window.location.href = '/parent/dashboard';
-                else window.location.href = '/';
+                if (role === 'student') redirectPath = '/student/dashboard';
+                else if (role === 'teacher') redirectPath = '/teacher/dashboard';
+                else if (role === 'hod') redirectPath = '/hod/dashboard';
+                else if (role === 'exam_section') redirectPath = '/exam-section/dashboard';
+                else if (role === 'library_manager') redirectPath = '/library/dashboard';
+                else if (role === 'account_section') redirectPath = '/account/dashboard';
+                else if (role === 'authority') redirectPath = '/authority/dashboard';
+                else if (role === 'parent') redirectPath = '/parent/dashboard';
+
+                window.location.href = redirectPath;
             } else {
-                alert(data.detail || 'Login failed');
+                alert(result.detail || 'Login failed. Please check your credentials.');
             }
         } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            console.error('Login error:', error);
+            alert('An educational system error occurred. Please try again.');
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = originalText;
         }
     });
 </script>

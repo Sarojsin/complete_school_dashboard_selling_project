@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from enum import Enum as PyEnum
 import datetime
-from database.database import Base
+from .models import Base
 
 class GroupPostType(PyEnum):
     NOTICE = "notice"
@@ -12,6 +12,7 @@ class GroupPostType(PyEnum):
 
 class Group(Base):
     __tablename__ = "groups"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
@@ -29,6 +30,9 @@ class Group(Base):
 
 class GroupMember(Base):
     __tablename__ = "group_members"
+    __table_args__ = (
+        {"sqlite_autoincrement": True, 'extend_existing': True},
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("groups.id", ondelete="CASCADE"), nullable=False)
@@ -37,17 +41,13 @@ class GroupMember(Base):
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
     
-    # Unique constraint: user can't be in same group twice
-    __table_args__ = (
-        {"sqlite_autoincrement": True},
-    )
-    
     # Relationships
     group = relationship("Group", back_populates="members")
     user = relationship("User", foreign_keys=[user_id])
 
 class GroupPost(Base):
     __tablename__ = "group_posts"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("groups.id", ondelete="CASCADE"), nullable=False)

@@ -2,16 +2,24 @@
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-from database.database import Base
+from app.core.database import Base
 
 class UserRole(str, enum.Enum):
-    STUDENT = "student"
-    TEACHER = "teacher"
-    AUTHORITY = "authority"
-    PARENT = "parent"
+    #ADMIN = "admin"
+    STUDENT = "STUDENT"
+    TEACHER = "TEACHER"
+    AUTHORITY = "AUTHORITY"
+    PARENT = "PARENT"
+    HOD = "HOD"
+    EXAM_SECTION = "EXAM_SECTION"
+    LIBRARY_MANAGER = "LIBRARY_MANAGER"
+    ACCOUNT_SECTION = "ACCOUNT_SECTION"
+    GROUP_CREATOR = "GROUP_CREATOR"
+
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
@@ -32,6 +40,7 @@ class User(Base):
 
 class Student(Base):
     __tablename__ = "students"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -46,6 +55,10 @@ class Student(Base):
     enrollment_date = Column(Date, default=datetime.utcnow)
     grade_level = Column(String(20))
     section = Column(String(10))
+    department_id = Column(Integer, ForeignKey("departments.id"))
+    
+    # Relationships
+    department_obj = relationship("Department", back_populates="students", foreign_keys=[department_id])
     
     # Relationships
     user = relationship("User", back_populates="student_profile")
@@ -57,9 +70,13 @@ class Student(Base):
     fees = relationship("FeeRecord", back_populates="student", cascade="all, delete-orphan")
     test_submissions = relationship("TestSubmission", back_populates="student", cascade="all, delete-orphan")
     video_watch_history = relationship("VideoProgress", back_populates="student", cascade="all, delete-orphan")
+    exam_results = relationship("ExamResult", back_populates="student", cascade="all, delete-orphan")
+    book_loans = relationship("BookLoan", back_populates="student", cascade="all, delete-orphan")
+
 
 class Teacher(Base):
     __tablename__ = "teachers"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -71,6 +88,11 @@ class Teacher(Base):
     specialization = Column(String(255))
     joining_date = Column(Date, default=datetime.utcnow)
     status = Column(String(20), default="active") # active, inactive, on_leave, retired
+    department_id = Column(Integer, ForeignKey("departments.id"))
+    
+    # Relationships
+    department_obj = relationship("Department", back_populates="teachers", foreign_keys=[department_id])
+    hod_department = relationship("Department", back_populates="hod", uselist=False, foreign_keys="[Department.hod_teacher_id]")
     
     # Relationships
     user = relationship("User", back_populates="teacher_profile")
@@ -80,9 +102,12 @@ class Teacher(Base):
     notes = relationship("Note", back_populates="teacher", cascade="all, delete-orphan")
     videos = relationship("Video", back_populates="teacher", cascade="all, delete-orphan")
     notices = relationship("Notice", back_populates="teacher", cascade="all, delete-orphan")
+    payments = relationship("TeacherPayment", back_populates="teacher", cascade="all, delete-orphan")
+
 
 class Authority(Base):
     __tablename__ = "authorities"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -97,6 +122,7 @@ class Authority(Base):
 
 class Parent(Base):
     __tablename__ = "parents"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -112,6 +138,7 @@ class Parent(Base):
 
 class Course(Base):
     __tablename__ = "courses"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     course_code = Column(String(50), unique=True, nullable=False, index=True)

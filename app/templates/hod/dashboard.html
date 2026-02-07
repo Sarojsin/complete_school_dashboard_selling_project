@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}HOD Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>HOD Dashboard</h2>
+    
+    {% if stats.error %}
+        <div class="alert alert-warning">
+            {{ stats.error }}
+        </div>
+    {% else %}
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card text-white bg-primary mb-3">
+                    <div class="card-header">Department</div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stats.department_name }}</h5>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-header">Teachers</div>
+                    <div class="card-body">
+                        <h2 class="card-title">{{ stats.total_teachers }}</h2>
+                        <p class="card-text">Total Teachers</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card text-white bg-info mb-3">
+                    <div class="card-header">Students</div>
+                    <div class="card-body">
+                        <h2 class="card-title">{{ stats.total_students }}</h2>
+                        <p class="card-text">Total Students</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <a href="#" class="text-decoration-none">View Department Teachers</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="#" class="text-decoration-none">View Department Students</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="#" class="text-decoration-none">View Courses</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Notices</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">No recent notices.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
