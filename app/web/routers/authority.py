@@ -13,6 +13,7 @@ from app.core.database import get_async_db
 from app.core.templates import templates
 from app.dependencies.auth import get_current_user
 from app.models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
+from app.models.department_models import Department
 from app.models.group_models import Group, GroupMember
 from app.models.chat_models import ChatMessage
 from app.repositories.student_repository import StudentRepository
@@ -808,3 +809,70 @@ async def authority_delete_post(
 @router.get("/authority/reports")
 async def authority_reports(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
     return templates.TemplateResponse("authority/reports.html", {"request": request, "current_user": current_user, "reports": []})
+# Authority Department Management
+@router.get("/authority/departments")
+async def authority_departments(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    result = await db.execute(select(Department).options(joinedload(Department.hod).joinedload(Teacher.user)))
+    departments = result.scalars().all()
+    
+    # Get teachers for the HOD dropdown
+    teachers_res = await db.execute(select(Teacher).options(joinedload(Teacher.user)))
+    teachers = teachers_res.scalars().all()
+    
+    return templates.TemplateResponse("authority/departments.html", {
+        "request": request,
+        "current_user": current_user,
+        "departments": departments,
+        "teachers": teachers
+    })
+
+@router.post("/authority/departments/add")
+async def authority_add_department(
+    request: Request,
+    name: str = Form(...),
+    code: str = Form(...),
+    hod_teacher_id: Optional[int] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    new_dept = Department(name=name, code=code, hod_teacher_id=hod_teacher_id)
+    db.add(new_dept)
+    await db.commit()
+    return RedirectResponse(url="/authority/departments?success=added", status_code=303)
+
+@router.post("/authority/departments/{id}/edit")
+async def authority_edit_department(
+    id: int,
+    request: Request,
+    name: str = Form(...),
+    code: str = Form(...),
+    hod_teacher_id: Optional[int] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    result = await db.execute(select(Department).where(Department.id == id))
+    dept = result.scalar_one_or_none()
+    if not dept:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    dept.name = name
+    dept.code = code
+    dept.hod_teacher_id = hod_teacher_id
+    
+    await db.commit()
+    return RedirectResponse(url="/authority/departments?success=updated", status_code=303)
+
+@router.post("/authority/departments/{id}/delete")
+async def authority_delete_department(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    result = await db.execute(select(Department).where(Department.id == id))
+    dept = result.scalar_one_or_none()
+    if not dept:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    await db.delete(dept)
+    await db.commit()
+    return RedirectResponse(url="/authority/departments?success=deleted", status_code=303)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, File, UploadFile, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_, and_
 from typing import Optional, List
 import os
 import shutil
@@ -43,6 +43,8 @@ async def student_dashboard(request: Request, current_user: User = Depends(get_c
         
     unread_count = await MessageRepository.get_unread_count(db, current_user.id)
     
+    from datetime import date
+    
     return templates.TemplateResponse("student/dashboard.html", {
         "request": request, 
         "current_user": current_user, 
@@ -55,7 +57,9 @@ async def student_dashboard(request: Request, current_user: User = Depends(get_c
         "attendance_overview": data["attendance_overview"],
         "attendance_grid": data["attendance_grid"],
         "days_labels": data["days_labels"],
-        "unread_count": unread_count
+        "unread_count": unread_count,
+        "library_stats": data["library_stats"],
+        "today": date.today()
     })
 
 @router.get("/student/profile")
@@ -243,31 +247,121 @@ async def student_test_result(request: Request, test_id: int, current_user: User
     return templates.TemplateResponse("student/test_result.html", {"request": request, "test": test, "score": submission.score or 0, "total_questions": len(test.questions), "percentage": round(percentage, 1), "result_status": "Passed" if percentage >= 40 else "Failed", "correct_answers": correct_count, "wrong_answers": wrong_count, "skipped_questions": skipped_count, "time_taken": f"{submission.time_taken // 60}m {submission.time_taken % 60}s" if submission.time_taken else "N/A", "performance_rating": rating, "performance_feedback": "Keep up the great work!" if percentage >= 80 else "Good job!", "questions": questions_data, "improvement_suggestions": ["Review chapters related to incorrect answers."]})
 
 @router.get("/student/notices")
-async def student_notices(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+async def student_notices(
+    request: Request, 
+    category: Optional[str] = Query("all"),
+    page: int = Query(1, ge=1),
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_async_db)
+):
+    from sqlalchemy.orm import joinedload
+    from app.models.models import Notice, Authority, Teacher
+    from app.models.exam_models import ExamNotice
+    
     student = await StudentRepository.get_by_user_id(db, current_user.id)
     grade = student.grade_level if student else None
     
-    notices_data = await NoticeRepository.get_active_notices(db, target_role="student", target_grade=grade)
+    # 1. Fetch General Notices
+    query_general = select(Notice).options(
+        joinedload(Notice.authority).joinedload(Authority.user),
+        joinedload(Notice.teacher).joinedload(Teacher.user)
+    ).filter(
+        or_(Notice.expires_at.is_(None), Notice.expires_at >= datetime.utcnow())
+    )
     
-    notices = []
-    for n in notices_data:
-        author = "School Authority"
+    if grade:
+        query_general = query_general.filter(
+            or_(
+                Notice.target_role == 'all',
+                and_(Notice.target_role == 'student', or_(Notice.target_grade == grade, Notice.target_grade.is_(None)))
+            )
+        )
+    else:
+        query_general = query_general.filter(or_(Notice.target_role == 'student', Notice.target_role == 'all'))
+        
+    res_general = await db.execute(query_general)
+    general_notices = res_general.scalars().unique().all()
+    
+    # 2. Fetch Exam Notices
+    query_exam = select(ExamNotice).options(
+        joinedload(ExamNotice.creator)
+    )
+    res_exam = await db.execute(query_exam)
+    exam_notices = res_exam.scalars().all()
+    
+    # 3. Unify and Categorize
+    all_notices = []
+    
+    # Process General Notices
+    for n in general_notices:
+        cat = "Authority"
+        author_name = "School Office"
+        
         if n.teacher:
-            author = f"Teacher: {n.teacher.user.full_name}"
+            cat = "Teacher"
+            author_name = n.teacher.user.full_name
         elif n.authority:
-            author = n.authority.user.full_name
+            author_name = n.authority.user.full_name
+            dept = (n.authority.department or "").lower()
+            if "library" in dept: cat = "Library"
+            elif "account" in dept: cat = "Account"
+            elif "hod" in dept: cat = "HOD"
+            elif "exam" in dept: cat = "Exam"
             
-        notices.append({
-            "id": n.id, 
-            "title": n.title, 
-            "content": n.content, 
-            "excerpt": n.content[:100] + "..." if len(n.content) > 100 else n.content, 
-            "priority": n.priority, 
-            "date": n.created_at.strftime('%Y-%m-%d'), 
-            "time": n.created_at.strftime('%H:%M'), 
-            "author": author
+        all_notices.append({
+            "id": f"gen_{n.id}",
+            "title": n.title,
+            "content": n.content,
+            "category": cat,
+            "priority": n.priority,
+            "author": author_name,
+            "date": n.created_at.strftime('%Y-%m-%d'),
+            "time": n.created_at.strftime('%H:%M'),
+            "raw_date": n.created_at
         })
-    return templates.TemplateResponse("student/notices.html", {"request": request, "current_user": current_user, "student": current_user, "notices": notices, "important_notices": [n for n in notices if n["priority"] in ["high", "urgent"]], "current_page": 1, "total_pages": 1})
+        
+    # Process Exam Notices
+    for n in exam_notices:
+        all_notices.append({
+            "id": f"exam_{n.id}",
+            "title": n.title,
+            "content": n.content,
+            "category": "Exam",
+            "priority": "normal",
+            "author": n.creator.full_name if n.creator else "Exam Section",
+            "date": n.created_at.strftime('%Y-%m-%d'),
+            "time": n.created_at.strftime('%H:%M'),
+            "raw_date": n.created_at
+        })
+        
+    # 4. Sort by Date
+    all_notices.sort(key=lambda x: x["raw_date"], reverse=True)
+    
+    # 5. Apply Category Filter
+    if category and category != "all":
+        all_notices = [n for n in all_notices if n["category"].lower() == category.lower()]
+        
+    # 6. Pagination (simple slice for combined list)
+    per_page = 10
+    total_items = len(all_notices)
+    total_pages = (total_items + per_page - 1) // per_page if total_items > 0 else 1
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_notices = all_notices[start:end]
+    
+    important_notices = [n for n in all_notices if n["priority"] in ["high", "urgent"]][:3]
+    
+    return templates.TemplateResponse("student/notices.html", {
+        "request": request, 
+        "current_user": current_user, 
+        "student": current_user, 
+        "notices": paginated_notices, 
+        "important_notices": important_notices,
+        "current_page": page,
+        "total_pages": total_pages,
+        "current_category": category,
+        "categories": ["All", "Exam", "Library", "Account", "HOD", "Teacher", "Authority"]
+    })
 
 @router.get("/student/timetable")
 async def student_timetable(request: Request, current_user: User = Depends(get_current_user)):
@@ -508,4 +602,76 @@ async def student_view_post(
         "group_id": group_id,
         "is_teacher": False,
         "is_author": post.author_id == current_user.id
+    })
+
+# ------------------ EXAM RESULTS & LIBRARY VIEWS ------------------
+
+@router.get("/student/exam-results")
+async def student_exam_results(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    """Student view of their own exam results"""
+    from sqlalchemy.orm import joinedload
+    from app.models.exam_models import ExamResult
+    
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+    
+    # Get student's exam results with course eager loaded
+    result = await db.execute(
+        select(ExamResult)
+        .options(joinedload(ExamResult.course))
+        .where(ExamResult.student_id == student.id)
+        .order_by(ExamResult.semester.desc(), ExamResult.published_at.desc())
+    )
+    exam_results = result.scalars().all()
+    
+    return templates.TemplateResponse("student/exam_results.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": student,
+        "exam_results": exam_results
+    })
+
+@router.get("/student/library")
+async def student_library(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_async_db)):
+    """Student view of their borrowed books and library status"""
+    from datetime import date
+    student = await StudentRepository.get_by_user_id(db, current_user.id)
+    if not student:
+        return RedirectResponse("/student/dashboard")
+    
+    # Get student's book loans
+    from app.models.library_models import BookLoan
+    result = await db.execute(
+        select(BookLoan)
+        .where(BookLoan.student_id == student.id)
+        .order_by(BookLoan.taken_date.desc())
+    )
+    book_loans = result.scalars().all()
+    
+    # Calculate total fines
+    total_fines = sum(loan.fine_amount for loan in book_loans if loan.fine_amount > 0)
+    
+    # Separate active and returned loans
+    active_loans = [loan for loan in book_loans if loan.status == 'borrowed']
+    returned_loans = [loan for loan in book_loans if loan.status == 'returned']
+    
+    # Calculate currently borrowed count
+    currently_borrowed = len(active_loans)
+    
+    # Calculate overdue count
+    today = date.today()
+    overdue_count = sum(1 for loan in active_loans if loan.due_date and loan.due_date < today)
+    
+    return templates.TemplateResponse("student/library.html", {
+        "request": request,
+        "current_user": current_user,
+        "student": student,
+        "book_loans": book_loans,
+        "active_loans": active_loans,
+        "returned_loans": returned_loans,
+        "total_fines": total_fines,
+        "currently_borrowed": currently_borrowed,
+        "overdue_count": overdue_count,
+        "today": today
     })
