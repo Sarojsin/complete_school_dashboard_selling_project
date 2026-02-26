@@ -124,6 +124,32 @@ class StudentService:
         notices = await NoticeRepository.get_active_notices(db, target_role="student", target_grade=student.grade_level)
         latest_notice = notices[0] if notices else None
         
+        # Fetch Library Data
+        from app.models.library_models import BookLoan
+        from datetime import date
+        library_result = await db.execute(
+            select(BookLoan)
+            .where(BookLoan.student_id == student.id)
+            .order_by(BookLoan.taken_date.desc())
+        )
+        book_loans = library_result.scalars().all()
+        
+        # Calculate library stats
+        active_loans = [loan for loan in book_loans if loan.status == 'borrowed']
+        returned_loans = [loan for loan in book_loans if loan.status == 'returned']
+        total_fines = sum(loan.fine_amount for loan in book_loans if loan.fine_amount > 0)
+        today = date.today()
+        overdue_count = sum(1 for loan in active_loans if loan.due_date and loan.due_date < today)
+        
+        library_stats = {
+            "total_borrowed": len(book_loans),
+            "currently_borrowed": len(active_loans),
+            "returned": len(returned_loans),
+            "overdue": overdue_count,
+            "total_fines": total_fines,
+            "recent_loans": active_loans[:3]  # Show last 3 active loans
+        }
+        
         return {
             "student": student,
             "courses": courses,
@@ -134,7 +160,8 @@ class StudentService:
             "attendance_grid": attendance_grid,
             "days_labels": days_labels,
             "stats": stats,
-            "latest_notice": latest_notice
+            "latest_notice": latest_notice,
+            "library_stats": library_stats
         }
 
     @staticmethod
