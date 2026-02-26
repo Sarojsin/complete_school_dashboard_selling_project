@@ -18,3 +18,11 @@ class TeacherPayment(Base):
     # Relationships
     teacher = relationship("Teacher", back_populates="payments")
     payer = relationship("User")
+    
+    @property
+    def teacher_name(self):
+        return self.teacher.full_name if self.teacher else "Unknown"
+        
+    @property
+    def paid_by_name(self):
+        return self.payer.full_name if self.payer else (self.payer.username if self.payer else "Authority")
