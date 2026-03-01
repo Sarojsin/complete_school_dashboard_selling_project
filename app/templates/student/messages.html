@@ -128,8 +128,9 @@
     document.addEventListener('DOMContentLoaded', function () {
         {% for message in messages %}
         {% if not message.is_read %}
-        const modal{{ message.id }} = document.getElementById('messageModal{{ message.id }}');
-        modal{{ message.id }}.addEventListener('shown.bs.modal', function() {
+        const modal{{ message.id }
+    } = document.getElementById('messageModal{{ message.id }}');
+        modal{ { message.id } }.addEventListener('shown.bs.modal', function () {
         fetch('/student/messages/{{ message.id }}/read', {
             method: 'POST',
             headers: {

@@ -14,8 +14,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Study Notes</h2>
                 <div class="dropdown">
-                    <button class="btn btn-outline-primary dropdown-toggle" type="button" 
-                            data-bs-toggle="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="fas fa-filter me-2"></i>Filter by Subject
                     </button>
                     <ul class="dropdown-menu">
@@ -31,8 +30,7 @@
             <div class="row mb-4">
                 <div class="col-md-8">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search notes..." 
-                               id="notesSearch">
+                        <input type="text" class="form-control" placeholder="Search notes..." id="notesSearch">
                         <button class="btn btn-primary" type="button">
                             <i class="fas fa-search"></i>
                         </button>
@@ -51,10 +49,8 @@
             <!-- Notes Grid -->
             <div class="row" id="notesGrid">
                 {% for note in notes %}
-                <div class="col-lg-6 col-xl-4 mb-4 note-item" 
-                     data-subject="{{ note.subject }}"
-                     data-teacher="{{ note.teacher }}"
-                     data-date="{{ note.upload_date }}">
+                <div class="col-lg-6 col-xl-4 mb-4 note-item" data-subject="{{ note.subject }}"
+                    data-teacher="{{ note.teacher }}" data-date="{{ note.upload_date }}">
                     <div class="card h-100 shadow-sm note-card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <span class="badge bg-primary">{{ note.subject }}</span>
@@ -85,13 +81,12 @@
                         </div>
                         <div class="card-footer bg-transparent">
                             <div class="btn-group w-100" role="group">
-                                <a href="{{ note.file_url }}" class="btn btn-outline-primary btn-sm" 
-                                   target="_blank" download>
+                                <a href="{{ note.file_url }}" class="btn btn-outline-primary btn-sm" target="_blank"
+                                    download>
                                     <i class="fas fa-download me-1"></i>Download
                                 </a>
                                 <button type="button" class="btn btn-outline-info btn-sm preview-btn"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#previewModal{{ note.id }}">
+                                    data-bs-toggle="modal" data-bs-target="#previewModal{{ note.id }}">
                                     <i class="fas fa-eye me-1"></i>Preview
                                 </button>
                             </div>
@@ -204,8 +199,8 @@
                 <!-- Preview Content -->
                 <div class="preview-container border rounded p-3" style="max-height: 400px; overflow-y: auto;">
                     {% if note.file_type == 'pdf' %}
-                    <iframe src="{{ note.file_url }}#view=FitH" width="100%" height="350" 
-                            style="border: none;"></iframe>
+                    <iframe src="{{ note.file_url }}#view=FitH" width="100%" height="350"
+                        style="border: none;"></iframe>
                     {% elif note.file_type in ['doc', 'docx'] %}
                     <div class="text-center py-4">
                         <i class="fas fa-file-word fa-3x text-primary mb-3"></i>
@@ -247,50 +242,50 @@
 {% endfor %}
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Notes search functionality
-    const notesSearch = document.getElementById('notesSearch');
-    const noteItems = document.querySelectorAll('.note-item');
-    const sortSelect = document.getElementById('sortSelect');
+    document.addEventListener('DOMContentLoaded', function () {
+        // Notes search functionality
+        const notesSearch = document.getElementById('notesSearch');
+        const noteItems = document.querySelectorAll('.note-item');
+        const sortSelect = document.getElementById('sortSelect');
 
-    function filterAndSortNotes() {
-        const searchTerm = notesSearch.value.toLowerCase();
-        const sortBy = sortSelect.value;
+        function filterAndSortNotes() {
+            const searchTerm = notesSearch.value.toLowerCase();
+            const sortBy = sortSelect.value;
 
-        // Filter
-        const filteredNotes = Array.from(noteItems).filter(item => {
-            const title = item.querySelector('.card-title').textContent.toLowerCase();
-            const subject = item.getAttribute('data-subject').toLowerCase();
-            const teacher = item.getAttribute('data-teacher').toLowerCase();
-            
-            return title.includes(searchTerm) || subject.includes(searchTerm) || teacher.includes(searchTerm);
-        });
+            // Filter
+            const filteredNotes = Array.from(noteItems).filter(item => {
+                const title = item.querySelector('.card-title').textContent.toLowerCase();
+                const subject = item.getAttribute('data-subject').toLowerCase();
+                const teacher = item.getAttribute('data-teacher').toLowerCase();
 
-        // Sort
-        filteredNotes.sort((a, b) => {
-            switch(sortBy) {
-                case 'newest':
-                    return new Date(b.getAttribute('data-date')) - new Date(a.getAttribute('data-date'));
-                case 'oldest':
-                    return new Date(a.getAttribute('data-date')) - new Date(b.getAttribute('data-date'));
-                case 'subject':
-                    return a.getAttribute('data-subject').localeCompare(b.getAttribute('data-subject'));
-                case 'teacher':
-                    return a.getAttribute('data-teacher').localeCompare(b.getAttribute('data-teacher'));
-                default:
-                    return 0;
-            }
-        });
+                return title.includes(searchTerm) || subject.includes(searchTerm) || teacher.includes(searchTerm);
+            });
 
-        // Hide all notes first
-        noteItems.forEach(item => item.style.display = 'none');
-        
-        // Show filtered and sorted notes
-        filteredNotes.forEach(item => item.style.display = 'block');
-    }
+            // Sort
+            filteredNotes.sort((a, b) => {
+                switch (sortBy) {
+                    case 'newest':
+                        return new Date(b.getAttribute('data-date')) - new Date(a.getAttribute('data-date'));
+                    case 'oldest':
+                        return new Date(a.getAttribute('data-date')) - new Date(b.getAttribute('data-date'));
+                    case 'subject':
+                        return a.getAttribute('data-subject').localeCompare(b.getAttribute('data-subject'));
+                    case 'teacher':
+                        return a.getAttribute('data-teacher').localeCompare(b.getAttribute('data-teacher'));
+                    default:
+                        return 0;
+                }
+            });
 
-    notesSearch.addEventListener('input', filterAndSortNotes);
-    sortSelect.addEventListener('change', filterAndSortNotes);
-});
+            // Hide all notes first
+            noteItems.forEach(item => item.style.display = 'none');
+
+            // Show filtered and sorted notes
+            filteredNotes.forEach(item => item.style.display = 'block');
+        }
+
+        notesSearch.addEventListener('input', filterAndSortNotes);
+        sortSelect.addEventListener('change', filterAndSortNotes);
+    });
 </script>
 {% endblock %}
