@@ -62,6 +62,16 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/library' %}active{% endif %}" href="/student/library">
+            <i class="bi bi-book me-2"></i>My Library
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.path == '/student/exam-results' %}active{% endif %}" href="/student/exam-results">
+            <i class="bi bi-file-earmark-text me-2"></i>Exam Results
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link {% if request.path == '/student/forum' %}active{% endif %}" href="/student/forum">
             <i class="bi bi-chat-dots me-2"></i>Discussion Forum
         </a>

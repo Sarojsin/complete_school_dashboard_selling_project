@@ -22,15 +22,15 @@
                 <div class="col-md-4">
                     <div class="card shadow-sm">
                         <div class="card-body text-center">
-                            <img src="{{ student.profile_pic or '/static/images/default-avatar.png' }}" 
-                                 class="rounded-circle mb-3" width="150" height="150" alt="Profile Picture">
+                            <img src="{{ student.profile_pic or '/static/images/default-avatar.png' }}"
+                                class="rounded-circle mb-3" width="150" height="150" alt="Profile Picture">
                             <h4>{{ student.name }}</h4>
                             <p class="text-muted">Student ID: {{ student.id }}</p>
                             <p class="text-muted">{{ student.grade }} • {{ student.section }}</p>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-8">
                     <div class="card shadow-sm">
                         <div class="card-header bg-primary text-white">

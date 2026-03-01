@@ -14,8 +14,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Learning Videos</h2>
                 <div class="dropdown">
-                    <button class="btn btn-outline-primary dropdown-toggle" type="button" 
-                            data-bs-toggle="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="fas fa-filter me-2"></i>Filter by Subject
                     </button>
                     <ul class="dropdown-menu">
@@ -31,8 +30,7 @@
             <div class="row mb-4">
                 <div class="col-md-6">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search videos..." 
-                               id="videoSearch">
+                        <input type="text" class="form-control" placeholder="Search videos..." id="videoSearch">
                         <button class="btn btn-primary" type="button">
                             <i class="fas fa-search"></i>
                         </button>
@@ -51,9 +49,8 @@
             <!-- Video Grid -->
             <div class="row" id="videoGrid">
                 {% for video in videos %}
-                <div class="col-lg-4 col-md-6 mb-4 video-item" 
-                     data-subject="{{ video.subject }}"
-                     data-watched="{{ 'true' if video.watched else 'false' }}">
+                <div class="col-lg-4 col-md-6 mb-4 video-item" data-subject="{{ video.subject }}"
+                    data-watched="{{ 'true' if video.watched else 'false' }}">
                     <div class="card h-100 shadow-sm video-card">
                         <div class="position-relative">
                             <img src="{{ video.thumbnail }}" class="card-img-top" alt="{{ video.title }}">
@@ -92,10 +89,8 @@
                         </div>
                         <div class="card-footer bg-transparent">
                             <div class="d-grid gap-2">
-                                <button class="btn btn-primary btn-sm watch-btn" 
-                                        data-video-id="{{ video.id }}"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#videoModal{{ video.id }}">
+                                <button class="btn btn-primary btn-sm watch-btn" data-video-id="{{ video.id }}"
+                                    data-bs-toggle="modal" data-bs-target="#videoModal{{ video.id }}">
                                     <i class="fas fa-play me-1"></i> Watch Video
                                 </button>
                             </div>
@@ -138,7 +133,7 @@
                             <p class="text-muted mb-0">Total Watch Time</p>
                         </div>
                     </div>
-                    
+
                     <!-- Subject-wise Progress -->
                     <h6 class="mt-4 mb-3">Progress by Subject</h6>
                     {% for subject, stats in progress_stats.by_subject.items() %}
@@ -148,8 +143,7 @@
                             <span>{{ stats.watched }}/{{ stats.total }} ({{ stats.percentage }}%)</span>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar" role="progressbar" 
-                                 style="width: {{ stats.percentage }}%"></div>
+                            <div class="progress-bar" role="progressbar" style="width: {{ stats.percentage }}%"></div>
                         </div>
                     </div>
                     {% endfor %}
@@ -175,19 +169,19 @@
                         Your browser does not support the video tag.
                     </video>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-8">
                         <h6>Description</h6>
                         <p class="text-muted">{{ video.description }}</p>
-                        
+
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             <span class="badge bg-primary">{{ video.subject }}</span>
                             <span class="badge bg-secondary">{{ video.duration }}</span>
                             {% if video.tags %}
-                                {% for tag in video.tags %}
-                                <span class="badge bg-light text-dark">{{ tag }}</span>
-                                {% endfor %}
+                            {% for tag in video.tags %}
+                            <span class="badge bg-light text-dark">{{ tag }}</span>
+                            {% endfor %}
                             {% endif %}
                         </div>
                     </div>
@@ -214,7 +208,8 @@
                                     <h6>Related Materials</h6>
                                     <div class="list-group list-group-flush">
                                         {% for material in video.related_materials %}
-                                        <a href="{{ material.url }}" class="list-group-item list-group-item-action small">
+                                        <a href="{{ material.url }}"
+                                            class="list-group-item list-group-item-action small">
                                             <i class="fas fa-{{ material.icon }} me-2"></i>
                                             {{ material.name }}
                                         </a>
@@ -240,53 +235,53 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Mark video as watched when play button is clicked
-    const watchBtn = document.querySelector('[data-video-id="{{ video.id }}"]');
-    if (watchBtn) {
-        watchBtn.addEventListener('click', function() {
-            // Send AJAX request to mark as watched
-            fetch('/student/mark-video-watched/{{ video.id }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+    document.addEventListener('DOMContentLoaded', function () {
+        // Mark video as watched when play button is clicked
+        const watchBtn = document.querySelector('[data-video-id="{{ video.id }}"]');
+        if (watchBtn) {
+            watchBtn.addEventListener('click', function () {
+                // Send AJAX request to mark as watched
+                fetch('/student/mark-video-watched/{{ video.id }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
             });
-        });
-    }
-});
+        }
+    });
 </script>
 {% endfor %}
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Video search functionality
-    const videoSearch = document.getElementById('videoSearch');
-    const videoItems = document.querySelectorAll('.video-item');
-    const watchedSwitch = document.getElementById('watchedSwitch');
+    document.addEventListener('DOMContentLoaded', function () {
+        // Video search functionality
+        const videoSearch = document.getElementById('videoSearch');
+        const videoItems = document.querySelectorAll('.video-item');
+        const watchedSwitch = document.getElementById('watchedSwitch');
 
-    function filterVideos() {
-        const searchTerm = videoSearch.value.toLowerCase();
-        const showOnlyUnwatched = watchedSwitch.checked;
+        function filterVideos() {
+            const searchTerm = videoSearch.value.toLowerCase();
+            const showOnlyUnwatched = watchedSwitch.checked;
 
-        videoItems.forEach(item => {
-            const title = item.querySelector('.card-title').textContent.toLowerCase();
-            const subject = item.getAttribute('data-subject').toLowerCase();
-            const watched = item.getAttribute('data-watched') === 'true';
-            
-            const matchesSearch = title.includes(searchTerm) || subject.includes(searchTerm);
-            const matchesWatchedFilter = !showOnlyUnwatched || !watched;
-            
-            if (matchesSearch && matchesWatchedFilter) {
-                item.style.display = 'block';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
+            videoItems.forEach(item => {
+                const title = item.querySelector('.card-title').textContent.toLowerCase();
+                const subject = item.getAttribute('data-subject').toLowerCase();
+                const watched = item.getAttribute('data-watched') === 'true';
 
-    videoSearch.addEventListener('input', filterVideos);
-    watchedSwitch.addEventListener('change', filterVideos);
-});
+                const matchesSearch = title.includes(searchTerm) || subject.includes(searchTerm);
+                const matchesWatchedFilter = !showOnlyUnwatched || !watched;
+
+                if (matchesSearch && matchesWatchedFilter) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        videoSearch.addEventListener('input', filterVideos);
+        watchedSwitch.addEventListener('change', filterVideos);
+    });
 </script>
 {% endblock %}
