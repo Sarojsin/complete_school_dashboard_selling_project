@@ -38,7 +38,9 @@
         <li><a class="dropdown-item" href="?semester=all">All Semesters</a></li>
         <li><a class="dropdown-item" href="?semester=1">Semester 1</a></li>
         <li><a class="dropdown-item" href="?semester=2">Semester 2</a></li>
-        <li><hr class="dropdown-divider"></li>
+        <li>
+            <hr class="dropdown-divider">
+        </li>
         <li><a class="dropdown-item" href="?course=all">All Courses</a></li>
     </ul>
 </div>
@@ -161,31 +163,35 @@
                                 </td>
                                 <td>{{ course.teacher }}</td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if course.assignment_avg >= 80 else 'warning' if course.assignment_avg >= 70 else 'danger' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.assignment_avg >= 80 else 'warning' if course.assignment_avg >= 70 else 'danger' }}">
                                         {{ course.assignment_avg }}%
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if course.exam_avg >= 80 else 'warning' if course.exam_avg >= 70 else 'danger' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.exam_avg >= 80 else 'warning' if course.exam_avg >= 70 else 'danger' }}">
                                         {{ course.exam_avg }}%
                                     </span>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="progress flex-grow-1 me-2" style="height: 8px; width: 80px;">
-                                            <div class="progress-bar bg-{{ 'success' if course.overall >= 80 else 'warning' if course.overall >= 70 else 'danger' }}" 
-                                                 style="width: {{ course.overall }}%"></div>
+                                            <div class="progress-bar bg-{{ 'success' if course.overall >= 80 else 'warning' if course.overall >= 70 else 'danger' }}"
+                                                style="width: {{ course.overall }}%"></div>
                                         </div>
                                         <strong>{{ course.overall }}%</strong>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if course.grade in ['A','A+','A-'] else 'warning' if course.grade in ['B','B+','B-'] else 'danger' }} fs-6">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.grade in ['A','A+','A-'] else 'warning' if course.grade in ['B','B+','B-'] else 'danger' }} fs-6">
                                         {{ course.grade }}
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if course.status == 'Completed' else 'info' if course.status == 'In Progress' else 'secondary' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.status == 'Completed' else 'info' if course.status == 'In Progress' else 'secondary' }}">
                                         {{ course.status }}
                                     </span>
                                 </td>
@@ -239,14 +245,16 @@
                     {% for course in courses %}
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading{{ loop.index }}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse{{ loop.index }}">
                                 <div class="d-flex justify-content-between w-100 me-3">
                                     <span>
-                                        <strong>{{ course.name }}</strong> 
+                                        <strong>{{ course.name }}</strong>
                                         <span class="badge bg-secondary ms-2">{{ course.code }}</span>
                                     </span>
                                     <span>
-                                        <span class="badge bg-{{ 'success' if course.overall >= 80 else 'warning' if course.overall >= 70 else 'danger' }} me-2">
+                                        <span
+                                            class="badge bg-{{ 'success' if course.overall >= 80 else 'warning' if course.overall >= 70 else 'danger' }} me-2">
                                             {{ course.overall }}%
                                         </span>
                                         <span class="badge bg-dark">{{ course.grade }}</span>
@@ -254,7 +262,8 @@
                                 </div>
                             </button>
                         </h2>
-                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#gradeAccordion">
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
+                            data-bs-parent="#gradeAccordion">
                             <div class="accordion-body">
                                 <!-- Assignments -->
                                 <h6 class="mb-3">Assignments</h6>
@@ -276,12 +285,14 @@
                                                 <td>{{ assignment.due_date }}</td>
                                                 <td>{{ assignment.score }}/{{ assignment.max_score }}</td>
                                                 <td>
-                                                    <span class="badge bg-{{ 'success' if assignment.percentage >= 80 else 'warning' if assignment.percentage >= 70 else 'danger' }}">
+                                                    <span
+                                                        class="badge bg-{{ 'success' if assignment.percentage >= 80 else 'warning' if assignment.percentage >= 70 else 'danger' }}">
                                                         {{ assignment.percentage }}%
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="{{ assignment.feedback }}">
+                                                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip"
+                                                        title="{{ assignment.feedback }}">
                                                         <i class="bi bi-chat-left-text"></i>
                                                     </button>
                                                 </td>
@@ -312,7 +323,8 @@
                                                 <td>{{ exam.score }}/{{ exam.max_score }}</td>
                                                 <td>{{ exam.weight }}%</td>
                                                 <td>
-                                                    <span class="badge bg-{{ 'success' if exam.percentage >= 80 else 'warning' if exam.percentage >= 70 else 'danger' }}">
+                                                    <span
+                                                        class="badge bg-{{ 'success' if exam.percentage >= 80 else 'warning' if exam.percentage >= 70 else 'danger' }}">
                                                         {{ exam.percentage }}%
                                                     </span>
                                                 </td>
