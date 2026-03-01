@@ -38,7 +38,9 @@
         <li><a class="dropdown-item" href="?semester=all">All Semesters</a></li>
         <li><a class="dropdown-item" href="?semester=1">Semester 1</a></li>
         <li><a class="dropdown-item" href="?semester=2">Semester 2</a></li>
-        <li><hr class="dropdown-divider"></li>
+        <li>
+            <hr class="dropdown-divider">
+        </li>
         <li><a class="dropdown-item" href="?status=active">Active Courses</a></li>
         <li><a class="dropdown-item" href="?status=completed">Completed</a></li>
     </ul>
@@ -142,9 +144,11 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title mb-1">{{ course.name }}</h6>
-                                        <p class="text-muted mb-0 small">{{ course.code }} • {{ course.credits }} Credits</p>
+                                        <p class="text-muted mb-0 small">{{ course.code }} • {{ course.credits }}
+                                            Credits</p>
                                     </div>
-                                    <span class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.status == 'active' else 'secondary' }}">
                                         {{ course.status|title }}
                                     </span>
                                 </div>
@@ -154,7 +158,8 @@
                                     <div class="col-6">
                                         <small class="text-muted d-block">Instructor</small>
                                         <div class="d-flex align-items-center mt-1">
-                                            <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2" width="24" height="24" alt="{{ course.instructor }}">
+                                            <img src="{{ course.instructor_avatar }}" class="rounded-circle me-2"
+                                                width="24" height="24" alt="{{ course.instructor }}">
                                             <strong>{{ course.instructor }}</strong>
                                         </div>
                                     </div>
@@ -163,15 +168,15 @@
                                         <strong>{{ course.schedule }}</strong>
                                     </div>
                                 </div>
-                                
+
                                 <div class="course-progress mb-3">
                                     <div class="d-flex justify-content-between mb-1">
                                         <small class="text-muted">Course Progress</small>
                                         <small><strong>{{ course.progress }}%</strong></small>
                                     </div>
                                     <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar bg-{{ 'success' if course.progress >= 80 else 'warning' if course.progress >= 60 else 'info' }}" 
-                                             style="width: {{ course.progress }}%"></div>
+                                        <div class="progress-bar bg-{{ 'success' if course.progress >= 80 else 'warning' if course.progress >= 60 else 'info' }}"
+                                            style="width: {{ course.progress }}%"></div>
                                     </div>
                                 </div>
 
@@ -179,17 +184,20 @@
                                     <div class="row text-center">
                                         <div class="col-4">
                                             <small class="text-muted d-block">Current Grade</small>
-                                            <strong class="text-{{ 'success' if course.current_grade >= 80 else 'warning' if course.current_grade >= 70 else 'danger' }}">
+                                            <strong
+                                                class="text-{{ 'success' if course.current_grade >= 80 else 'warning' if course.current_grade >= 70 else 'danger' }}">
                                                 {{ course.current_grade }}%
                                             </strong>
                                         </div>
                                         <div class="col-4">
                                             <small class="text-muted d-block">Assignments</small>
-                                            <strong class="text-primary">{{ course.assignments_completed }}/{{ course.assignments_total }}</strong>
+                                            <strong class="text-primary">{{ course.assignments_completed }}/{{
+                                                course.assignments_total }}</strong>
                                         </div>
                                         <div class="col-4">
                                             <small class="text-muted d-block">Attendance</small>
-                                            <strong class="text-{{ 'success' if course.attendance >= 85 else 'warning' if course.attendance >= 75 else 'danger' }}">
+                                            <strong
+                                                class="text-{{ 'success' if course.attendance >= 85 else 'warning' if course.attendance >= 75 else 'danger' }}">
                                                 {{ course.attendance }}%
                                             </strong>
                                         </div>
@@ -220,13 +228,16 @@
                                     <a href="/student/courses/{{ course.id }}" class="btn btn-outline-primary btn-sm">
                                         <i class="bi bi-eye"></i> View
                                     </a>
-                                    <a href="/student/notes?course={{ course.id }}" class="btn btn-outline-success btn-sm">
+                                    <a href="/student/notes?course={{ course.id }}"
+                                        class="btn btn-outline-success btn-sm">
                                         <i class="bi bi-journal"></i> Materials
                                     </a>
-                                    <a href="/student/assignments?course={{ course.id }}" class="btn btn-outline-info btn-sm">
+                                    <a href="/student/assignments?course={{ course.id }}"
+                                        class="btn btn-outline-info btn-sm">
                                         <i class="bi bi-list-task"></i> Assignments
                                     </a>
-                                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#contactModal{{ course.id }}">
+                                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#contactModal{{ course.id }}">
                                         <i class="bi bi-envelope"></i> Contact
                                     </button>
                                 </div>
@@ -266,7 +277,7 @@
                     </div>
                     <small class="text-muted">94% of maximum GPA</small>
                 </div>
-                
+
                 <div class="academic-info">
                     <div class="d-flex justify-content-between mb-2">
                         <span>Class Rank:</span>
@@ -325,7 +336,8 @@
                                 </td>
                                 <td>{{ course.instructor }}</td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if course.final_grade >= 80 else 'warning' if course.final_grade >= 70 else 'danger' }} fs-6">
+                                    <span
+                                        class="badge bg-{{ 'success' if course.final_grade >= 80 else 'warning' if course.final_grade >= 70 else 'danger' }} fs-6">
                                         {{ course.final_grade }}%
                                     </span>
                                 </td>
@@ -406,12 +418,12 @@
         border: none;
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
-    
+
     .course-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
-    
+
     .course-badge {
         position: absolute;
         top: 0;
@@ -420,17 +432,17 @@
         height: 100%;
         border-radius: 4px 0 0 4px;
     }
-    
+
     .resource-card {
         transition: transform 0.2s;
         border: none;
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
-    
+
     .resource-card:hover {
         transform: translateY(-2px);
     }
-    
+
     .upcoming-items .badge {
         font-size: 0.7rem;
     }
@@ -449,35 +461,35 @@
                 '{{ course.name }}',
                 {% endfor %}
             ],
-            datasets: [{
-                label: 'Course Progress %',
-                data: [
-                    {% for course in current_courses %}
+    datasets: [{
+        label: 'Course Progress %',
+        data: [
+            {% for course in current_courses %}
                     {{ course.progress }},
-                    {% endfor %}
-                ],
-                backgroundColor: [
-                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
-                ],
-                borderColor: [
-                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
-                ],
+    {% endfor %}
+    ],
+        backgroundColor: [
+            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+        ],
+            borderColor: [
+                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+            ],
                 borderWidth: 1
             }]
         },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
                     max: 100
-                }
             }
         }
+    }
     });
 
     // Course card click handlers
     document.querySelectorAll('.course-card').forEach(card => {
-        card.addEventListener('click', function(e) {
+        card.addEventListener('click', function (e) {
             // Don't trigger if clicking on buttons or links
             if (!e.target.closest('a') && !e.target.closest('button')) {
                 const viewLink = this.querySelector('a[href*="/courses/"]');
@@ -490,7 +502,7 @@
 
     // Quick contact modal
     document.querySelectorAll('[data-bs-target^="#contactModal"]').forEach(button => {
-        button.addEventListener('click', function(e) {
+        button.addEventListener('click', function (e) {
             e.stopPropagation();
             const courseId = this.getAttribute('data-bs-target').replace('#contactModal', '');
             // You can pre-fill modal content based on courseId

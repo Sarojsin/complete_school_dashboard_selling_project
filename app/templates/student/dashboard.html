@@ -3,158 +3,412 @@
 {% block title %}Student Dashboard{% endblock %}
 
 {% block sidebar_content %}
-{% include 'student/sidebar.html' %}
+<div class="dashboard-sidebar">
+    <div class="sidebar-header mb-3">
+        <h6 class="mb-0 fw-bold text-uppercase small text-muted">
+            <i class="bi bi-grid-fill me-2"></i>Student Panel
+        </h6>
+    </div>
+    {% include 'student/sidebar.html' %}
+</div>
 {% endblock %}
 
-{% block page_title %}Student Dashboard{% endblock %}
-
 {% block content %}
-<!-- Stats Cards -->
-<div class="row">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card primary h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Current GPA</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">3.75</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-graph-up fs-1 text-primary"></i>
-                    </div>
-                </div>
-            </div>
+<!-- Welcome Banner -->
+<!-- Welcome Banner -->
+<div class="welcome-banner mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h4 class="fw-bold mb-1" style="position: relative; z-index: 1;">
+                👋 Welcome back, {{ current_user.full_name }}!
+            </h4>
+            <p class="mb-0 opacity-75" style="position: relative; z-index: 1;">
+                Here's what's happening with your academics today.
+            </p>
         </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card success h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Attendance</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">94%</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-calendar-check fs-1 text-success"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card info h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Pending Assignments</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">3</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-journal-text fs-1 text-info"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card warning h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Upcoming Tests</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">2</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-pencil-square fs-1 text-warning"></i>
-                    </div>
-                </div>
-            </div>
+        <div class="col-auto d-none d-md-block" style="position: relative; z-index: 1;">
+            {% if unread_count > 0 %}
+            <a href="/student/messages" class="btn btn-light btn-sm">
+                <i class="bi bi-envelope me-1"></i>{{ unread_count }} new message{{ 's' if unread_count > 1
+                else '' }}
+            </a>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<div class="row">
+<!-- Stats Cards Row -->
+<div class="row g-3 mb-4">
+    <!-- GPA -->
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="stat-card-gradient" style="background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+            </div>
+            <div class="stat-value">{{ stats.gpa }}</div>
+            <div class="stat-label">GPA</div>
+        </div>
+    </div>
+
+    <!-- Attendance -->
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="stat-card-gradient" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
+            </div>
+            <div class="stat-value">{{ stats.attendance }}</div>
+            <div class="stat-label">Attendance</div>
+        </div>
+    </div>
+
+    <!-- Pending Assignments -->
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="stat-card-gradient" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
+            </div>
+            <div class="stat-value">{{ stats.pending_assignments }}</div>
+            <div class="stat-label">Pending Tasks</div>
+        </div>
+    </div>
+
+    <!-- Upcoming Tests -->
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="stat-card-gradient" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon"><i class="bi bi-pencil-square"></i></div>
+            </div>
+            <div class="stat-value">{{ stats.upcoming_tests }}</div>
+            <div class="stat-label">Upcoming Tests</div>
+        </div>
+    </div>
+
+    <!-- Library Books -->
+    <div class="col-xl-2 col-md-4 col-6">
+        <a href="/student/library" class="text-decoration-none">
+            <div class="stat-card-gradient" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="stat-icon"><i class="bi bi-book"></i></div>
+                    {% if library_stats.overdue > 0 %}
+                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">{{
+                        library_stats.overdue }} overdue</span>
+                    {% endif %}
+                </div>
+                <div class="stat-value">{{ library_stats.currently_borrowed }}</div>
+                <div class="stat-label">Library Books</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Total Courses -->
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="stat-card-gradient" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon"><i class="bi bi-mortarboard"></i></div>
+            </div>
+            <div class="stat-value">{{ stats.courses_count }}</div>
+            <div class="stat-label">Courses</div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Assignments & Grades -->
+<div class="row g-4 mb-4">
     <!-- Upcoming Assignments -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header bg-white py-3">
-                <h5 class="card-title mb-0"><i class="bi bi-journal-text me-2"></i>Upcoming Assignments</h5>
+    <div class="col-lg-6">
+        <div class="card section-card h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-journal-text me-2 text-primary"></i>Upcoming Assignments
+                </h6>
+                <a href="/student/assignments" class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">View
+                    All</a>
             </div>
             <div class="card-body">
+                {% if assignments %}
                 <div class="list-group list-group-flush">
                     {% for assignment in assignments %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-0">
                         <div>
-                            <h6 class="mb-1">{{ assignment.title }}</h6>
-                            <small class="text-muted">{{ assignment.course }} • Due: {{ assignment.due_date }}</small>
+                            <h6 class="mb-1 fw-bold" style="font-size: 0.9rem;">{{ assignment.title }}</h6>
+                            <small class="text-muted">{{ assignment.course }} • Due: {{
+                                assignment.due_date.strftime('%d %b %Y') if assignment.due_date else 'N/A'
+                                }}</small>
                         </div>
-                        <span class="badge bg-{{ 'warning' if assignment.status == 'Pending' else 'success' }}">
-                            {{ assignment.status }}
+                        <span
+                            class="badge bg-{{ 'warning text-dark' if assignment.status == 'pending' else 'success' }}"
+                            style="border-radius: 6px; font-size: 0.72rem;">
+                            {{ assignment.status | capitalize }}
                         </span>
                     </div>
                     {% endfor %}
                 </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2.5rem;"></i>
+                    <p class="mt-3 text-muted mb-0">No pending assignments! 🎉</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Recent Grades -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header bg-white py-3">
-                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Recent Grades</h5>
+    <div class="col-lg-6">
+        <div class="card section-card h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-graph-up me-2 text-success"></i>Recent Grades
+                </h6>
+                <a href="/student/grades" class="btn btn-sm btn-outline-success" style="border-radius: 8px;">View
+                    All</a>
             </div>
             <div class="card-body">
+                {% if recent_grades %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover mb-0" style="font-size: 0.88rem;">
                         <thead>
-                            <tr>
-                                <th>Course</th>
-                                <th>Assignment</th>
-                                <th>Grade</th>
-                                <th>Date</th>
+                            <tr class="text-muted" style="font-size: 0.78rem;">
+                                <th class="border-0 fw-semibold">Course</th>
+                                <th class="border-0 fw-semibold">Assignment</th>
+                                <th class="border-0 fw-semibold">Grade</th>
+                                <th class="border-0 fw-semibold">Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for grade in recent_grades %}
                             <tr>
-                                <td>{{ grade.course }}</td>
+                                <td class="fw-bold">{{ grade.course }}</td>
                                 <td>{{ grade.assignment }}</td>
                                 <td>
                                     <span
-                                        class="badge bg-{{ 'success' if grade.score >= 90 else 'warning' if grade.score >= 70 else 'danger' }}">
+                                        class="badge bg-{{ 'success' if grade.score >= 90 else 'primary' if grade.score >= 70 else 'warning text-dark' if grade.score >= 50 else 'danger' }}"
+                                        style="border-radius: 6px;">
                                         {{ grade.score }}%
                                     </span>
                                 </td>
-                                <td>{{ grade.date }}</td>
+                                <td><small class="text-muted">{{ grade.date }}</small></td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-journal-text text-muted" style="font-size: 2.5rem;"></i>
+                    <p class="mt-3 text-muted mb-0">No grades available yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Library & Notice + Quick Links -->
+<div class="row g-4 mb-4">
+    <!-- My Library -->
+    <div class="col-lg-6">
+        <div class="card section-card h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-book-half me-2 text-primary"></i>My Library
+                </h6>
+                <a href="/student/library" class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">View
+                    All</a>
+            </div>
+            <div class="card-body">
+                {% if library_stats.currently_borrowed > 0 %}
+                <!-- Overdue Alert -->
+                {% if library_stats.overdue > 0 %}
+                <div class="alert alert-warning py-2 mb-3"
+                    style="border-radius: 10px; border: none; background: #fef3c7;">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
+                        <div>
+                            <strong style="font-size: 0.85rem;">{{ library_stats.overdue }} book(s)
+                                overdue!</strong>
+                            <div><small class="text-muted">Please return them to avoid additional
+                                    fines.</small></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Recently Borrowed -->
+                {% if library_stats.recent_loans %}
+                <h6 class="text-muted mb-2 small text-uppercase fw-bold" style="letter-spacing: 0.05em;">
+                    Recently Borrowed</h6>
+                <div class="list-group list-group-flush mb-3">
+                    {% for loan in library_stats.recent_loans %}
+                    <div class="list-group-item px-0 py-2 border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold" style="font-size: 0.88rem;">{{ loan.book_title }}
+                                </h6>
+                                <small class="text-muted">by {{ loan.book_author }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="d-block text-muted">Due: {{ loan.due_date.strftime('%d %b')
+                                    }}</small>
+                                {% if loan.due_date < today %} <span class="badge bg-danger"
+                                    style="border-radius: 6px; font-size: 0.68rem;">Overdue</span>
+                                    {% else %}
+                                    <span class="badge bg-primary"
+                                        style="border-radius: 6px; font-size: 0.68rem;">Active</span>
+                                    {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Fines -->
+                {% if library_stats.total_fines > 0 %}
+                <div class="alert alert-danger py-2 mb-3" style="border-radius: 10px; border: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold" style="font-size: 0.85rem;"><i
+                                class="bi bi-cash-coin me-2"></i>Outstanding Fines</span>
+                        <span class="fw-bold fs-5">₹{{ library_stats.total_fines }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-book display-4 text-muted"></i>
+                    <p class="mt-3 text-muted mb-0">No books currently borrowed</p>
+                    <a href="/library/books" class="btn btn-primary btn-sm mt-2" style="border-radius: 8px;">
+                        <i class="bi bi-search me-2"></i>Browse Books
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Stats Summary -->
+                <div class="mt-auto pt-3 border-top">
+                    <div class="row text-center">
+                        <div class="col-4 border-end">
+                            <h6 class="mb-0 text-primary fw-bold">{{ library_stats.total_borrowed }}</h6>
+                            <small class="text-muted" style="font-size: 0.72rem;">Total</small>
+                        </div>
+                        <div class="col-4 border-end">
+                            <h6 class="mb-0 text-success fw-bold">{{ library_stats.returned }}</h6>
+                            <small class="text-muted" style="font-size: 0.72rem;">Returned</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mb-0 text-info fw-bold">{{ library_stats.currently_borrowed }}</h6>
+                            <small class="text-muted" style="font-size: 0.72rem;">Active</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notice & Quick Links -->
+    <div class="col-lg-6">
+        <!-- Recent Notice -->
+        {% if latest_notice %}
+        <div class="card section-card border-start border-primary border-4 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 fw-bold text-primary"
+                    style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <i class="bi bi-megaphone me-2"></i>Recent Notice
+                </h6>
+                <span
+                    class="badge bg-{{ 'danger' if latest_notice.priority == 'urgent' else 'warning text-dark' if latest_notice.priority == 'high' else 'info' }}"
+                    style="border-radius: 6px;">
+                    {{ latest_notice.priority | upper }}
+                </span>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">{{ latest_notice.title }}</h6>
+                <p class="text-muted small mb-3">{{ latest_notice.content[:150] }}{{ '...' if
+                    latest_notice.content|length > 150 else '' }}</p>
+                <a href="/student/notices" class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">Read
+                    More</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Links -->
+        <div class="card section-card">
+            <div class="card-header bg-white py-3">
+                <h6 class="card-title mb-0 fw-bold"><i class="bi bi-lightning-fill me-2 text-warning"></i>Quick Links
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="/student/profile" class="btn btn-outline-primary w-100 text-start quick-link-btn">
+                            <i class="bi bi-person me-2"></i>Profile
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/student/library" class="btn btn-outline-primary w-100 text-start quick-link-btn">
+                            <i class="bi bi-book me-2"></i>My Library
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/student/timetable" class="btn btn-outline-success w-100 text-start quick-link-btn">
+                            <i class="bi bi-calendar-week me-2"></i>Timetable
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/student/courses" class="btn btn-outline-success w-100 text-start quick-link-btn">
+                            <i class="bi bi-book me-2"></i>Courses
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/student/notes" class="btn btn-outline-info w-100 text-start quick-link-btn">
+                            <i class="bi bi-journal me-2"></i>Notes
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/student/videos" class="btn btn-outline-info w-100 text-start quick-link-btn">
+                            <i class="bi bi-play-circle me-2"></i>Videos
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/student/fees" class="btn btn-outline-dark w-100 text-start quick-link-btn">
+                            <i class="bi bi-cash-coin me-2"></i>Fees
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/student/exam-results" class="btn btn-outline-danger w-100 text-start quick-link-btn">
+                            <i class="bi bi-file-earmark-text me-2"></i>Results
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- Attendance Chart -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header bg-white py-3">
-                <h5 class="card-title mb-0"><i class="bi bi-calendar-check me-2"></i>Attendance Overview</h5>
+<!-- Row 4: Attendance Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card section-card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-calendar-check me-2 text-success"></i>Attendance Overview
+                </h6>
+                <a href="/student/attendance" class="btn btn-sm btn-outline-success" style="border-radius: 8px;">Full
+                    Report</a>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover text-center align-middle mb-4">
+                <!-- Weekly Grid -->
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-hover text-center align-middle mb-0"
+                        style="font-size: 0.85rem;">
                         <thead class="table-light">
                             <tr>
                                 <th class="text-start" style="min-width: 150px;">Course</th>
                                 {% for day in days_labels %}
                                 <th class="{{ 'bg-primary bg-opacity-10' if day.is_today else '' }}">
-                                    <div class="small fw-bold text-uppercase" style="font-size: 0.7rem;">{{ day.short }}
-                                    </div>
-                                    <div class="fw-bold" style="font-size: 0.9rem;">{{ day.date.strftime('%d') }}</div>
+                                    <div class="small fw-bold text-uppercase" style="font-size: 0.7rem;">{{
+                                        day.short }}</div>
+                                    <div class="fw-bold" style="font-size: 0.9rem;">{{
+                                        day.date.strftime('%d') }}</div>
                                 </th>
                                 {% endfor %}
                             </tr>
@@ -168,14 +422,11 @@
                                 {% for day in row.days %}
                                 <td class="{{ 'bg-primary bg-opacity-10' if day.is_today else '' }}">
                                     {% if day.status == 'present' %}
-                                    <i class="bi bi-check-circle-fill text-success" title="Present"
-                                        style="font-size: 1.1rem;"></i>
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 1.1rem;"></i>
                                     {% elif day.status == 'absent' %}
-                                    <i class="bi bi-x-circle-fill text-danger" title="Absent"
-                                        style="font-size: 1.1rem;"></i>
+                                    <i class="bi bi-x-circle-fill text-danger" style="font-size: 1.1rem;"></i>
                                     {% elif day.status == 'late' %}
-                                    <i class="bi bi-clock-fill text-warning" title="Late"
-                                        style="font-size: 1.1rem;"></i>
+                                    <i class="bi bi-clock-fill text-warning" style="font-size: 1.1rem;"></i>
                                     {% else %}
                                     <span class="text-muted small opacity-50">-</span>
                                     {% endif %}
@@ -185,26 +436,29 @@
                             {% endfor %}
                             {% else %}
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No enrolled courses found.</td>
+                                <td colspan="8" class="text-center text-muted py-4">No enrolled courses
+                                    found.</td>
                             </tr>
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
 
-                <div class="mt-2 pt-3 border-top">
-                    <h6 class="fw-bold mb-3 small text-uppercase text-muted"><i
-                            class="bi bi-bar-chart-fill me-2"></i>Performance Summary</h6>
+                <!-- Performance Summary -->
+                <div class="pt-3 border-top">
+                    <h6 class="fw-bold mb-3 small text-uppercase text-muted" style="letter-spacing: 0.05em;">
+                        <i class="bi bi-bar-chart-fill me-2"></i>Performance Summary
+                    </h6>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle table-sm">
+                        <table class="table table-hover align-middle table-sm mb-0" style="font-size: 0.85rem;">
                             <thead class="small text-muted">
                                 <tr>
-                                    <th>Course</th>
-                                    <th>Present</th>
-                                    <th>Absent</th>
-                                    <th>Late</th>
-                                    <th>Total</th>
-                                    <th style="width: 25%;">Rate</th>
+                                    <th class="border-0">Course</th>
+                                    <th class="border-0">Present</th>
+                                    <th class="border-0">Absent</th>
+                                    <th class="border-0">Late</th>
+                                    <th class="border-0">Total</th>
+                                    <th class="border-0" style="width: 25%;">Rate</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -220,9 +474,10 @@
                                         <div class="d-flex align-items-center">
                                             <span class="me-2 small fw-bold" style="font-size: 0.75rem;">{{
                                                 stat.percentage }}%</span>
-                                            <div class="progress flex-grow-1" style="height: 4px;">
+                                            <div class="progress flex-grow-1" style="height: 6px; border-radius: 3px;">
                                                 <div class="progress-bar bg-{{ 'success' if stat.percentage >= 85 else 'warning' if stat.percentage >= 75 else 'danger' }}"
-                                                    style="width: {{ stat.percentage }}%"></div>
+                                                    style="width: {{ stat.percentage }}%; border-radius: 3px;">
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -230,7 +485,8 @@
                                 {% endfor %}
                                 {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-2 small">No history yet.</td>
+                                    <td colspan="6" class="text-center text-muted py-2 small">No attendance
+                                        history yet.</td>
                                 </tr>
                                 {% endif %}
                             </tbody>
@@ -240,108 +496,19 @@
             </div>
         </div>
     </div>
-
-    <!-- Quick Links & Notice -->
-    <div class="col-lg-4 mb-4">
-        {% if latest_notice %}
-        <div class="card border-primary border-start border-4 mb-4">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 text-primary small text-uppercase fw-bold"><i
-                        class="bi bi-megaphone me-2"></i>Recent Announcement</h5>
-                <span
-                    class="badge bg-{{ 'danger' if latest_notice.priority == 'urgent' else 'warning' if latest_notice.priority == 'high' else 'info' }}">
-                    {{ latest_notice.priority | upper }}
-                </span>
-            </div>
-            <div class="card-body">
-                <h6 class="fw-bold">{{ latest_notice.title }}</h6>
-                <p class="text-muted small mb-3">{{ latest_notice.content[:150] }}{{ '...' if
-                    latest_notice.content|length > 150 else '' }}</p>
-
-                <div class="d-flex align-items-center mt-3 pt-3 border-top">
-                    <div class="user-avatar me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                        {% if latest_notice.teacher %}
-                        {{ latest_notice.teacher.user.full_name[0] | upper }}
-                        {% elif latest_notice.authority %}
-                        {{ latest_notice.authority.user.full_name[0] | upper }}
-                        {% else %}
-                        S
-                        {% endif %}
-                    </div>
-                    <div class="small">
-                        <div class="fw-bold">
-                            {% if latest_notice.teacher %}
-                            {{ latest_notice.teacher.user.full_name }}
-                            {% elif latest_notice.authority %}
-                            {{ latest_notice.authority.user.full_name }}
-                            {% else %}
-                            System
-                            {% endif %}
-                        </div>
-                        <div class="text-muted" style="font-size: 0.7rem;">{{ latest_notice.created_at.strftime('%b %d,
-                            %Y') }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="card">
-            <div class="card-header bg-white py-3">
-                <h5 class="card-title mb-0"><i class="bi bi-link-45deg me-2"></i>Quick Links</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/student/profile" class="btn btn-outline-primary text-start">
-                        <i class="bi bi-person me-2"></i>My Profile
-                    </a>
-                    <a href="/student/timetable" class="btn btn-outline-primary text-start">
-                        <i class="bi bi-calendar-week me-2"></i>View Timetable
-                    </a>
-                    <a href="/student/courses" class="btn btn-outline-success text-start">
-                        <i class="bi bi-book me-2"></i>My Courses
-                    </a>
-                    <a href="/student/notes" class="btn btn-outline-info text-start">
-                        <i class="bi bi-journal me-2"></i>Study Notes
-                    </a>
-                    <a href="/student/videos" class="btn btn-outline-info text-start">
-                        <i class="bi bi-play-circle me-2"></i>Video Lectures
-                    </a>
-                    <a href="/student/tests" class="btn btn-outline-warning text-start">
-                        <i class="bi bi-pencil-square me-2"></i>Upcoming Tests
-                    </a>
-                    <a href="/student/notices" class="btn btn-outline-secondary text-start">
-                        <i class="bi bi-megaphone me-2"></i>Notices
-                    </a>
-                    <a href="/student/messages" class="btn btn-outline-primary text-start">
-                        <i class="bi bi-envelope me-2"></i>Messages
-                        {% if unread_count > 0 %}
-                        <span class="badge bg-danger rounded-pill">{{ unread_count }}</span>
-                        {% endif %}
-                    </a>
-                    <a href="/student/teachers" class="btn btn-outline-success text-start">
-                        <i class="bi bi-person-badge me-2"></i>Contact Teachers
-                    </a>
-                    <a href="/student/fees" class="btn btn-outline-dark text-start">
-                        <i class="bi bi-cash-coin me-2"></i>Fee Records
-                    </a>
-                    <a href="/student/forum" class="btn btn-outline-danger text-start">
-                        <i class="bi bi-chat-dots me-2"></i>Discussion Forum
-                    </a>
-                    <a href="/student/groups" class="btn btn-outline-primary text-start">
-                        <i class="bi bi-people-fill me-2"></i>My Groups
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Attendance Chart
-    // Attendance Chart removal - Replaced with table
-
+    // Auto-highlight current sidebar link
+    document.addEventListener('DOMContentLoaded', function () {
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.dashboard-sidebar .nav-link').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+    });
 </script>
 {% endblock %}
