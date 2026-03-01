@@ -157,7 +157,7 @@
                             <div>
                                 <h6 class="mb-1">{{ class.subject }}</h6>
                                 <small class="text-muted">
-                                    <i class="bi bi-person me-1"></i>{{ class.teacher }} 
+                                    <i class="bi bi-person me-1"></i>{{ class.teacher }}
                                     • <i class="bi bi-geo-alt me-1"></i>{{ class.room }}
                                     • <span class="badge bg-{{ class.type_color }}">{{ class.type }}</span>
                                 </small>
@@ -278,24 +278,24 @@
     .timetable {
         font-size: 0.875rem;
     }
-    
+
     .timetable th {
         text-align: center;
         vertical-align: middle;
         font-weight: 600;
     }
-    
+
     .timetable-cell {
         height: 100px;
         vertical-align: top;
         padding: 4px !important;
         transition: background-color 0.2s;
     }
-    
+
     .timetable-cell.has-class:hover {
         background-color: #f8f9fa;
     }
-    
+
     .class-card {
         border-radius: 6px;
         padding: 8px;
@@ -306,68 +306,82 @@
         cursor: pointer;
         transition: transform 0.2s;
     }
-    
+
     .class-card:hover {
         transform: translateY(-2px);
     }
-    
+
     .class-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: 4px;
     }
-    
+
     .class-details {
         font-size: 0.75rem;
         opacity: 0.9;
     }
-    
+
     .class-live {
         text-align: center;
         margin-top: 4px;
     }
-    
+
     .class-time {
         min-width: 80px;
     }
-    
+
     /* Color coding for different subject types */
-    .bg-lecture { background: linear-gradient(135deg, #4e73df, #224abe); }
-    .bg-lab { background: linear-gradient(135deg, #1cc88a, #13855c); }
-    .bg-tutorial { background: linear-gradient(135deg, #36b9cc, #258391); }
-    .bg-workshop { background: linear-gradient(135deg, #f6c23e, #dda20a); }
-    .bg-sports { background: linear-gradient(135deg, #e74a3b, #be2617); }
+    .bg-lecture {
+        background: linear-gradient(135deg, #4e73df, #224abe);
+    }
+
+    .bg-lab {
+        background: linear-gradient(135deg, #1cc88a, #13855c);
+    }
+
+    .bg-tutorial {
+        background: linear-gradient(135deg, #36b9cc, #258391);
+    }
+
+    .bg-workshop {
+        background: linear-gradient(135deg, #f6c23e, #dda20a);
+    }
+
+    .bg-sports {
+        background: linear-gradient(135deg, #e74a3b, #be2617);
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     // Week navigation
-    document.getElementById('prevWeek').addEventListener('click', function() {
+    document.getElementById('prevWeek').addEventListener('click', function () {
         // Logic to load previous week
         console.log('Loading previous week...');
     });
-    
-    document.getElementById('currentWeek').addEventListener('click', function() {
+
+    document.getElementById('currentWeek').addEventListener('click', function () {
         // Logic to load current week
         console.log('Loading current week...');
     });
-    
-    document.getElementById('nextWeek').addEventListener('click', function() {
+
+    document.getElementById('nextWeek').addEventListener('click', function () {
         // Logic to load next week
         console.log('Loading next week...');
     });
-    
+
     // Add click handlers to class cards
     document.querySelectorAll('.class-card').forEach(card => {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function () {
             const subject = this.querySelector('strong').textContent;
             alert(`Showing details for: ${subject}`);
             // You can implement modal or redirect to class details
         });
     });
-    
+
     // Auto-refresh for live classes
     function updateLiveStatus() {
         const now = new Date();
@@ -375,7 +389,7 @@
             // Logic to update live status based on current time
         });
     }
-    
+
     // Update every minute
     setInterval(updateLiveStatus, 60000);
 </script>
