@@ -3,10 +3,12 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import os
 from app.core.database import get_async_db
 from app.repositories.user_repository import UserRepository
 from app.services.auth_service import AuthService
 from app.schemas.misc import Token, LoginRequest, UserResponse, StudentCreate, TeacherCreate, AuthorityCreate, ParentCreate
+from app.schemas.admin import AdminCreate
 from app.models.models import User, UserRole
 from app.core.config import settings
 
@@ -37,7 +39,7 @@ async def login(
         "access_token": tokens["access_token"],
         "refresh_token": tokens["refresh_token"],
         "token_type": "bearer",
-        "user": UserResponse.from_orm(user).model_dump(mode='json')
+        "user": UserResponse.model_validate(user).model_dump(mode='json')
     })
     
     # Set as session cookies (no max_age/expires means delete on browser close)
@@ -83,7 +85,7 @@ async def login_json(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
         token_type="bearer",
-        user=UserResponse.from_orm(user)
+        user=UserResponse.model_validate(user)
     )
 
 @router.post("/refresh")
@@ -184,7 +186,7 @@ async def signup_student(
     
     return {
         "message": "Student account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/signup/teacher")
@@ -233,7 +235,48 @@ async def signup_teacher(
     
     return {
         "message": "Teacher account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
+    }
+
+@router.post("/signup/admin", status_code=status.HTTP_201_CREATED)
+async def signup_admin(
+    admin_data: AdminCreate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Public admin registration - requires special secret key"""
+    # Check if ADMIN_SECRET_KEY is configured
+    if not settings.is_admin_secret_configured:
+        raise HTTPException(
+            status_code=500,
+            detail="Admin registration is not configured. Please set ADMIN_SECRET_KEY environment variable."
+        )
+    
+    # Verify secret key
+    if admin_data.secret_key != settings.ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin secret key")
+
+    # Check if user already exists
+    existing_user = await UserRepository.get_by_email(db, admin_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    existing_username = await UserRepository.get_by_username(db, admin_data.username)
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    # Create user with ADMIN role
+    user = await UserRepository.create(
+        db=db,
+        email=admin_data.email,
+        username=admin_data.username,
+        password=admin_data.password,
+        full_name=admin_data.full_name,
+        role=UserRole.ADMIN
+    )
+    
+    return {
+        "message": "Admin account created successfully",
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/signup/authority")
@@ -280,7 +323,7 @@ async def signup_authority(
     
     return {
         "message": "Authority account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/signup/parent")
@@ -335,7 +378,7 @@ async def signup_parent(
     
     return {
         "message": "Parent account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/signup/hod")
@@ -384,7 +427,7 @@ async def signup_hod(
     
     return {
         "message": "HOD account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/signup/exam-section")
@@ -425,7 +468,7 @@ async def signup_exam_section(
     
     return {
         "message": "Exam Section account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/signup/library")
@@ -466,7 +509,7 @@ async def signup_library(
     
     return {
         "message": "Library account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/signup/account")
@@ -507,7 +550,7 @@ async def signup_account(
     
     return {
         "message": "Account Section account created successfully",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 
