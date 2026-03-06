@@ -28,8 +28,9 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:8000,http://127.0.0.1:8000"
     
-    # Authority Registration
-    AUTHORITY_SECRET_KEY: str = "admin-secret-2024"
+    # Authority & Admin Registration
+    AUTHORITY_SECRET_KEY: str = ""
+    ADMIN_SECRET_KEY: str = ""
     
     class Config:
         env_file = ".env"
@@ -48,5 +49,10 @@ class Settings(BaseSettings):
         if self.DATABASE_URL.startswith("postgres://"):
             return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
         return self.DATABASE_URL
+    
+    @property
+    def is_admin_secret_configured(self) -> bool:
+        """Check if ADMIN_SECRET_KEY is properly configured (not empty)"""
+        return bool(self.ADMIN_SECRET_KEY and self.ADMIN_SECRET_KEY.strip())
 
 settings = Settings()
