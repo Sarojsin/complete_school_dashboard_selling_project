@@ -89,6 +89,36 @@ def create_app() -> FastAPI:
             content={"detail": exc.detail}
         )
 
+    # Domain Exception Handlers (Layered Architecture Support)
+    from fastapi.responses import JSONResponse
+    from app.core.exceptions import (
+        NotFoundError, ValidationError, ForbiddenError,
+        UnauthorizedError, ConflictError
+    )
+
+    @app.exception_handler(NotFoundError)
+    async def not_found_exception_handler(request: Request, exc: NotFoundError):
+        return JSONResponse(status_code=404, content={"detail": exc.message})
+
+    @app.exception_handler(ValidationError)
+    async def validation_exception_handler(request: Request, exc: ValidationError):
+        return JSONResponse(status_code=400, content={"detail": exc.message})
+
+    @app.exception_handler(ForbiddenError)
+    async def forbidden_exception_handler(request: Request, exc: ForbiddenError):
+        return JSONResponse(status_code=403, content={"detail": exc.message})
+
+    @app.exception_handler(UnauthorizedError)
+    async def unauthorized_exception_handler(request: Request, exc: UnauthorizedError):
+        # Allow same redirect behavior for domain unauthorized errors
+        if not request.url.path.startswith("/api/"):
+            return RedirectResponse(url="/login")
+        return JSONResponse(status_code=401, content={"detail": exc.message})
+
+    @app.exception_handler(ConflictError)
+    async def conflict_exception_handler(request: Request, exc: ConflictError):
+        return JSONResponse(status_code=409, content={"detail": exc.message})
+
     # Include Web Routes
     app.include_router(common_router)
     app.include_router(student_router)
@@ -127,20 +157,80 @@ def create_app() -> FastAPI:
 
     # Add these imports
     from app.api.endpoints import hod, exam_section, library, account
+    from app.api.endpoints import admin_features, admin_dashboard
     from app.web.routers import hod as web_hod, exam_section as web_exam_section, library as web_library, account as web_account
+    from app.web.routers import admin as web_admin
 
     # Register API routes
     app.include_router(hod.router)
     app.include_router(exam_section.router)
     app.include_router(library.router)
     app.include_router(account.router)
+    
+    # Register Admin Feature routes
+    app.include_router(admin_features.router, prefix="/api/admin", tags=["Admin Features"])
+    app.include_router(admin_dashboard.router, prefix="/api/admin", tags=["Admin Dashboard"])
+    
+    # Register Admin User Management routes
+    from app.api.endpoints import admin_users
+    app.include_router(admin_users.router, prefix="/api/admin", tags=["Admin Users"])
+    
+    # Register Admin Academic routes
+    from app.api.endpoints import admin_academic
+    app.include_router(admin_academic.router, prefix="/api/admin", tags=["Admin Academic"])
+    
+    # Register Admin Exam routes
+    from app.api.endpoints import admin_exams
+    app.include_router(admin_exams.router, prefix="/api/admin", tags=["Admin Exams"])
+    
+    # Register Admin Finance routes
+    from app.api.endpoints import admin_finance
+    app.include_router(admin_finance.router, prefix="/api/admin", tags=["Admin Finance"])
+    
+    # Register Admin Notices routes
+    from app.api.endpoints import admin_notices
+    app.include_router(admin_notices.router, prefix="/api/admin", tags=["Admin Notices"])
+    
+    # Register Admin Messages routes
+    from app.api.endpoints import admin_messages
+    app.include_router(admin_messages.router, prefix="/api/admin", tags=["Admin Messages"])
+    
+    # Register Admin Media routes
+    from app.api.endpoints import admin_media
+    app.include_router(admin_media.router, prefix="/api/admin", tags=["Admin Media"])
+    
+    # Register Admin System Monitoring routes
+    from app.api.endpoints import admin_system
+    app.include_router(admin_system.router, prefix="/api/admin", tags=["Admin System"])
+    
+    # Register Admin Security routes
+    from app.api.endpoints import admin_security
+    app.include_router(admin_security.router, prefix="/api/admin", tags=["Admin Security"])
+    
+    # Register Admin Backup routes
+    from app.api.endpoints import admin_backup
+    app.include_router(admin_backup.router, prefix="/api/admin", tags=["Admin Backup"])
+    
+    # Register Admin Reports routes
+    from app.api.endpoints import admin_reports
+    app.include_router(admin_reports.router, prefix="/api/admin", tags=["Admin Reports"])
+    
+    # Register Admin Settings routes
+    from app.api.endpoints import admin_settings
+    app.include_router(admin_settings.router, prefix="/api/admin", tags=["Admin Settings"])
+    
+    # Register Admin Advanced routes
+    from app.api.endpoints import admin_advanced
+    app.include_router(admin_advanced.router, prefix="/api/admin", tags=["Admin Advanced"])
 
     # Register web routes
     app.include_router(web_hod.router, prefix="/hod", tags=["HOD Web"])
     app.include_router(web_exam_section.router, prefix="/exam-section", tags=["Exam Section Web"])
     app.include_router(web_library.router, prefix="/library", tags=["Library Web"])
     app.include_router(web_account.router, prefix="/account", tags=["Account Web"])
+    app.include_router(web_admin.router, prefix="/admin", tags=["Admin Web"])
     return app
 
 
 app = create_app()
+ 
