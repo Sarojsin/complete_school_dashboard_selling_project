@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Student Performance - Analytics{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-3">
+            {% include "hod/sidebar.html" %}
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Student Performance</h2>
+                    <p class="text-muted mb-0">{{ student.full_name }} ({{ student.student_id }})</p>
+                </div>
+                <a href="/hod/students" class="btn btn-outline-secondary rounded-pill btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Students
+                </a>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm text-center py-4 h-100">
+                        <div class="card-body">
+                            <h6 class="text-muted small text-uppercase fw-bold mb-3">Overall Standing</h6>
+                            <h3 class="fw-bold mb-0 text-primary">Good</h3>
+                            <p class="small text-muted mt-2 mb-0">Based on recent results</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- More metric cards can be added here -->
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 fw-bold">Exam History</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Exam Type</th>
+                                <th>Subject/Course</th>
+                                <th>Marks</th>
+                                <th>Grade</th>
+                                <th class="text-end pe-4">Semester</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if results %}
+                            {% for res in results %}
+                            <tr>
+                                <td class="ps-4 fw-medium text-dark">{{ res.exam_type }}</td>
+                                <td>{{ res.subject }}</td>
+                                <td>{{ res.marks_obtained }} / {{ res.total_marks }}</td>
+                                <td>
+                                    {% set percent = (res.marks_obtained / res.total_marks * 100) if res.total_marks > 0
+                                    else 0 %}
+                                    <span
+                                        class="badge {% if percent >= 80 %}bg-success{% elif percent >= 60 %}bg-info{% elif percent >= 40 %}bg-warning{% else %}bg-danger{% endif %} rounded-pill">
+                                        {{ res.grade }}
+                                    </span>
+                                </td>
+                                <td class="text-end pe-4">Semester {{ res.semester }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    No exam records found for this student.
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
