@@ -5,7 +5,60 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
+            <!-- Filter Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filter Students</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="/library/issue-book" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Class/Grade</label>
+                            <select name="grade" class="form-select">
+                                <option value="">All Classes</option>
+                                {% for g in available_grades %}
+                                <option value="{{ g }}" {% if filters.grade == g %}selected{% endif %}>{{ g }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Section</label>
+                            <select name="section" class="form-select">
+                                <option value="">All Sections</option>
+                                {% for s in available_sections %}
+                                <option value="{{ s }}" {% if filters.section == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Search (Name/ID)</label>
+                            <input type="text" name="search" class="form-control" placeholder="Search student..." value="{{ filters.search or '' }}">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="bi bi-search me-1"></i>Filter
+                            </button>
+                            {% if filters.grade or filters.section or filters.search %}
+                            <a href="/library/issue-book" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                    
+                    {% if filters.grade or filters.section or filters.search %}
+                    <div class="mt-3">
+                        <small class="text-muted">Active filters:</small>
+                        {% if filters.grade %}<span class="badge bg-info me-1">Class: {{ filters.grade }}</span>{% endif %}
+                        {% if filters.section %}<span class="badge bg-info me-1">Section: {{ filters.section }}</span>{% endif %}
+                        {% if filters.search %}<span class="badge bg-info me-1">Search: {{ filters.search }}</span>{% endif %}
+                        <span class="badge bg-success">{{ students|length }} students found</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h4>Issue Book to Student</h4>
@@ -18,45 +71,119 @@
                     {% endif %}
                     
                     <form method="post" action="/library/issue-book">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                        
                         <div class="mb-3">
-                            <label for="student_id" class="form-label">Student</label>
-                            <select class="form-control" id="student_id" name="student_id" required>
+                            <label for="student_id" class="form-label">
+                                Student 
+                                <span class="text-muted">({{ students|length }} available)</span>
+                            </label>
+                            <select class="form-select" id="student_id" name="student_id" required>
                                 <option value="">Select Student</option>
                                 {% for student in students %}
-                                    <option value="{{ student.id }}">{{ student.name }}</option>
+                                    <option value="{{ student.id }}">
+                                        {{ student.full_name }} 
+                                        {% if student.student_id %}(ID: {{ student.student_id }}){% endif %}
+                                        {% if student.grade_level %}- {{ student.grade_level }}{% endif %}
+                                        {% if student.section %}[{{ student.section }}]{% endif %}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
+                         
                         <div class="mb-3">
-                            <label for="book_title" class="form-label">Book Title</label>
-                            <input type="text" class="form-control" id="book_title" 
-                                   name="book_title" required>
+                            <label for="book_select" class="form-label">
+                                Select Book from Catalog
+                                <span class="text-muted">({{ available_books|length }} available)</span>
+                            </label>
+                            <select class="form-select" id="book_select" name="book_id" required onchange="fillBookDetails(this)">
+                                <option value="">-- Select a Book --</option>
+                                {% for book in available_books %}
+                                    <option value="{{ book.id }}" 
+                                            data-title="{{ book.title }}" 
+                                            data-author="{{ book.author }}"
+                                            data-isbn="{{ book.isbn or '' }}"
+                                            {% if selected_book_id == book.id %}selected{% endif %}>
+                                        {{ book.title }} by {{ book.author }} 
+                                        {% if book.available_copies > 0 %}
+                                            <span class="text-success">({{ book.available_copies }} available)</span>
+                                        {% else %}
+                                            <span class="text-danger">(Out of Stock)</span>
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                <a href="/library/books/add" target="_blank">
+                                    <i class="bi bi-plus-circle"></i> Add new book to catalog
+                                </a>
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="book_author" class="form-label">Author</label>
-                            <input type="text" class="form-control" id="book_author" 
-                                   name="book_author" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="book_isbn" class="form-label">ISBN (Optional)</label>
-                            <input type="text" class="form-control" id="book_isbn" 
-                                   name="book_isbn">
-                        </div>
-                        
+
+                        <!-- Hidden fields to store book details -->
+                        <input type="hidden" id="book_title" name="book_title">
+                        <input type="hidden" id="book_author" name="book_author">
+                        <input type="hidden" id="book_isbn" name="book_isbn">
+                         
                         <div class="mb-3">
                             <label for="due_days" class="form-label">Loan Period (Days)</label>
                             <input type="number" class="form-control" id="due_days" 
                                    name="due_days" value="15" min="1" max="30">
                         </div>
-                        
+
+                        <!-- Selected Book Preview -->
+                        <div id="book_preview" class="alert alert-info d-none">
+                            <h6 class="alert-heading"><i class="bi bi-book me-2"></i>Selected Book:</h6>
+                            <p class="mb-1"><strong>Title:</strong> <span id="preview_title"></span></p>
+                            <p class="mb-1"><strong>Author:</strong> <span id="preview_author"></span></p>
+                            <p class="mb-0" id="preview_isbn_container"><strong>ISBN:</strong> <span id="preview_isbn"></span></p>
+                        </div>
+                         
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Issue Book</button>
-                            <a href="/library/dashboard" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-2"></i>Issue Book
+                            </button>
+                            <a href="/library/dashboard" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
                         </div>
                     </form>
+
+                    <script>
+                        function fillBookDetails(select) {
+                            const option = select.options[select.selectedIndex];
+                            if (option.value) {
+                                // Fill hidden fields
+                                document.getElementById('book_title').value = option.getAttribute('data-title');
+                                document.getElementById('book_author').value = option.getAttribute('data-author');
+                                document.getElementById('book_isbn').value = option.getAttribute('data-isbn');
+                                
+                                // Show preview
+                                document.getElementById('preview_title').textContent = option.getAttribute('data-title');
+                                document.getElementById('preview_author').textContent = option.getAttribute('data-author');
+                                
+                                const isbn = option.getAttribute('data-isbn');
+                                if (isbn) {
+                                    document.getElementById('preview_isbn').textContent = isbn;
+                                    document.getElementById('preview_isbn_container').classList.remove('d-none');
+                                } else {
+                                    document.getElementById('preview_isbn_container').classList.add('d-none');
+                                }
+                                
+                                document.getElementById('book_preview').classList.remove('d-none');
+                            } else {
+                                document.getElementById('book_preview').classList.add('d-none');
+                            }
+                        }
+
+                        // Auto-fill book details if a book is pre-selected (e.g., when coming from catalog)
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const bookSelect = document.getElementById('book_select');
+                            if (bookSelect.value) {
+                                fillBookDetails(bookSelect);
+                            }
+                        });
+                    </script>
                 </div>
             </div>
         </div>
