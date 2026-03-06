@@ -130,7 +130,8 @@
     <div class="col-lg-8 mb-4">
         <div class="card">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0"><i class="bi bi-calendar-month me-2"></i>Attendance Calendar - {{ current_month }}</h5>
+                <h5 class="card-title mb-0"><i class="bi bi-calendar-month me-2"></i>Attendance Calendar - {{
+                    current_month }}</h5>
                 <div class="btn-group">
                     <button class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-chevron-left"></i>
@@ -159,17 +160,22 @@
                                 <div class="date-number">{{ day.date.day }}</div>
                                 <div class="attendance-status">
                                     {% if day.attendance == 'present' %}
-                                    <i class="bi bi-check-circle-fill text-success" data-bs-toggle="tooltip" title="Present"></i>
+                                    <i class="bi bi-check-circle-fill text-success" data-bs-toggle="tooltip"
+                                        title="Present"></i>
                                     {% elif day.attendance == 'absent' %}
-                                    <i class="bi bi-x-circle-fill text-danger" data-bs-toggle="tooltip" title="Absent"></i>
+                                    <i class="bi bi-x-circle-fill text-danger" data-bs-toggle="tooltip"
+                                        title="Absent"></i>
                                     {% elif day.attendance == 'late' %}
                                     <i class="bi bi-clock-fill text-warning" data-bs-toggle="tooltip" title="Late"></i>
                                     {% elif day.attendance == 'half_day' %}
-                                    <i class="bi bi-record-circle text-info" data-bs-toggle="tooltip" title="Half Day"></i>
+                                    <i class="bi bi-record-circle text-info" data-bs-toggle="tooltip"
+                                        title="Half Day"></i>
                                     {% elif day.attendance == 'holiday' %}
-                                    <i class="bi bi-star-fill text-secondary" data-bs-toggle="tooltip" title="Holiday"></i>
+                                    <i class="bi bi-star-fill text-secondary" data-bs-toggle="tooltip"
+                                        title="Holiday"></i>
                                     {% else %}
-                                    <i class="bi bi-dash-circle text-muted" data-bs-toggle="tooltip" title="No Class"></i>
+                                    <i class="bi bi-dash-circle text-muted" data-bs-toggle="tooltip"
+                                        title="No Class"></i>
                                     {% endif %}
                                 </div>
                             </div>
@@ -229,13 +235,14 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="mb-0">{{ course.name }}</h6>
-                        <span class="badge bg-{{ 'success' if course.percentage >= 85 else 'warning' if course.percentage >= 75 else 'danger' }}">
+                        <span
+                            class="badge bg-{{ 'success' if course.percentage >= 85 else 'warning' if course.percentage >= 75 else 'danger' }}">
                             {{ course.percentage }}%
                         </span>
                     </div>
                     <div class="progress mb-1" style="height: 8px;">
-                        <div class="progress-bar bg-{{ 'success' if course.percentage >= 85 else 'warning' if course.percentage >= 75 else 'danger' }}" 
-                             style="width: {{ course.percentage }}%"></div>
+                        <div class="progress-bar bg-{{ 'success' if course.percentage >= 85 else 'warning' if course.percentage >= 75 else 'danger' }}"
+                            style="width: {{ course.percentage }}%"></div>
                     </div>
                     <div class="d-flex justify-content-between small text-muted">
                         <span>{{ course.present }}/{{ course.total }} classes</span>
@@ -294,9 +301,11 @@
                                 {% for period in record.periods %}
                                 <td class="text-center">
                                     {% if period.status == 'present' %}
-                                    <i class="bi bi-check-circle-fill text-success" data-bs-toggle="tooltip" title="Present"></i>
+                                    <i class="bi bi-check-circle-fill text-success" data-bs-toggle="tooltip"
+                                        title="Present"></i>
                                     {% elif period.status == 'absent' %}
-                                    <i class="bi bi-x-circle-fill text-danger" data-bs-toggle="tooltip" title="Absent"></i>
+                                    <i class="bi bi-x-circle-fill text-danger" data-bs-toggle="tooltip"
+                                        title="Absent"></i>
                                     {% elif period.status == 'late' %}
                                     <i class="bi bi-clock-fill text-warning" data-bs-toggle="tooltip" title="Late"></i>
                                     {% else %}
@@ -345,8 +354,10 @@
                         <h6>Minimum Attendance Requirement</h6>
                         <ul class="list-unstyled">
                             <li><i class="bi bi-check-circle text-success me-2"></i>Minimum 75% attendance required</li>
-                            <li><i class="bi bi-check-circle text-success me-2"></i>Medical leaves are considered with certificate</li>
-                            <li><i class="bi bi-check-circle text-success me-2"></i>Prior permission required for planned absence</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Medical leaves are considered with
+                                certificate</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Prior permission required for
+                                planned absence</li>
                         </ul>
                     </div>
                     <div class="col-md-6">
