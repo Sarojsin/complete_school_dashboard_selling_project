@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Post Exam Notice - Exam Section{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Post Exam Notice</h2>
+        <a href="/exam-section/dashboard" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form action="/exam-section/notices/create" method="POST">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Notice Title</label>
+                    <input type="text" class="form-control form-control-lg" id="title" name="title"
+                        placeholder="Enter a descriptive title" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="notice_type" class="form-label">Notice Type</label>
+                        <select class="form-select" id="notice_type" name="notice_type" required>
+                            <option value="schedule">Exam Schedule</option>
+                            <option value="hall_ticket">Hall Ticket Information</option>
+                            <option value="result">Result Declaration</option>
+                            <option value="general">General Notice</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="exam_date" class="form-label">Exam Date (Optional)</label>
+                        <input type="date" class="form-control" id="exam_date" name="exam_date">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="content" class="form-label">Detailed Content</label>
+                    <textarea class="form-control" id="content" name="content" rows="6"
+                        placeholder="Provide full details of the notice..." required></textarea>
+                </div>
+
+                <div class="mt-4 d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="reset" class="btn btn-light me-md-2">Clear</button>
+                    <button type="submit" class="btn btn-primary px-4">Post Notice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
