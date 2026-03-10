@@ -57,6 +57,71 @@ class AdminUserService:
         return {"success": True, "message": f"Role changed to '{request.new_role}'", "new_role": request.new_role}
 
     @staticmethod
+    async def lock_user_account(
+        db: AsyncSession,
+        user_id: int,
+        current_admin_id: int,
+        reason: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if user_id == current_admin_id:
+            raise ValidationError("Cannot lock your own account")
+
+        user = await AdminUserService.get_user_or_404(db, user_id)
+        await AdminUserRepository.set_user_lock(
+            db=db,
+            user_id=user_id,
+            lock=True,
+            admin_user_id=current_admin_id,
+            reason=reason,
+        )
+        # Keep existing auth behavior consistent by marking locked user inactive.
+        user.is_active = False
+        await db.commit()
+        return {"success": True, "message": "Account locked successfully", "user_id": user_id}
+
+    @staticmethod
+    async def force_logout_user(
+        db: AsyncSession,
+        user_id: int,
+        current_admin_id: int,
+    ) -> Dict[str, Any]:
+        await AdminUserService.get_user_or_404(db, user_id)
+        await AdminUserRepository.mark_force_logout(
+            db=db,
+            user_id=user_id,
+            admin_user_id=current_admin_id,
+        )
+        await db.commit()
+        return {"success": True, "message": "User has been force logged out", "user_id": user_id}
+
+    @staticmethod
+    async def get_login_history(
+        db: AsyncSession,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> Dict[str, Any]:
+        await AdminUserService.get_user_or_404(db, user_id)
+        logs = await AdminUserRepository.get_login_history_for_user(db, user_id, skip, limit)
+        return {
+            "user_id": user_id,
+            "items": [
+                {
+                    "id": entry.id,
+                    "username": entry.username,
+                    "success": entry.success,
+                    "ip_address": entry.ip_address,
+                    "user_agent": entry.user_agent,
+                    "failure_reason": entry.failure_reason,
+                    "token_issued_at": entry.token_issued_at.isoformat() if entry.token_issued_at else None,
+                    "created_at": entry.created_at.isoformat() if entry.created_at else None,
+                }
+                for entry in logs
+            ],
+            "count": len(logs),
+        }
+
+    @staticmethod
     async def get_user_stats_by_role(db: AsyncSession) -> Dict[str, Any]:
         totals, actives = await AdminUserRepository.get_user_stats_by_role(db)
         return {
