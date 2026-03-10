@@ -18,7 +18,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_async_db
 from app.models.models import User
 from app.api.deps.admin import get_current_admin, require_super_admin
-from app.api.schemas.admin.users import ChangeRoleRequest, PasswordResetRequest, UserResponse
+from app.api.schemas.admin.users import (
+    ChangeRoleRequest,
+    LockAccountRequest,
+    PasswordResetRequest,
+    UserResponse,
+)
 from app.services.admin_user_service import AdminUserService
 
 router = APIRouter(prefix="/admin/users", tags=["Admin User Management"])
@@ -79,6 +84,43 @@ async def reset_user_password(
 ):
     """Reset a user's password."""
     return await AdminUserService.reset_user_password(db, user_id, body)
+
+
+# ---------------------------------------------------------------------------
+# Lock / force logout / login history
+# ---------------------------------------------------------------------------
+
+@router.post("/{user_id}/lock")
+async def lock_user_account(
+    user_id: int,
+    body: LockAccountRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """Lock a user account."""
+    return await AdminUserService.lock_user_account(db, user_id, current_user.id, body.reason)
+
+
+@router.post("/{user_id}/force-logout")
+async def force_logout_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """Force logout a user by invalidating all active access tokens."""
+    return await AdminUserService.force_logout_user(db, user_id, current_user.id)
+
+
+@router.get("/{user_id}/login-history")
+async def get_user_login_history(
+    user_id: int,
+    skip: int = 0,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """Return login history for a specific user."""
+    return await AdminUserService.get_login_history(db, user_id, skip, limit)
 
 
 # ---------------------------------------------------------------------------

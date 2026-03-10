@@ -17,10 +17,9 @@ Usage:
 
 import bcrypt as _bcrypt
 
-from fastapi import Depends, HTTPException, Request, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends, HTTPException, status
 
-from app.core.database import get_async_db
+from app.dependencies.auth import get_current_user
 from app.models.models import User, UserRole
 
 
@@ -72,8 +71,7 @@ ALL_ADMIN_ROLES: list[UserRole] = ADMIN_ROLES + SECTION_ADMIN_ROLES
 # ---------------------------------------------------------------------------
 
 async def get_current_admin(
-    request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_user),
 ) -> User:
     """
     FastAPI dependency that enforces admin or authority role.
@@ -84,16 +82,6 @@ async def get_current_admin(
 
     Returns the authenticated ``User`` ORM instance.
     """
-    from app.dependencies.auth import get_current_user  # local to avoid circular
-
-    try:
-        current_user: User = await get_current_user(request, db)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
-
     if current_user.role not in ALL_ADMIN_ROLES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
