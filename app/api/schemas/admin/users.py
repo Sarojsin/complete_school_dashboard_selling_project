@@ -43,3 +43,7 @@ class ChangeRoleRequest(BaseModel):
     OpenAPI documentation. This typed body schema fixes that.
     """
     new_role: str = Field(..., description="Target UserRole enum value, e.g. 'teacher'")
+
+
+class LockAccountRequest(BaseModel):
+    reason: Optional[str] = Field(None, description="Optional reason shown in security logs")
