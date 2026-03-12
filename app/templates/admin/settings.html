@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Nexus Elite | System Tuning</title>
+    <link href="{{ url_for('static', path='css/admin.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-symbols-outlined">shield_person</span>
+                </div>
+                <h1 class="sidebar-title">NEXUS ELITE</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/admin/dashboard" class="sidebar-link">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span>Command Center</span>
+                </a>
+                <a href="/admin/features" class="sidebar-link">
+                    <span class="material-symbols-outlined">vitals</span>
+                    <span>Feature Matrix</span>
+                </a>
+                <a href="/admin/audit" class="sidebar-link">
+                    <span class="material-symbols-outlined">history_edu</span>
+                    <span>Audit Spectrum</span>
+                </a>
+                <a href="/admin/settings" class="sidebar-link active">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span>System Tuning</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h2 style="font-size: 1.875rem; font-weight: 800; letter-spacing: -0.025em;">System Infrastructure
+                    </h2>
+                    <p style="color: var(--text-muted); font-weight: 500;">Configure global overrides and forensic log
+                        retention.</p>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn btn-primary">Commit All Changes</button>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <!-- Master Overrides Panel -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Master Control Overrides</h3>
+                    </div>
+                    <div class="panel-body" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                            <div>
+                                <p style="font-weight: 700;">Emergency Bypass</p>
+                                <p style="font-size: 0.75rem; color: var(--text-muted);">GLOBAL MODULE KILL-SWITCH</p>
+                            </div>
+                            <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" style="opacity: 0; width: 0; height: 0;">
+                                <span
+                                    style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px;">
+                                    <span
+                                        style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                            <div>
+                                <p style="font-weight: 700;">Maintenance Mode</p>
+                                <p style="font-size: 0.75rem; color: var(--text-muted);">RESTRICT ACCESS TO ADMIN ONLY
+                                </p>
+                            </div>
+                            <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" style="opacity: 0; width: 0; height: 0;">
+                                <span
+                                    style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px;">
+                                    <span
+                                        style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Forensic Config Panel -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Forensic Retention</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div style="margin-bottom: 2rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                                <span style="font-weight: 700;">Log Retention Depth</span>
+                                <span style="font-weight: 800; color: var(--primary-color);">90 DAYS</span>
+                            </div>
+                            <input type="range" min="30" max="365" value="90"
+                                style="width: 100%; accent-color: var(--primary-color);">
+                        </div>
+
+                        <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 1rem; border-radius: 8px;">
+                            <p style="color: #991b1b; font-size: 0.875rem; font-weight: 600;">Caution: Higher retention
+                                increases database storage requirements significantly.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
