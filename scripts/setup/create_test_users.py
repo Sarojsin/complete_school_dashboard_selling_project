@@ -2,9 +2,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database.database import SessionLocal
-from repositories.user_repository import UserRepository
-from models.models import UserRole
+from app.core.database import SessionLocal
+from app.repositories.user_repository import UserRepository
+from app.models.models import UserRole
 
 def create_test_users():
     db = SessionLocal()
