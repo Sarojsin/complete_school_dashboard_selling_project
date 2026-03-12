@@ -18,13 +18,42 @@
         :root {
             --primary: #4361ee;
             --secondary: #3f37c9;
-            --success: #4cc9f0;
+            --success: #10b981;
             --info: #4895ef;
             --warning: #f72585;
+            --danger: #ef4444;
             --light: #f8f9fa;
             --dark: #212529;
-            --gradient: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-info: linear-gradient(135deg, #4895ef 0%, #3f37c9 100%);
+            --gradient-warning: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+            --gradient-dark: linear-gradient(135deg, #212529 0%, #000000 100%);
+            --gradient: var(--gradient-primary);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
         }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 16px;
+        }
+
+        .glass-card-dark {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 16px;
+        }
+
 
         body {
             font-family: 'Inter', sans-serif;
@@ -39,59 +68,102 @@
 
         .card {
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
         }
 
         .btn-primary {
-            background: var(--gradient);
+            background: var(--gradient-primary);
             border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-weight: 500;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
         .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
+            filter: brightness(1.1);
+        }
+
+
+        .stat-card.primary {
+            background: var(--gradient-primary);
+        }
+
+        .stat-card.success {
+            background: var(--gradient-success);
+        }
+
+        .stat-card.info {
+            background: var(--gradient-info);
+        }
+
+        .stat-card.warning {
+            background: var(--gradient-warning);
+        }
+
+        .stat-card.danger {
+            background: var(--gradient-danger);
         }
 
         .stat-card {
-            background: var(--gradient);
             color: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card i {
+            position: absolute;
+            right: -10px;
+            bottom: -10px;
+            font-size: 5rem;
+            opacity: 0.15;
+            transform: rotate(-15deg);
         }
 
         .sidebar {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
             height: fit-content;
             position: sticky;
             top: 20px;
+            padding: 1rem;
         }
 
         .sidebar .nav-link {
-            color: #64748b;
-            padding: 12px 16px;
-            margin: 4px 0;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.2s ease;
+            color: #475569;
+            padding: 14px 18px;
+            margin: 6px 0;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
         }
 
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background: var(--gradient);
-            color: white;
+        .sidebar .nav-link:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+            transform: translateX(5px);
         }
+
+        .sidebar .nav-link.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
 
         .sidebar .nav-link i {
             margin-right: 8px;
@@ -185,6 +257,8 @@
                         <a class="nav-link" href="/library/dashboard">Dashboard</a>
                         {% elif role_val == 'account_section' %}
                         <a class="nav-link" href="/account/dashboard">Dashboard</a>
+                        {% elif role_val == 'admin' %}
+                        <a class="nav-link" href="/admin/dashboard">Dashboard</a>
                         {% else %}
                         <a class="nav-link" href="/">Dashboard</a>
                         {% endif %}
@@ -230,7 +304,7 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item"
-                                    href="/{{ current_user.role.value if hasattr(current_user.role, 'value') else current_user.role }}/profile"><i
+                                    href="/{{ (current_user.role.value if hasattr(current_user.role, 'value') else current_user.role).lower() }}/profile"><i
                                         class="bi bi-person me-2"></i>Profile</a></li>
                             <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear me-2"></i>Settings</a>
                             </li>
@@ -252,7 +326,49 @@
 
     <!-- Main Content -->
     <main>
-        {% block content %}{% endblock %}
+        {% set _sidebar_html %}
+        {% block sidebar_content %}{% endblock %}
+        {% endset %}
+        {% set _sidebar_html = _sidebar_html | trim %}
+
+        {% if _sidebar_html %}
+        <div class="container-fluid py-4">
+            <div class="row">
+                <!-- Sidebar (Desktop) -->
+                <div class="col-xl-2 col-lg-3 d-none d-lg-block">
+                    <div class="sidebar p-3">
+                        {{ _sidebar_html }}
+                    </div>
+                </div>
+                <!-- Mobile Sidebar Toggle -->
+                <div class="col-12 d-lg-none mb-3">
+                    <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mobileSidebar">
+                        <i class="bi bi-list me-2"></i>Navigation Menu
+                    </button>
+                    <div class="collapse mt-2" id="mobileSidebar">
+                        <div class="sidebar p-3">
+                            {{ _sidebar_html }}
+                        </div>
+                    </div>
+                </div>
+                <!-- Main Content Area -->
+                <div class="col-xl-10 col-lg-9">
+                    {% if self.page_title() | trim %}
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fw-bold mb-0">{% block page_title %}{% endblock %}</h3>
+                        {% block page_actions %}{% endblock %}
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% block content %}{% endblock %}
+
+                    {% if _sidebar_html %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </main>
 
     <!-- Footer -->

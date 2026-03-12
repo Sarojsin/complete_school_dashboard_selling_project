@@ -21,7 +21,8 @@
                     <a href="/register" class="btn btn-light btn-lg">Get Started Free</a>
                     <a href="/login" class="btn btn-outline-light btn-lg">Sign In</a>
                     {% else %}
-                    <a href="/{{ current_user.role }}/dashboard" class="btn btn-light btn-lg">Go to Dashboard</a>
+                    <a href="/{{ current_user.role | lower }}/dashboard" class="btn btn-light btn-lg">Go to
+                        Dashboard</a>
                     {% endif %}
                 </div>
             </div>
