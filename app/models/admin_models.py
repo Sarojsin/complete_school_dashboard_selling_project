@@ -135,10 +135,76 @@ class AdminAuditLog(Base):
         return f"<AdminAuditLog {self.action} on {self.feature_code} at {self.timestamp}>"
 
 
+class LoginHistory(Base):
+    """
+    Tracks successful and failed authentication attempts.
+
+    This powers admin login-history visibility and security analytics.
+    """
+    __tablename__ = "login_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    username = Column(String(100), nullable=True, index=True)
+    success = Column(Boolean, default=False, nullable=False, index=True)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    failure_reason = Column(String(255), nullable=True)
+    token_issued_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    user = relationship("User")
+
+    def __repr__(self):
+        status = "success" if self.success else "failed"
+        return f"<LoginHistory {status} user={self.user_id} at {self.created_at}>"
+
+
+class FailedLoginAttempt(Base):
+    """
+    Tracks repeated failed login attempts by username and IP.
+    """
+    __tablename__ = "failed_login_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), nullable=False, index=True)
+    ip_address = Column(String(50), nullable=True, index=True)
+    attempts_count = Column(Integer, default=1, nullable=False)
+    last_failure_reason = Column(String(255), nullable=True)
+    last_attempt_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    def __repr__(self):
+        return f"<FailedLoginAttempt username={self.username} count={self.attempts_count}>"
+
+
+class UserSecurityState(Base):
+    """
+    Stores mutable security controls for users without changing core user schema.
+    """
+    __tablename__ = "user_security_states"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, index=True)
+    is_locked = Column(Boolean, default=False, nullable=False, index=True)
+    lock_reason = Column(Text, nullable=True)
+    locked_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    locked_at = Column(DateTime, nullable=True)
+    force_logout_after = Column(DateTime, nullable=True, index=True)
+    force_logout_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User", foreign_keys=[user_id])
+
+    def __repr__(self):
+        return f"<UserSecurityState user={self.user_id} locked={self.is_locked}>"
+
+
 # Import UserRole for type hints in other modules
 __all__ = [
     "SystemFeature",
     "FeatureRolePermission", 
     "AdminAuditLog",
+    "LoginHistory",
+    "FailedLoginAttempt",
+    "UserSecurityState",
     "FeatureCategory",
 ]

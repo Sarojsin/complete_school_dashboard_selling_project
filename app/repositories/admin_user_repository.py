@@ -1,8 +1,10 @@
+from datetime import datetime
 from typing import List, Dict, Optional
 from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import User, UserRole, Student, Teacher, Parent
+from app.models.admin_models import LoginHistory, FailedLoginAttempt, UserSecurityState
 
 class AdminUserRepository:
     """Handles specialized admin queries for User management."""
@@ -103,4 +105,141 @@ class AdminUserRepository:
             
         query = query.offset(skip).limit(limit).order_by(Parent.full_name)
         result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_user_security_state(
+        db: AsyncSession,
+        user_id: int,
+        create_if_missing: bool = False,
+    ) -> Optional[UserSecurityState]:
+        result = await db.execute(
+            select(UserSecurityState).where(UserSecurityState.user_id == user_id)
+        )
+        state = result.scalar_one_or_none()
+        if state or not create_if_missing:
+            return state
+
+        state = UserSecurityState(user_id=user_id)
+        db.add(state)
+        await db.flush()
+        return state
+
+    @staticmethod
+    async def set_user_lock(
+        db: AsyncSession,
+        user_id: int,
+        lock: bool,
+        admin_user_id: int,
+        reason: Optional[str] = None,
+    ) -> UserSecurityState:
+        state = await AdminUserRepository.get_user_security_state(
+            db, user_id, create_if_missing=True
+        )
+        state.is_locked = lock
+        state.lock_reason = reason if lock else None
+        state.locked_by = admin_user_id if lock else None
+        state.locked_at = datetime.utcnow() if lock else None
+        state.updated_at = datetime.utcnow()
+        return state
+
+    @staticmethod
+    async def mark_force_logout(
+        db: AsyncSession,
+        user_id: int,
+        admin_user_id: int,
+    ) -> UserSecurityState:
+        state = await AdminUserRepository.get_user_security_state(
+            db, user_id, create_if_missing=True
+        )
+        state.force_logout_after = datetime.utcnow()
+        state.force_logout_by = admin_user_id
+        state.updated_at = datetime.utcnow()
+        return state
+
+    @staticmethod
+    async def create_login_history(
+        db: AsyncSession,
+        username: str,
+        success: bool,
+        user_id: Optional[int] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        failure_reason: Optional[str] = None,
+        token_issued_at: Optional[datetime] = None,
+    ) -> LoginHistory:
+        entry = LoginHistory(
+            user_id=user_id,
+            username=username,
+            success=success,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            failure_reason=failure_reason,
+            token_issued_at=token_issued_at,
+        )
+        db.add(entry)
+        await db.flush()
+        return entry
+
+    @staticmethod
+    async def increment_failed_login_attempt(
+        db: AsyncSession,
+        username: str,
+        ip_address: Optional[str] = None,
+        reason: Optional[str] = None,
+    ) -> FailedLoginAttempt:
+        result = await db.execute(
+            select(FailedLoginAttempt).where(
+                FailedLoginAttempt.username == username,
+                FailedLoginAttempt.ip_address == ip_address,
+            )
+        )
+        row = result.scalar_one_or_none()
+        if row:
+            row.attempts_count += 1
+            row.last_failure_reason = reason
+            row.last_attempt_at = datetime.utcnow()
+            return row
+
+        row = FailedLoginAttempt(
+            username=username,
+            ip_address=ip_address,
+            attempts_count=1,
+            last_failure_reason=reason,
+            last_attempt_at=datetime.utcnow(),
+        )
+        db.add(row)
+        await db.flush()
+        return row
+
+    @staticmethod
+    async def clear_failed_login_attempts(
+        db: AsyncSession,
+        username: str,
+        ip_address: Optional[str] = None,
+    ) -> None:
+        result = await db.execute(
+            select(FailedLoginAttempt).where(
+                FailedLoginAttempt.username == username,
+                FailedLoginAttempt.ip_address == ip_address,
+            )
+        )
+        row = result.scalar_one_or_none()
+        if row:
+            await db.delete(row)
+
+    @staticmethod
+    async def get_login_history_for_user(
+        db: AsyncSession,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> List[LoginHistory]:
+        result = await db.execute(
+            select(LoginHistory)
+            .where(LoginHistory.user_id == user_id)
+            .order_by(LoginHistory.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
         return list(result.scalars().all())
