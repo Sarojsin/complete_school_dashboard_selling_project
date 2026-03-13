@@ -14,6 +14,7 @@ from app.schemas.misc import (
     StudentCreate, StudentResponse, StudentUpdate,
     TeacherCreate, TeacherResponse, TeacherUpdate
 )
+from app.services.password_policy_service import PasswordPolicyService
 
 router = APIRouter()
 
@@ -121,6 +122,8 @@ async def create_student(
     existing_username = await UserRepository.get_by_username(db, student.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
+
+    await PasswordPolicyService.enforce(db, student.password)
     
     # Create user
     user = await UserRepository.create(
@@ -206,6 +209,8 @@ async def create_teacher(
     existing_username = await UserRepository.get_by_username(db, teacher.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
+
+    await PasswordPolicyService.enforce(db, teacher.password)
     
     # Create user
     user = await UserRepository.create(
