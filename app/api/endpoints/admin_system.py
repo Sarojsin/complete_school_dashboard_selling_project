@@ -52,15 +52,21 @@ async def get_performance_metrics(current_user: User = Depends(get_current_admin
 
 
 @router.get("/backup/status")
-async def get_backup_status(current_user: User = Depends(get_current_admin)):
+async def get_backup_status(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_admin),
+):
     """Get backup status"""
-    return await AdminSystemService.get_backup_status()
+    return await AdminSystemService.get_backup_status(db)
 
 
 @router.get("/security/status")
-async def get_security_status(current_user: User = Depends(get_current_admin)):
+async def get_security_status(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_admin),
+):
     """Get security status"""
-    return await AdminSystemService.get_security_status()
+    return await AdminSystemService.get_security_status(db)
 
 
 @router.get("/dashboard")

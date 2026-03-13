@@ -127,7 +127,7 @@ async def delete_department_admin(
 
 
 # ---------------------------------------------------------------------------
-# Timetable (placeholder)
+# Timetable
 # ---------------------------------------------------------------------------
 
 @router.get("/timetable")
@@ -138,7 +138,8 @@ async def get_timetable_admin(
     current_user: User = Depends(get_current_admin),
 ):
     """Return timetable entries."""
-    return {"message": "Timetable management coming soon", "course_id": course_id, "day": day}
+    entries = await AdminAcademicService.get_timetable(db, course_id, day)
+    return {"entries": entries, "total": len(entries)}
 
 
 @router.get("/timetable/conflicts")
@@ -151,7 +152,9 @@ async def check_timetable_conflicts(
     current_user: User = Depends(get_current_admin),
 ):
     """Check for scheduling conflicts (pending TimetableEntry model)."""
-    return {"has_conflicts": False, "conflicting_courses": []}
+    return await AdminAcademicService.check_timetable_conflicts(
+        db, course_id, day_of_week, start_time, end_time
+    )
 
 
 # ---------------------------------------------------------------------------
