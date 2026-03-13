@@ -129,7 +129,7 @@ async def get_attendance_analytics(
     current_user: User = Depends(get_current_admin),
 ):
     """Return attendance percentage overview."""
-    return await DashboardService.get_attendance_analytics()
+    return await DashboardService.get_attendance_analytics(db)
 
 
 @router.get("/analytics/exams")
