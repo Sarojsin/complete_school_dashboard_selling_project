@@ -1,6 +1,6 @@
 
 from sqlalchemy import text
-from database.database import engine
+from app.core.database import engine
 
 def drop_course_id():
     print("Dropping 'course_id' column from 'tests' table...")
