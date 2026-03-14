@@ -82,6 +82,65 @@ async def signup_library_page(request: Request):
 async def signup_account_page(request: Request):
     return templates.TemplateResponse("auth/signup_account.html", {"request": request})
 
+@router.get("/signup/admin", response_class=HTMLResponse)
+async def signup_admin_page(request: Request):
+    return templates.TemplateResponse("auth/signup_admin.html", {"request": request})
+
+@router.post("/signup/admin")
+async def signup_admin_handler(request: Request):
+    """Handle admin signup form submission"""
+    form = await request.form()
+    import httpx
+    import os
+    
+    api_base = os.getenv("API_BASE_URL", "http://localhost:8000")
+    
+    data = {
+        "email": form.get("email"),
+        "username": form.get("username"),
+        "full_name": form.get("full_name"),
+        "password": form.get("password"),
+        "secret_key": form.get("secret_key")
+    }
+    
+    # Get CSRF token from request state (set by middleware)
+    csrf_token = getattr(request.state, "csrf_token", None)
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            # Include CSRF token in headers
+            headers = {}
+            if csrf_token:
+                headers["X-CSRF-Token"] = csrf_token
+                headers["Cookie"] = f"csrf_token={csrf_token}"
+            
+            response = await client.post(
+                f"{api_base}/api/auth/signup/admin",
+                json=data,
+                headers=headers,
+                timeout=10.0
+            )
+            if response.status_code == 201:
+                return templates.TemplateResponse(
+                    "auth/signup_admin.html",
+                    {"request": request, "success": True}
+                )
+            else:
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get("detail", "Registration failed")
+                except:
+                    error_msg = f"Registration failed (status: {response.status_code})"
+                return templates.TemplateResponse(
+                    "auth/signup_admin.html",
+                    {"request": request, "error": error_msg}
+                )
+        except Exception as e:
+            return templates.TemplateResponse(
+                "auth/signup_admin.html",
+                {"request": request, "error": str(e)}
+            )
+
 
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):

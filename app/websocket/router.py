@@ -8,11 +8,15 @@ from app.utils.websocket_manager import manager
 from app.core.config import settings
 from app.services.chat_service import ChatService
 import json
+from typing import Optional
 
 router = APIRouter()
 
-async def get_user_from_token(token: str, db: AsyncSession) -> User:
+async def get_user_from_token(token: Optional[str], db: AsyncSession) -> User:
     """Authenticate user from WebSocket token"""
+    if not token:
+        return None
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if payload.get("type") != "access":
@@ -30,9 +34,16 @@ async def get_user_from_token(token: str, db: AsyncSession) -> User:
 @router.websocket("/ws/chat")
 async def websocket_endpoint(
     websocket: WebSocket,
-    token: str = Query(...),
+    token: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_async_db)
 ):
+    if not token:
+        cookie_authorization = websocket.cookies.get("access_token")
+        if cookie_authorization:
+            scheme, _, param = cookie_authorization.partition(" ")
+            if scheme.lower() == "bearer" and param:
+                token = param
+
     user = await get_user_from_token(token, db)
     
     if not user:
