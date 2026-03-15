@@ -6,6 +6,9 @@ from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.admin_system_repository import AdminSystemRepository
+from app.repositories.admin_settings_repository import AdminSettingsRepository
+from app.services.admin_backup_service import AdminBackupService
+from app.core.metrics import metrics_collector
 
 class AdminSystemService:
     """Business logic for system monitoring and health checks."""
@@ -72,45 +75,43 @@ class AdminSystemService:
 
     @staticmethod
     async def get_performance_metrics() -> Dict[str, Any]:
+        snapshot = metrics_collector.snapshot()
         return {
-            "avg_response_time_ms": 45,
-            "requests_per_minute": 120,
-            "error_rate": 0.5,
-            "cache_hit_rate": 78.5,
-            "top_endpoints": [
-                {"path": "/api/auth/login", "requests": 500},
-                {"path": "/api/courses", "requests": 350},
-                {"path": "/api/grades", "requests": 280}
-            ]
+            **snapshot,
+            "cache_hit_rate": None,
         }
 
     @staticmethod
-    async def get_backup_status() -> Dict[str, Any]:
-        return {
-            "last_backup": "2024-01-15T10:30:00Z",
-            "last_backup_size_mb": 256,
-            "auto_backup_enabled": True,
-            "backup_schedule": "daily at 2:00 AM",
-            "next_scheduled_backup": "2024-01-16T02:00:00Z",
-            "total_backups": 30
-        }
+    async def get_backup_status(db: AsyncSession) -> Dict[str, Any]:
+        return await AdminBackupService.get_backup_status(db)
 
     @staticmethod
-    async def get_security_status() -> Dict[str, Any]:
-        return {
-            "jwt_expiration_minutes": 60,
-            "refresh_token_expiration_days": 7,
-            "csrf_enabled": True,
-            "2fa_enabled": False,
-            "password_policy": {
+    async def get_security_status(db: AsyncSession) -> Dict[str, Any]:
+        base = await AdminSettingsRepository.get_setting_value(
+            db,
+            "security_settings",
+            {
+                "jwt_expiration_minutes": 60,
+                "refresh_token_expiration_days": 7,
+                "csrf_enabled": True,
+                "ip_whitelist_enabled": False,
+                "failed_login_attempts_allowed": 5,
+                "account_lockout_minutes": 30,
+                "two_factor_enabled": False,
+            },
+        )
+        password_policy = await AdminSettingsRepository.get_setting_value(
+            db,
+            "password_policy",
+            {
                 "min_length": 8,
                 "require_uppercase": True,
                 "require_numbers": True,
-                "require_special_chars": True
+                "require_special_chars": True,
             },
-            "failed_login_attempts_allowed": 5,
-            "account_lockout_duration_minutes": 30
-        }
+        )
+        base["password_policy"] = password_policy
+        return base
 
     @staticmethod
     async def get_system_dashboard(db: AsyncSession) -> Dict[str, Any]:

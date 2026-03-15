@@ -7,6 +7,7 @@ from app.repositories.admin_user_repository import AdminUserRepository
 from app.core.exceptions import NotFoundError, ValidationError, ForbiddenError
 from app.api.deps.admin import hash_password
 from app.api.schemas.admin.users import ChangeRoleRequest, PasswordResetRequest, UserResponse
+from app.services.password_policy_service import PasswordPolicyService
 
 
 class AdminUserService:
@@ -41,6 +42,7 @@ class AdminUserService:
     @staticmethod
     async def reset_user_password(db: AsyncSession, user_id: int, request: PasswordResetRequest) -> Dict[str, Any]:
         user = await AdminUserService.get_user_or_404(db, user_id)
+        await PasswordPolicyService.enforce(db, request.new_password)
         user.hashed_password = hash_password(request.new_password)
         await db.commit()
         return {"success": True, "message": "Password reset successfully"}
