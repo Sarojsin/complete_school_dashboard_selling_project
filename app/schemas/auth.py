@@ -8,6 +8,11 @@ class Token(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+
+class AuthSessionResponse(BaseModel):
+    token_type: str = "bearer"
+    user: UserResponse
+
 class TokenData(BaseModel):
     user_id: Optional[int] = None
     role: Optional[str] = None

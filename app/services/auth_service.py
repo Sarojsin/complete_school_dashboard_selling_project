@@ -19,9 +19,15 @@ class AuthService:
         return encoded_jwt
     
     @staticmethod
-    def create_token_for_user(user: User) -> dict:
-        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    def create_token_for_user(
+        user: User,
+        access_expires_minutes: Optional[int] = None,
+        refresh_expires_days: Optional[int] = None,
+    ) -> dict:
+        access_minutes = access_expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        refresh_days = refresh_expires_days or settings.REFRESH_TOKEN_EXPIRE_DAYS
+        access_token_expires = timedelta(minutes=access_minutes)
+        refresh_token_expires = timedelta(days=refresh_days)
         
         access_token = AuthService.create_access_token(
             data={"sub": str(user.id), "role": user.role.value, "type": "access"},
