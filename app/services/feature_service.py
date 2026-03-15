@@ -185,7 +185,7 @@ class FeatureService:
         
         return {
             "success": True,
-            "message": f"Feature {feature_code} has been {'disabled' if new_value else 'enabled'}",
+            "message": f"Feature {feature_code} has been {'enabled' if new_value else 'disabled'}",
             "is_enabled": new_value
         }
     
