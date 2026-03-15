@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Optional
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Course, Teacher
@@ -173,4 +174,57 @@ class AdminAcademicService:
             },
             "teachers": stats["total_teachers"],
             "students": stats["total_students"],
+        }
+
+    # -----------------------------------------------------------------------
+    # Timetable
+    # -----------------------------------------------------------------------
+    @staticmethod
+    async def get_timetable(
+        db: AsyncSession,
+        course_id: Optional[int],
+        day: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        entries = await AdminAcademicRepository.get_timetable_entries(db, course_id, day)
+        return [
+            {
+                "id": e.id,
+                "course_id": e.course_id,
+                "day_of_week": e.day_of_week,
+                "start_time": e.start_time.isoformat() if e.start_time else None,
+                "end_time": e.end_time.isoformat() if e.end_time else None,
+                "room": e.room,
+            }
+            for e in entries
+        ]
+
+    @staticmethod
+    async def check_timetable_conflicts(
+        db: AsyncSession,
+        course_id: int,
+        day_of_week: str,
+        start_time: str,
+        end_time: str,
+    ) -> Dict[str, Any]:
+        try:
+            start = datetime.strptime(start_time, "%H:%M").time()
+            end = datetime.strptime(end_time, "%H:%M").time()
+        except ValueError:
+            raise ValidationError("Time must be in HH:MM format")
+
+        conflicts = await AdminAcademicRepository.find_timetable_conflicts(
+            db, course_id, day_of_week, start, end
+        )
+        return {
+            "has_conflicts": len(conflicts) > 0,
+            "conflicting_courses": [
+                {
+                    "course_id": c.course_id,
+                    "day_of_week": c.day_of_week,
+                    "start_time": c.start_time.isoformat() if c.start_time else None,
+                    "end_time": c.end_time.isoformat() if c.end_time else None,
+                    "room": c.room,
+                }
+                for c in conflicts
+            ],
         }
