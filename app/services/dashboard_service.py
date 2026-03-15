@@ -1,8 +1,9 @@
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, case
 
-from app.models.models import User
+from app.models.models import User, Attendance, Student
 from app.repositories.dashboard_repository import DashboardRepository
 from app.repositories.feature_repository import FeatureRepository
 
@@ -150,21 +151,64 @@ class DashboardService:
         return {"period": "monthly", "data": data}
 
     @staticmethod
-    async def get_attendance_analytics() -> Dict[str, Any]:
+    async def get_attendance_analytics(db: AsyncSession) -> Dict[str, Any]:
+        today = date.today()
+        start = today - timedelta(days=30)
+
+        present_case = case((Attendance.status == "present", 1), else_=0)
+
+        # Overall attendance percentage for last 30 days
+        overall_rows = await db.execute(
+            select(
+                func.sum(present_case).label("present"),
+                func.count(Attendance.id).label("total"),
+            ).where(Attendance.date >= start, Attendance.date <= today)
+        )
+        overall_present, overall_total = overall_rows.first() or (0, 0)
+        overall_pct = round((overall_present / overall_total * 100), 2) if overall_total else 0.0
+
+        # By grade
+        grade_rows = await db.execute(
+            select(
+                Student.grade_level,
+                func.sum(present_case).label("present"),
+                func.count(Attendance.id).label("total"),
+            )
+            .join(Student, Student.id == Attendance.student_id)
+            .where(Attendance.date >= start, Attendance.date <= today)
+            .group_by(Student.grade_level)
+        )
+        by_grade = []
+        for grade_level, present, total in grade_rows:
+            pct = round((present / total * 100), 2) if total else 0.0
+            label = grade_level or "N/A"
+            by_grade.append({"grade": label, "percentage": pct})
+
+        # Weekly trend (last 7 days)
+        trend_start = today - timedelta(days=6)
+        trend_rows = await db.execute(
+            select(
+                Attendance.date,
+                func.sum(present_case).label("present"),
+                func.count(Attendance.id).label("total"),
+            )
+            .where(Attendance.date >= trend_start, Attendance.date <= today)
+            .group_by(Attendance.date)
+        )
+        trend_map = {row[0]: row for row in trend_rows}
+        weekly_trend = []
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            present, total = 0, 0
+            if day in trend_map:
+                _, present, total = trend_map[day]
+            pct = round((present / total * 100), 2) if total else 0.0
+            weekly_trend.append({"day": day.strftime("%a"), "percentage": pct})
+
         return {
-            "overall_percentage": 87.5,
-            "by_grade": [
-                {"grade": "Grade 10", "percentage": 89.2},
-                {"grade": "Grade 11", "percentage": 85.7},
-                {"grade": "Grade 12", "percentage": 88.1},
-            ],
-            "weekly_trend": [
-                {"day": "Mon", "percentage": 92.0},
-                {"day": "Tue", "percentage": 88.5},
-                {"day": "Wed", "percentage": 85.0},
-                {"day": "Thu", "percentage": 87.2},
-                {"day": "Fri", "percentage": 84.8},
-            ],
+            "overall_percentage": overall_pct,
+            "by_grade": by_grade,
+            "weekly_trend": weekly_trend,
         }
 
     @staticmethod
@@ -176,6 +220,6 @@ class DashboardService:
     async def get_analytics_summary(db: AsyncSession) -> Dict[str, Any]:
         enrollment = await DashboardService.get_enrollment_analytics(db, "yearly")
         fees       = await DashboardService.get_fee_analytics(db, "yearly")
-        attendance = await DashboardService.get_attendance_analytics()
+        attendance = await DashboardService.get_attendance_analytics(db)
         exams      = await DashboardService.get_exam_analytics(db)
         return {"enrollment": enrollment, "fees": fees, "attendance": attendance, "exams": exams}
