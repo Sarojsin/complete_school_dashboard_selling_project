@@ -7,18 +7,18 @@ import sys
 import logging
 from sqlalchemy import text
 
-# Add current directory to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add project root directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from database.database import engine, Base
+from app.core.database import engine, Base
 # Import all models to ensure they are registered with Base.metadata
-from models.models import (
+from app.models.models import (
     User, Student, Teacher, Parent, Authority, 
     Course, CourseEnrollment, Assignment, AssignmentSubmission, 
     Grade, Attendance, FeeRecord, Notice, Note, Video, Message, Schedule
 )
-from models.test_models import Test, TestQuestion, TestSubmission
-from models import group_models
+from app.models.test_models import Test, TestQuestion, TestSubmission
+from app.models import group_models, admin_models
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -104,6 +104,40 @@ def ensure_columns_exist():
         except Exception as e:
             logger.warning(f"Failed to check/add 'explanation' column: {e}")
 
+    # 4. Check 'notes' table for 'is_approved'
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='notes' AND column_name='is_approved';"
+            ))
+            if not result.first():
+                logger.info("Adding 'is_approved' column to 'notes' table...")
+                conn.execute(text("ALTER TABLE notes ADD COLUMN is_approved BOOLEAN DEFAULT TRUE;"))
+                conn.commit()
+                logger.info("Added 'is_approved' column successfully.")
+            else:
+                logger.info("'is_approved' column already exists in 'notes'.")
+        except Exception as e:
+            logger.warning(f"Failed to check/add 'is_approved' column on notes: {e}")
+
+    # 5. Check 'videos' table for 'is_approved'
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='videos' AND column_name='is_approved';"
+            ))
+            if not result.first():
+                logger.info("Adding 'is_approved' column to 'videos' table...")
+                conn.execute(text("ALTER TABLE videos ADD COLUMN is_approved BOOLEAN DEFAULT TRUE;"))
+                conn.commit()
+                logger.info("Added 'is_approved' column successfully.")
+            else:
+                logger.info("'is_approved' column already exists in 'videos'.")
+        except Exception as e:
+            logger.warning(f"Failed to check/add 'is_approved' column on videos: {e}")
+
 def setup_database():
     """Ensure tables exist and run migrations"""
     try:
@@ -127,6 +161,11 @@ def setup_database():
             if os.path.exists(migration_script):
                 logger.info(f"Running migration: {migration_script}")
                 subprocess.run([sys.executable, migration_script], check=False)
+
+            security_tables_migration = os.path.join(migrations_dir, "add_admin_security_tables.py")
+            if os.path.exists(security_tables_migration):
+                logger.info(f"Running migration: {security_tables_migration}")
+                subprocess.run([sys.executable, security_tables_migration], check=False)
             
             # Check for SQL migrations
             for file in os.listdir(migrations_dir):
@@ -151,3 +190,181 @@ def setup_database():
 
 if __name__ == "__main__":
     setup_database()
+'''STEP 1 — Initialize Alembic
+
+From project root:
+
+alembic init migrations
+
+This creates:
+
+migrations/
+migrations/env.py
+migrations/script.py.mako
+alembic.ini
+⚙ STEP 2 — Configure Database URL
+
+Open:
+
+alembic.ini
+
+Replace:
+
+sqlalchemy.url = driver://user:pass@localhost/dbname
+
+With your real database.
+
+For PostgreSQL (recommended):
+
+sqlalchemy.url = postgresql+psycopg2://user:password@localhost/school_db
+
+⚠ In production (Render/AWS), you’ll override this using environment variables.
+
+Better version:
+
+In alembic.ini:
+
+sqlalchemy.url = ${DATABASE_URL}
+🧠 STEP 3 — Connect Alembic to Your Models
+
+Open:
+
+migrations/env.py
+
+Find:
+
+target_metadata = None
+
+Replace with:
+
+from app.models import Base
+target_metadata = Base.metadata
+
+Now Alembic can detect model changes.
+
+🔄 STEP 4 — Handle Existing Database (IMPORTANT)
+
+Since you already have tables:
+
+We DO NOT want Alembic to recreate them.
+
+Run:
+
+alembic revision --autogenerate -m "initial"
+
+Then:
+
+alembic stamp head
+
+What this does:
+
+Creates migration history
+
+Marks DB as already up-to-date
+
+Prevents table recreation
+
+This is the safe transition step.
+
+🧱 STEP 5 — Test a Real Migration
+
+Now let’s test it properly.
+
+Add a new field to one model:
+
+is_active = Column(Boolean, default=True)
+
+Now generate migration:
+
+alembic revision --autogenerate -m "add is_active to students"
+
+Review the generated file.
+
+Then apply:
+
+alembic upgrade head
+
+Done.
+
+Your DB is now versioned.
+
+🔁 STEP 6 — Remove setup_database.py
+
+Once Alembic is working:
+
+Delete:
+
+setup_database.py
+manual ALTER TABLE logic
+column existence checks
+
+Never mutate DB manually again.
+
+🌍 STEP 7 — Configure Production Deployment
+
+On:
+
+Render
+
+Amazon Web Services
+
+Change your start command to:
+
+alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 10000
+
+This ensures:
+
+DB migrates
+
+Then app starts
+
+Safe production behavior.
+
+🏗 Final Production Structure
+
+Your project should now look like:
+
+app/
+migrations/
+alembic.ini
+requirements.txt
+Dockerfile
+
+No manual DB scripts.
+
+🧠 Proper Workflow From Now On
+
+Whenever you:
+
+Add a column
+
+Remove a column
+
+Change a field type
+
+Add a table
+
+You do:
+
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+
+Commit the migration file.
+
+Push.
+
+Deploy.
+
+That’s it.
+
+⚠ Common Mistakes to Avoid
+
+❌ Editing migration files randomly
+
+❌ Deleting migration history
+
+❌ Running Base.metadata.create_all() in production
+
+❌ Mixing manual SQL + Alembic
+
+Once you switch — commit fully. '''
