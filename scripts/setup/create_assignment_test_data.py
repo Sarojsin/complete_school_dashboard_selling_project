@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database.database import SessionLocal
-from models.models import User, Student, Teacher, Course, CourseEnrollment, Assignment, UserRole
-from repositories.user_repository import UserRepository
+from app.core.database import SessionLocal
+from app.models.models import User, Student, Teacher, Course, CourseEnrollment, Assignment, UserRole
+from app.repositories.user_repository import UserRepository
 
 def create_test_data():
     db = SessionLocal()
