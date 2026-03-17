@@ -1,6 +1,6 @@
-from database.database import SessionLocal
-from repositories.teacher_repository import TeacherRepository
-from models.models import Teacher, User, Course, Student, CourseEnrollment
+from app.core.database import SessionLocal
+from app.repositories.teacher_repository import TeacherRepository
+from app.models.models import Teacher, User, Course, Student, CourseEnrollment
 
 def debug_teacher_filter():
     db = SessionLocal()
