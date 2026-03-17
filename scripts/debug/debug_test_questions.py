@@ -1,5 +1,5 @@
 
-from database.database import SessionLocal
+from app.core.database import SessionLocal
 from app.models.models import User, Student, Teacher # Import these to ensure relationships work
 from app.models.test_models import Test, TestQuestion
 import json
