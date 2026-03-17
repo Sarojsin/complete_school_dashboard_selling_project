@@ -1,5 +1,5 @@
 
-from database.database import SessionLocal
+from app.core.database import SessionLocal
 from app.models.models import Student, User, Course, CourseEnrollment
 from app.models.test_models import Test
 from datetime import datetime
