@@ -1,7 +1,7 @@
 import pytest
 from app.main import app
-from dependencies import get_current_user
-from models.models import User, Student
+from app.dependencies.auth import get_current_user
+from app.models.models import User, Student
 
 def test_student_dashboard_redirect(client):
     """Test that student dashboard redirects to login when not authenticated."""
