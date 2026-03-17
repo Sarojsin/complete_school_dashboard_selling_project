@@ -5,15 +5,15 @@ import os
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database.database import SessionLocal, engine, Base
-from models.group_models import Group, GroupMember
-from models.models import User, UserRole
-from repositories.group_repository import GroupRepository
-from repositories.group_post_repository import GroupPostRepository
-from services.group_service import GroupService
-from services.group_post_service import GroupPostService
-from schemas.group_schemas import GroupCreate, GroupInviteRequest
-from schemas.group_post_schemas import GroupPostCreate
+from app.core.database import SessionLocal, engine, Base
+from app.models.group_models import Group, GroupMember
+from app.models.models import User, UserRole
+from app.repositories.group_repository import GroupRepository
+from app.repositories.group_post_repository import GroupPostRepository
+from app.services.group_service import GroupService
+from app.services.group_post_service import GroupPostService
+from app.legacy.schemas.group_schemas import GroupCreate, GroupInviteRequest
+from app.legacy.schemas.group_post_schemas import GroupPostCreate
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -75,7 +75,7 @@ def verify_groups():
         # Let's fix that by creating a simple wrapper or just using repo.
         
         # Update: Let's quickly define a minimal UserRepository mock or just instantiate it if available.
-        # from repositories.user_repository import UserRepository
+        # from app.repositories.user_repository import UserRepository
         # user_repo = UserRepository(db)
         # group_service.user_repo = user_repo
         
