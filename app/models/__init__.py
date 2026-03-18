@@ -2,7 +2,17 @@ from .department_models import Department
 from .exam_models import ExamResult, ExamNotice
 from .library_models import BookLoan, Book
 from .account_models import TeacherPayment
-from .admin_models import SystemFeature, FeatureRolePermission, AdminAuditLog, FeatureCategory
+from .admin_models import (
+    SystemFeature,
+    FeatureRolePermission,
+    AdminAuditLog,
+    LoginHistory,
+    FailedLoginAttempt,
+    UserSecurityState,
+    SystemSetting,
+    BackupRecord,
+    FeatureCategory,
+)
 
 __all__ = [
     "Department",
@@ -14,5 +24,10 @@ __all__ = [
     "SystemFeature",
     "FeatureRolePermission",
     "AdminAuditLog",
+    "LoginHistory",
+    "FailedLoginAttempt",
+    "UserSecurityState",
+    "SystemSetting",
+    "BackupRecord",
     "FeatureCategory",
 ]
