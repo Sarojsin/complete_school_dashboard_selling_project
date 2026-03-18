@@ -3,7 +3,7 @@ from sqlalchemy import func, select, or_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Course, Student, Teacher
+from app.models.models import Course, Student, Teacher, Schedule
 from app.models.department_models import Department
 
 class AdminAcademicRepository:
@@ -95,3 +95,35 @@ class AdminAcademicRepository:
             "total_teachers": total_teachers_r.scalar() or 0,
             "total_students": total_students_r.scalar() or 0,
         }
+
+    @staticmethod
+    async def get_timetable_entries(
+        db: AsyncSession,
+        course_id: Optional[int] = None,
+        day: Optional[str] = None,
+    ) -> List[Schedule]:
+        query = select(Schedule)
+        if course_id is not None:
+            query = query.where(Schedule.course_id == course_id)
+        if day:
+            query = query.where(Schedule.day_of_week == day)
+        query = query.order_by(Schedule.day_of_week, Schedule.start_time)
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def find_timetable_conflicts(
+        db: AsyncSession,
+        course_id: int,
+        day_of_week: str,
+        start_time,
+        end_time,
+    ) -> List[Schedule]:
+        query = select(Schedule).where(
+            Schedule.day_of_week == day_of_week,
+            Schedule.course_id != course_id,
+            Schedule.start_time < end_time,
+            Schedule.end_time > start_time,
+        )
+        result = await db.execute(query)
+        return list(result.scalars().all())
