@@ -359,6 +359,7 @@ class Note(Base):
     file_path = Column(String(500), nullable=False)
     file_size = Column(Integer)
     file_type = Column(String(50))
+    is_approved = Column(Boolean, default=True, nullable=False)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -376,6 +377,7 @@ class Video(Base):
     file_path = Column(String(500), nullable=False)
     duration = Column(Integer)  # in seconds
     file_size = Column(Integer)
+    is_approved = Column(Boolean, default=True, nullable=False)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships

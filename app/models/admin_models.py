@@ -198,6 +198,50 @@ class UserSecurityState(Base):
         return f"<UserSecurityState user={self.user_id} locked={self.is_locked}>"
 
 
+class SystemSetting(Base):
+    """
+    Stores mutable system configuration as JSON blobs.
+
+    Example keys:
+    - security_settings
+    - jwt_settings
+    - password_policy
+    - ip_whitelist
+    - backup_schedule
+    - notification_automations
+    - broadcast_history
+    """
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    value_json = Column(Text, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    def __repr__(self):
+        return f"<SystemSetting {self.key}>"
+
+
+class BackupRecord(Base):
+    """
+    Tracks backups created by the admin backup system.
+    """
+    __tablename__ = "backup_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    size_bytes = Column(Integer, default=0, nullable=False)
+    backup_type = Column(String(20), default="manual", nullable=False)  # manual, auto
+    status = Column(String(20), default="completed", nullable=False)    # completed, failed, in_progress
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    def __repr__(self):
+        return f"<BackupRecord {self.filename} {self.status}>"
+
+
 # Import UserRole for type hints in other modules
 __all__ = [
     "SystemFeature",
@@ -206,5 +250,7 @@ __all__ = [
     "LoginHistory",
     "FailedLoginAttempt",
     "UserSecurityState",
+    "SystemSetting",
+    "BackupRecord",
     "FeatureCategory",
 ]
