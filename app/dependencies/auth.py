@@ -3,6 +3,8 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime
 from typing import Optional
 from app.core.database import get_async_db
 from app.models.models import User, UserRole
@@ -52,6 +54,42 @@ async def get_current_user(
     
     if user is None or not user.is_active:
         raise credentials_exception
+
+    # Extra admin-controlled security checks. If state table is not deployed yet,
+    # fail open to preserve backward compatibility.
+    try:
+        from app.repositories.admin_user_repository import AdminUserRepository
+        state = await AdminUserRepository.get_user_security_state(db, user.id)
+        if state:
+            if state.is_locked:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Account is locked by administrator",
+                )
+
+            token_iat = payload.get("iat")
+            if state.force_logout_after and token_iat is not None:
+                token_issued_at = datetime.utcfromtimestamp(int(token_iat))
+                if token_issued_at <= state.force_logout_after:
+                    raise credentials_exception
+    except HTTPException:
+        raise
+    except SQLAlchemyError:
+        # Security tables may not exist yet. Roll back failed transaction and
+        # reload user so downstream code doesn't hit expired attributes.
+        try:
+            await db.rollback()
+            result = await db.execute(select(User).filter(User.id == token_data.user_id))
+            user = result.scalars().first()
+            if user is None or not user.is_active:
+                raise credentials_exception
+        except HTTPException:
+            raise
+        except Exception:
+            raise credentials_exception
+    except Exception:
+        # Non-DB failures in optional security checks should not break auth.
+        pass
     
     return user
 
