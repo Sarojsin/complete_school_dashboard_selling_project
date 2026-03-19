@@ -60,3 +60,33 @@ async def get_async_db():
 
 # Base class for models
 Base = declarative_base()
+
+
+def ensure_admin_tables() -> None:
+    """
+    Ensure admin/security/setting tables exist.
+
+    This is a lightweight safety net for environments where migrations
+    haven't been applied yet.
+    """
+    try:
+        from app.models.admin_models import (
+            SystemSetting,
+            LoginHistory,
+            FailedLoginAttempt,
+            UserSecurityState,
+            BackupRecord,
+        )
+        Base.metadata.create_all(
+            bind=engine,
+            tables=[
+                SystemSetting.__table__,
+                LoginHistory.__table__,
+                FailedLoginAttempt.__table__,
+                UserSecurityState.__table__,
+                BackupRecord.__table__,
+            ],
+        )
+    except Exception:
+        # Fail open; the app should still start even if bootstrap fails.
+        pass
