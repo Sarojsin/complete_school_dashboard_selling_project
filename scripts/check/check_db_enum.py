@@ -3,7 +3,7 @@ import os
 sys.path.append(os.getcwd())
 
 from sqlalchemy import text
-from database.database import engine
+from app.core.database import engine
 
 def check_enum():
     with engine.connect() as conn:
