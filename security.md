@@ -41,7 +41,6 @@ We prioritize the integrity and confidentiality of user sensitive data through m
 
 > [!IMPORTANT]
 > The `SECRET_KEY` and `ALGORITHM` are managed via environment variables to ensure zero-leakage into the source code.
-
 ---
 
 ## 3. Role-Based Access Control (RBAC)
