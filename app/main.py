@@ -8,9 +8,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
 
 from app.core.config import settings
-from app.core.database import engine
+from app.core.database import engine, ensure_admin_tables
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.csrf import CSRFMiddleware
+from app.middleware.metrics import MetricsMiddleware
 from app.web.routers.common import router as common_router
 from app.web.routers.student import router as student_router
 from app.web.routers.teacher import router as teacher_router
@@ -24,9 +25,20 @@ from app.services.chat_cleanup_service import cleanup_expired_messages
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize scheduler
+    ensure_admin_tables()
     scheduler = AsyncIOScheduler()
     scheduler.add_job(cleanup_expired_messages, 'interval', hours=1)
+    from app.services.admin_backup_service import AdminBackupService
+    scheduler.add_job(
+        AdminBackupService.run_scheduled_backup_job,
+        "interval",
+        minutes=1,
+        id="auto_backup",
+        coalesce=True,
+        max_instances=1,
+    )
     scheduler.start()
+    app.state.scheduler = scheduler
     print("Scheduler started for chat message cleanup")
     yield
     # Shutdown: Clean up scheduler
@@ -47,6 +59,7 @@ def create_app() -> FastAPI:
     # 1. Security & CSRF Middleware
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(CSRFMiddleware)
+    app.add_middleware(MetricsMiddleware)
 
     # 2. CORS Middleware
     app.add_middleware(
@@ -61,7 +74,8 @@ def create_app() -> FastAPI:
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.SECRET_KEY,
-        session_cookie="school_session"
+        session_cookie="school_session",
+        https_only=not settings.DEBUG,
     )
 
     # Static files mounting
@@ -169,59 +183,59 @@ def create_app() -> FastAPI:
     
     # Register Admin Feature routes
     app.include_router(admin_features.router, prefix="/api/admin", tags=["Admin Features"])
-    app.include_router(admin_dashboard.router, prefix="/api/admin", tags=["Admin Dashboard"])
+    app.include_router(admin_dashboard.router, prefix="/api", tags=["Admin Dashboard"])
     
     # Register Admin User Management routes
     from app.api.endpoints import admin_users
-    app.include_router(admin_users.router, prefix="/api/admin", tags=["Admin Users"])
+    app.include_router(admin_users.router, prefix="/api", tags=["Admin Users"])
     
     # Register Admin Academic routes
     from app.api.endpoints import admin_academic
-    app.include_router(admin_academic.router, prefix="/api/admin", tags=["Admin Academic"])
+    app.include_router(admin_academic.router, prefix="/api", tags=["Admin Academic"])
     
     # Register Admin Exam routes
     from app.api.endpoints import admin_exams
-    app.include_router(admin_exams.router, prefix="/api/admin", tags=["Admin Exams"])
+    app.include_router(admin_exams.router, prefix="/api", tags=["Admin Exams"])
     
     # Register Admin Finance routes
     from app.api.endpoints import admin_finance
-    app.include_router(admin_finance.router, prefix="/api/admin", tags=["Admin Finance"])
+    app.include_router(admin_finance.router, prefix="/api", tags=["Admin Finance"])
     
     # Register Admin Notices routes
     from app.api.endpoints import admin_notices
-    app.include_router(admin_notices.router, prefix="/api/admin", tags=["Admin Notices"])
+    app.include_router(admin_notices.router, prefix="/api", tags=["Admin Notices"])
     
     # Register Admin Messages routes
     from app.api.endpoints import admin_messages
-    app.include_router(admin_messages.router, prefix="/api/admin", tags=["Admin Messages"])
+    app.include_router(admin_messages.router, prefix="/api", tags=["Admin Messages"])
     
     # Register Admin Media routes
     from app.api.endpoints import admin_media
-    app.include_router(admin_media.router, prefix="/api/admin", tags=["Admin Media"])
+    app.include_router(admin_media.router, prefix="/api", tags=["Admin Media"])
     
     # Register Admin System Monitoring routes
     from app.api.endpoints import admin_system
-    app.include_router(admin_system.router, prefix="/api/admin", tags=["Admin System"])
+    app.include_router(admin_system.router, prefix="/api", tags=["Admin System"])
     
     # Register Admin Security routes
     from app.api.endpoints import admin_security
-    app.include_router(admin_security.router, prefix="/api/admin", tags=["Admin Security"])
+    app.include_router(admin_security.router, prefix="/api", tags=["Admin Security"])
     
     # Register Admin Backup routes
     from app.api.endpoints import admin_backup
-    app.include_router(admin_backup.router, prefix="/api/admin", tags=["Admin Backup"])
+    app.include_router(admin_backup.router, prefix="/api", tags=["Admin Backup"])
     
     # Register Admin Reports routes
     from app.api.endpoints import admin_reports
-    app.include_router(admin_reports.router, prefix="/api/admin", tags=["Admin Reports"])
+    app.include_router(admin_reports.router, prefix="/api", tags=["Admin Reports"])
     
     # Register Admin Settings routes
     from app.api.endpoints import admin_settings
-    app.include_router(admin_settings.router, prefix="/api/admin", tags=["Admin Settings"])
+    app.include_router(admin_settings.router, prefix="/api", tags=["Admin Settings"])
     
     # Register Admin Advanced routes
     from app.api.endpoints import admin_advanced
-    app.include_router(admin_advanced.router, prefix="/api/admin", tags=["Admin Advanced"])
+    app.include_router(admin_advanced.router, prefix="/api", tags=["Admin Advanced"])
 
     # Register web routes
     app.include_router(web_hod.router, prefix="/hod", tags=["HOD Web"])
