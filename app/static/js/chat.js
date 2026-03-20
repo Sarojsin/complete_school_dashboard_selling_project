@@ -1,6 +1,5 @@
 class ChatClient {
-    constructor(token) {
-        this.token = token;
+    constructor() {
         this.ws = null;
         this.currentReceiverId = null;
         this.reconnectAttempts = 0;
@@ -9,7 +8,7 @@ class ChatClient {
 
     connect() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/chat?token=${this.token}`;
+        const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
         
         this.ws = new WebSocket(wsUrl);
         
@@ -170,11 +169,8 @@ class ChatClient {
 let chatClient = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-        chatClient = new ChatClient(token);
-        chatClient.connect();
-    }
+    chatClient = new ChatClient();
+    chatClient.connect();
 
     // Send message on form submit
     const messageForm = document.getElementById('messageForm');
