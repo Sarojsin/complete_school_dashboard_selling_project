@@ -5,7 +5,7 @@ import os
 sys.path.append(os.getcwd())
 
 from sqlalchemy import inspect
-from database.database import engine
+from app.core.database import engine
 
 def check_schema():
     inspector = inspect(engine)

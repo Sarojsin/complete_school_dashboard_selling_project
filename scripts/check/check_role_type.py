@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models.models import User, UserRole
-from database.database import engine
+from app.models.models import User, UserRole
+from app.core.database import engine
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
