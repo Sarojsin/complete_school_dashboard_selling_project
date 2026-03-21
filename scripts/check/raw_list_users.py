@@ -6,7 +6,7 @@ from sqlalchemy import text
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database.database import engine
+from app.core.database import engine
 
 def list_users_raw():
     try:
