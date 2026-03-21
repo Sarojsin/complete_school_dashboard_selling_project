@@ -1,3 +1,3 @@
-from models.models import UserRole
+from app.models.models import UserRole
 
 print(f"str(UserRole.PARENT): {str(UserRole.PARENT)}")
