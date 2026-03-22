@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, text
-from database.database import engine
+from app.core.database import engine
 
 def check_users():
     print("Checking recent users and their roles...")
