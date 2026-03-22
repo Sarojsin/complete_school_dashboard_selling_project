@@ -7,11 +7,11 @@ from httpx import AsyncClient
 from typing import Generator
 
 from app.main import app
-from database.database import Base
+from app.core.database import Base
 from app.core.database import get_db
 # Import all models to ensure they are registered with Base.metadata
-from models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
-from models.group_models import Group
+from app.models.models import User, Student, Teacher, Assignment, AssignmentSubmission, Course, FeeRecord, Notice, Attendance, Grade, Note, Video
+from app.models.group_models import Group
 
 # Set testing environment variable
 os.environ["TESTING"] = "True"
