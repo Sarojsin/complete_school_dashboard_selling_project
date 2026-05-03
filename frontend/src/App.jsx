@@ -104,6 +104,33 @@ import CollegeTeacherDashboard from './modules/collage/collage_teacher/pages/Tea
 // College Placement Portal
 import CollegePlacementStudentDashboard from './modules/collage/collage_placement/pages/StudentDashboard';
 
+// College HOD Portal
+import CollegeHODDashboard from './modules/college/college_hod/pages/HODDashboard';
+
+// College Dean Portal
+import CollegeDeanDashboard from './modules/college/college_dean/pages/DeanDashboard';
+
+// College Registrar Portal
+import CollegeRegistrarDashboard from './modules/college/college_registrar/pages/RegistrarDashboard';
+
+// College Exam Section Portal
+import CollegeExamDashboard from './modules/college/college_exam_section/pages/ExamDashboard';
+
+// College Account Section Portal
+import CollegeAccountDashboard from './modules/college/college_account_section/pages/AccountDashboard';
+
+// College Library Portal
+import CollegeLibraryDashboard from './modules/college/college_library/pages/LibraryDashboard';
+
+// College Lab Portal
+import CollegeLabDashboard from './modules/college/college_lab/pages/LabDashboard';
+
+// College Hostel Portal
+import CollegeHostelDashboard from './modules/college/college_hostel/pages/HostelDashboard';
+
+// College Research Portal
+import CollegeResearchDashboard from './modules/college/college_research/pages/ResearchDashboard';
+
 function App() {
   return (
     <BrowserRouter>
@@ -117,7 +144,7 @@ function App() {
         <Route 
           path="/teacher/dashboard" 
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedPortal="school">
               <TeacherDashboard />
             </PrivateRoute>
           } 
@@ -126,113 +153,113 @@ function App() {
         <Route 
           path="/student/dashboard" 
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedPortal="school">
               <StudentDashboard />
             </PrivateRoute>
           } 
         />
         
         {/* Student Portal Routes */}
-        <Route path="/student/profile" element={<PrivateRoute><StudentProfile /></PrivateRoute>} />
-        <Route path="/student/assignments" element={<PrivateRoute><Assignments /></PrivateRoute>} />
-        <Route path="/student/attendance" element={<PrivateRoute><Attendance /></PrivateRoute>} />
-        <Route path="/student/courses" element={<PrivateRoute><Courses /></PrivateRoute>} />
-        <Route path="/student/grades" element={<PrivateRoute><Grades /></PrivateRoute>} />
-        <Route path="/student/notices" element={<PrivateRoute><Notices /></PrivateRoute>} />
-        <Route path="/student/fees" element={<PrivateRoute><StudentFees /></PrivateRoute>} />
-        <Route path="/student/teachers" element={<PrivateRoute><StudentTeachers /></PrivateRoute>} />
-        <Route path="/student/tests" element={<PrivateRoute><TestList /></PrivateRoute>} />
-        <Route path="/student/exam-results" element={<PrivateRoute><ExamResults /></PrivateRoute>} />
+        <Route path="/student/profile" element={<PrivateRoute allowedPortal="school"><StudentProfile /></PrivateRoute>} />
+        <Route path="/student/assignments" element={<PrivateRoute allowedPortal="school"><Assignments /></PrivateRoute>} />
+        <Route path="/student/attendance" element={<PrivateRoute allowedPortal="school"><Attendance /></PrivateRoute>} />
+        <Route path="/student/courses" element={<PrivateRoute allowedPortal="school"><Courses /></PrivateRoute>} />
+        <Route path="/student/grades" element={<PrivateRoute allowedPortal="school"><Grades /></PrivateRoute>} />
+        <Route path="/student/notices" element={<PrivateRoute allowedPortal="school"><Notices /></PrivateRoute>} />
+        <Route path="/student/fees" element={<PrivateRoute allowedPortal="school"><StudentFees /></PrivateRoute>} />
+        <Route path="/student/teachers" element={<PrivateRoute allowedPortal="school"><StudentTeachers /></PrivateRoute>} />
+        <Route path="/student/tests" element={<PrivateRoute allowedPortal="school"><TestList /></PrivateRoute>} />
+        <Route path="/student/exam-results" element={<PrivateRoute allowedPortal="school"><ExamResults /></PrivateRoute>} />
         
         {/* Teacher Portal Routes */}
-        <Route path="/teacher/profile" element={<PrivateRoute><TeacherProfile /></PrivateRoute>} />
-        <Route path="/teacher/grades" element={<PrivateRoute><TeacherGrades /></PrivateRoute>} />
-        <Route path="/teacher/attendance" element={<PrivateRoute><TeacherAttendance /></PrivateRoute>} />
-        <Route path="/teacher/create-assignment" element={<PrivateRoute><CreateAssignment /></PrivateRoute>} />
-        <Route path="/teacher/assignments/:assignmentId" element={<PrivateRoute><CreateAssignment /></PrivateRoute>} />
-        <Route path="/teacher/edit-assignment/:assignmentId" element={<PrivateRoute><TeacherEditAssignment /></PrivateRoute>} />
-        <Route path="/teacher/view-submissions" element={<PrivateRoute><TeacherViewSubmissions /></PrivateRoute>} />
-        <Route path="/teacher/create-test" element={<PrivateRoute><TeacherCreateTest /></PrivateRoute>} />
-        <Route path="/teacher/edit-test/:testId" element={<PrivateRoute><TeacherEditTest /></PrivateRoute>} />
-        <Route path="/teacher/student/:studentId" element={<PrivateRoute><TeacherStudentDetail /></PrivateRoute>} />
-        <Route path="/teacher/timetable" element={<PrivateRoute><TeacherTimetable /></PrivateRoute>} />
-        <Route path="/teacher/notices" element={<PrivateRoute><TeacherNotices /></PrivateRoute>} />
-        <Route path="/teacher/groups" element={<PrivateRoute><TeacherGroups /></PrivateRoute>} />
-        <Route path="/teacher/add-grade" element={<PrivateRoute><TeacherAddGrade /></PrivateRoute>} />
-        <Route path="/teacher/add-grade/:courseId" element={<PrivateRoute><TeacherAddGrade /></PrivateRoute>} />
-        <Route path="/teacher/take-attendance" element={<PrivateRoute><TeacherTakeAttendance /></PrivateRoute>} />
-        <Route path="/teacher/take-attendance/:courseId" element={<PrivateRoute><TeacherTakeAttendance /></PrivateRoute>} />
-        <Route path="/teacher/upload-notes" element={<PrivateRoute><TeacherUploadNotes /></PrivateRoute>} />
-        <Route path="/teacher/upload-videos" element={<PrivateRoute><TeacherUploadVideos /></PrivateRoute>} />
-        <Route path="/teacher/courses/:courseId" element={<PrivateRoute><TeacherCourseDetail /></PrivateRoute>} />
-        <Route path="/teacher/courses" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
-        <Route path="/teacher/students" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
-        <Route path="/teacher/view-tests" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
-        <Route path="/teacher/messages" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
-        <Route path="/teacher/chat" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
+        <Route path="/teacher/profile" element={<PrivateRoute allowedPortal="school"><TeacherProfile /></PrivateRoute>} />
+        <Route path="/teacher/grades" element={<PrivateRoute allowedPortal="school"><TeacherGrades /></PrivateRoute>} />
+        <Route path="/teacher/attendance" element={<PrivateRoute allowedPortal="school"><TeacherAttendance /></PrivateRoute>} />
+        <Route path="/teacher/create-assignment" element={<PrivateRoute allowedPortal="school"><CreateAssignment /></PrivateRoute>} />
+        <Route path="/teacher/assignments/:assignmentId" element={<PrivateRoute allowedPortal="school"><CreateAssignment /></PrivateRoute>} />
+        <Route path="/teacher/edit-assignment/:assignmentId" element={<PrivateRoute allowedPortal="school"><TeacherEditAssignment /></PrivateRoute>} />
+        <Route path="/teacher/view-submissions" element={<PrivateRoute allowedPortal="school"><TeacherViewSubmissions /></PrivateRoute>} />
+        <Route path="/teacher/create-test" element={<PrivateRoute allowedPortal="school"><TeacherCreateTest /></PrivateRoute>} />
+        <Route path="/teacher/edit-test/:testId" element={<PrivateRoute allowedPortal="school"><TeacherEditTest /></PrivateRoute>} />
+        <Route path="/teacher/student/:studentId" element={<PrivateRoute allowedPortal="school"><TeacherStudentDetail /></PrivateRoute>} />
+        <Route path="/teacher/timetable" element={<PrivateRoute allowedPortal="school"><TeacherTimetable /></PrivateRoute>} />
+        <Route path="/teacher/notices" element={<PrivateRoute allowedPortal="school"><TeacherNotices /></PrivateRoute>} />
+        <Route path="/teacher/groups" element={<PrivateRoute allowedPortal="school"><TeacherGroups /></PrivateRoute>} />
+        <Route path="/teacher/add-grade" element={<PrivateRoute allowedPortal="school"><TeacherAddGrade /></PrivateRoute>} />
+        <Route path="/teacher/add-grade/:courseId" element={<PrivateRoute allowedPortal="school"><TeacherAddGrade /></PrivateRoute>} />
+        <Route path="/teacher/take-attendance" element={<PrivateRoute allowedPortal="school"><TeacherTakeAttendance /></PrivateRoute>} />
+        <Route path="/teacher/take-attendance/:courseId" element={<PrivateRoute allowedPortal="school"><TeacherTakeAttendance /></PrivateRoute>} />
+        <Route path="/teacher/upload-notes" element={<PrivateRoute allowedPortal="school"><TeacherUploadNotes /></PrivateRoute>} />
+        <Route path="/teacher/upload-videos" element={<PrivateRoute allowedPortal="school"><TeacherUploadVideos /></PrivateRoute>} />
+        <Route path="/teacher/courses/:courseId" element={<PrivateRoute allowedPortal="school"><TeacherCourseDetail /></PrivateRoute>} />
+        <Route path="/teacher/courses" element={<PrivateRoute allowedPortal="school"><TeacherDashboard /></PrivateRoute>} />
+        <Route path="/teacher/students" element={<PrivateRoute allowedPortal="school"><TeacherDashboard /></PrivateRoute>} />
+        <Route path="/teacher/view-tests" element={<PrivateRoute allowedPortal="school"><TeacherDashboard /></PrivateRoute>} />
+        <Route path="/teacher/messages" element={<PrivateRoute allowedPortal="school"><TeacherDashboard /></PrivateRoute>} />
+        <Route path="/teacher/chat" element={<PrivateRoute allowedPortal="school"><TeacherDashboard /></PrivateRoute>} />
         
         {/* Groups Portal Routes */}
-        <Route path="/groups" element={<PrivateRoute><GroupList /></PrivateRoute>} />
-        <Route path="/groups/create" element={<PrivateRoute><CreateGroup /></PrivateRoute>} />
-        <Route path="/groups/:groupId" element={<PrivateRoute><GroupDetail /></PrivateRoute>} />
-        <Route path="/groups/:groupId/edit" element={<PrivateRoute><GroupEdit /></PrivateRoute>} />
-        <Route path="/groups/:groupId/posts" element={<PrivateRoute><GroupPosts /></PrivateRoute>} />
-        <Route path="/groups/:groupId/posts/new" element={<PrivateRoute><NewPost /></PrivateRoute>} />
-        <Route path="/groups/:groupId/posts/:postId" element={<PrivateRoute><ViewPost /></PrivateRoute>} />
-        <Route path="/groups/:groupId/members" element={<PrivateRoute><GroupManageMembers /></PrivateRoute>} />
+        <Route path="/groups" element={<PrivateRoute allowedPortal="school"><GroupList /></PrivateRoute>} />
+        <Route path="/groups/create" element={<PrivateRoute allowedPortal="school"><CreateGroup /></PrivateRoute>} />
+        <Route path="/groups/:groupId" element={<PrivateRoute allowedPortal="school"><GroupDetail /></PrivateRoute>} />
+        <Route path="/groups/:groupId/edit" element={<PrivateRoute allowedPortal="school"><GroupEdit /></PrivateRoute>} />
+        <Route path="/groups/:groupId/posts" element={<PrivateRoute allowedPortal="school"><GroupPosts /></PrivateRoute>} />
+        <Route path="/groups/:groupId/posts/new" element={<PrivateRoute allowedPortal="school"><NewPost /></PrivateRoute>} />
+        <Route path="/groups/:groupId/posts/:postId" element={<PrivateRoute allowedPortal="school"><ViewPost /></PrivateRoute>} />
+        <Route path="/groups/:groupId/members" element={<PrivateRoute allowedPortal="school"><GroupManageMembers /></PrivateRoute>} />
         
         {/* HOD Portal Routes */}
-        <Route path="/hod/dashboard" element={<PrivateRoute><HODDashboard /></PrivateRoute>} />
-        <Route path="/hod/profile" element={<PrivateRoute><HODProfile /></PrivateRoute>} />
-        <Route path="/hod" element={<PrivateRoute><HODDashboard /></PrivateRoute>} />
+        <Route path="/hod/dashboard" element={<PrivateRoute allowedPortal="school"><HODDashboard /></PrivateRoute>} />
+        <Route path="/hod/profile" element={<PrivateRoute allowedPortal="school"><HODProfile /></PrivateRoute>} />
+        <Route path="/hod" element={<PrivateRoute allowedPortal="school"><HODDashboard /></PrivateRoute>} />
         
         {/* Parent Portal Routes */}
-        <Route path="/parent/dashboard" element={<PrivateRoute><ParentDashboard /></PrivateRoute>} />
-        <Route path="/parent/profile" element={<PrivateRoute><ParentProfile /></PrivateRoute>} />
-        <Route path="/parent/notices" element={<PrivateRoute><ParentNotices /></PrivateRoute>} />
-        <Route path="/parent/grades" element={<PrivateRoute><ChildGrades /></PrivateRoute>} />
-        <Route path="/parent/attendance" element={<PrivateRoute><ChildAttendance /></PrivateRoute>} />
-        <Route path="/parent/chat" element={<PrivateRoute><ParentChat /></PrivateRoute>} />
-        <Route path="/parent/homework" element={<PrivateRoute><ParentHomework /></PrivateRoute>} />
-        <Route path="/parent/fees" element={<PrivateRoute><ChildFees /></PrivateRoute>} />
+        <Route path="/parent/dashboard" element={<PrivateRoute allowedPortal="school"><ParentDashboard /></PrivateRoute>} />
+        <Route path="/parent/profile" element={<PrivateRoute allowedPortal="school"><ParentProfile /></PrivateRoute>} />
+        <Route path="/parent/notices" element={<PrivateRoute allowedPortal="school"><ParentNotices /></PrivateRoute>} />
+        <Route path="/parent/grades" element={<PrivateRoute allowedPortal="school"><ChildGrades /></PrivateRoute>} />
+        <Route path="/parent/attendance" element={<PrivateRoute allowedPortal="school"><ChildAttendance /></PrivateRoute>} />
+        <Route path="/parent/chat" element={<PrivateRoute allowedPortal="school"><ParentChat /></PrivateRoute>} />
+        <Route path="/parent/homework" element={<PrivateRoute allowedPortal="school"><ParentHomework /></PrivateRoute>} />
+        <Route path="/parent/fees" element={<PrivateRoute allowedPortal="school"><ChildFees /></PrivateRoute>} />
         
         {/* Authority Portal Routes */}
-        <Route path="/authority/dashboard" element={<PrivateRoute><AuthorityDashboard /></PrivateRoute>} />
-        <Route path="/authority/students" element={<PrivateRoute><StudentsManagement /></PrivateRoute>} />
-        <Route path="/authority/teachers" element={<PrivateRoute><TeachersManagement /></PrivateRoute>} />
-        <Route path="/authority/fees" element={<PrivateRoute><AdminFees /></PrivateRoute>} />
-        <Route path="/authority/analytics" element={<PrivateRoute><AdminAnalytics /></PrivateRoute>} />
-        <Route path="/authority" element={<PrivateRoute><AuthorityDashboard /></PrivateRoute>} />
+        <Route path="/authority/dashboard" element={<PrivateRoute allowedPortal="school"><AuthorityDashboard /></PrivateRoute>} />
+        <Route path="/authority/students" element={<PrivateRoute allowedPortal="school"><StudentsManagement /></PrivateRoute>} />
+        <Route path="/authority/teachers" element={<PrivateRoute allowedPortal="school"><TeachersManagement /></PrivateRoute>} />
+        <Route path="/authority/fees" element={<PrivateRoute allowedPortal="school"><AdminFees /></PrivateRoute>} />
+        <Route path="/authority/analytics" element={<PrivateRoute allowedPortal="school"><AdminAnalytics /></PrivateRoute>} />
+        <Route path="/authority" element={<PrivateRoute allowedPortal="school"><AuthorityDashboard /></PrivateRoute>} />
         
         {/* Exam Section Routes */}
-        <Route path="/exam/dashboard" element={<PrivateRoute><ExamDashboard /></PrivateRoute>} />
-        <Route path="/exam/grade-sheet" element={<PrivateRoute><ExamGradeSheet /></PrivateRoute>} />
-        <Route path="/exam/post-result" element={<PrivateRoute><ExamPostResult /></PrivateRoute>} />
-        <Route path="/exam/notices" element={<PrivateRoute><ExamNotices /></PrivateRoute>} />
-        <Route path="/exam" element={<PrivateRoute><ExamDashboard /></PrivateRoute>} />
+        <Route path="/exam/dashboard" element={<PrivateRoute allowedPortal="school"><ExamDashboard /></PrivateRoute>} />
+        <Route path="/exam/grade-sheet" element={<PrivateRoute allowedPortal="school"><ExamGradeSheet /></PrivateRoute>} />
+        <Route path="/exam/post-result" element={<PrivateRoute allowedPortal="school"><ExamPostResult /></PrivateRoute>} />
+        <Route path="/exam/notices" element={<PrivateRoute allowedPortal="school"><ExamNotices /></PrivateRoute>} />
+        <Route path="/exam" element={<PrivateRoute allowedPortal="school"><ExamDashboard /></PrivateRoute>} />
         
         {/* Account Section Routes */}
-        <Route path="/account/dashboard" element={<PrivateRoute><AccountDashboard /></PrivateRoute>} />
-        <Route path="/account" element={<PrivateRoute><AccountDashboard /></PrivateRoute>} />
+        <Route path="/account/dashboard" element={<PrivateRoute allowedPortal="school"><AccountDashboard /></PrivateRoute>} />
+        <Route path="/account" element={<PrivateRoute allowedPortal="school"><AccountDashboard /></PrivateRoute>} />
         
         {/* Super Admin Routes */}
-        <Route path="/admin/dashboard" element={<PrivateRoute><SuperAdminDashboard /></PrivateRoute>} />
-        <Route path="/admin/academic" element={<PrivateRoute><Academic /></PrivateRoute>} />
-        <Route path="/admin/advanced" element={<PrivateRoute><Advanced /></PrivateRoute>} />
-        <Route path="/admin/audit-logs" element={<PrivateRoute><AuditLogs /></PrivateRoute>} />
-        <Route path="/admin/backups" element={<PrivateRoute><Backups /></PrivateRoute>} />
-        <Route path="/admin/communication" element={<PrivateRoute><Communication /></PrivateRoute>} />
-        <Route path="/admin/features" element={<PrivateRoute><Features /></PrivateRoute>} />
-        <Route path="/admin/feature/:featureId" element={<PrivateRoute><FeatureDetail /></PrivateRoute>} />
-        <Route path="/admin/finance" element={<PrivateRoute><Finance /></PrivateRoute>} />
-        <Route path="/admin/media" element={<PrivateRoute><Media /></PrivateRoute>} />
-        <Route path="/admin/notices" element={<PrivateRoute><AdminNotices /></PrivateRoute>} />
-        <Route path="/admin/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
-        <Route path="/admin/security" element={<PrivateRoute><Security /></PrivateRoute>} />
-        <Route path="/admin/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-        <Route path="/admin/system" element={<PrivateRoute><System /></PrivateRoute>} />
-        <Route path="/admin/users" element={<PrivateRoute><Users /></PrivateRoute>} />
-        <Route path="/admin" element={<PrivateRoute><SuperAdminDashboard /></PrivateRoute>} />
+        <Route path="/admin/dashboard" element={<PrivateRoute allowedPortal="school"><SuperAdminDashboard /></PrivateRoute>} />
+        <Route path="/admin/academic" element={<PrivateRoute allowedPortal="school"><Academic /></PrivateRoute>} />
+        <Route path="/admin/advanced" element={<PrivateRoute allowedPortal="school"><Advanced /></PrivateRoute>} />
+        <Route path="/admin/audit-logs" element={<PrivateRoute allowedPortal="school"><AuditLogs /></PrivateRoute>} />
+        <Route path="/admin/backups" element={<PrivateRoute allowedPortal="school"><Backups /></PrivateRoute>} />
+        <Route path="/admin/communication" element={<PrivateRoute allowedPortal="school"><Communication /></PrivateRoute>} />
+        <Route path="/admin/features" element={<PrivateRoute allowedPortal="school"><Features /></PrivateRoute>} />
+        <Route path="/admin/feature/:featureId" element={<PrivateRoute allowedPortal="school"><FeatureDetail /></PrivateRoute>} />
+        <Route path="/admin/finance" element={<PrivateRoute allowedPortal="school"><Finance /></PrivateRoute>} />
+        <Route path="/admin/media" element={<PrivateRoute allowedPortal="school"><Media /></PrivateRoute>} />
+        <Route path="/admin/notices" element={<PrivateRoute allowedPortal="school"><AdminNotices /></PrivateRoute>} />
+        <Route path="/admin/reports" element={<PrivateRoute allowedPortal="school"><Reports /></PrivateRoute>} />
+        <Route path="/admin/security" element={<PrivateRoute allowedPortal="school"><Security /></PrivateRoute>} />
+        <Route path="/admin/settings" element={<PrivateRoute allowedPortal="school"><Settings /></PrivateRoute>} />
+        <Route path="/admin/system" element={<PrivateRoute allowedPortal="school"><System /></PrivateRoute>} />
+        <Route path="/admin/users" element={<PrivateRoute allowedPortal="school"><Users /></PrivateRoute>} />
+        <Route path="/admin" element={<PrivateRoute allowedPortal="school"><SuperAdminDashboard /></PrivateRoute>} />
         
         {/* ==================== COLLEGE PORTAL ROUTES ==================== */}
         
@@ -241,6 +268,33 @@ function App() {
         
         {/* College Placement Portal Routes */}
         <Route path="/college/student/dashboard" element={<PrivateRoute allowedPortal="college"><CollegePlacementStudentDashboard /></PrivateRoute>} />
+
+        {/* College HOD Portal Routes */}
+        <Route path="/college/hod/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeHODDashboard /></PrivateRoute>} />
+
+        {/* College Dean Portal Routes */}
+        <Route path="/college/dean/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeDeanDashboard /></PrivateRoute>} />
+
+        {/* College Registrar Portal Routes */}
+        <Route path="/college/registrar/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeRegistrarDashboard /></PrivateRoute>} />
+
+        {/* College Exam Section Portal Routes */}
+        <Route path="/college/exam/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeExamDashboard /></PrivateRoute>} />
+
+        {/* College Account Section Portal Routes */}
+        <Route path="/college/account/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeAccountDashboard /></PrivateRoute>} />
+
+        {/* College Library Portal Routes */}
+        <Route path="/college/library/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeLibraryDashboard /></PrivateRoute>} />
+
+        {/* College Lab Portal Routes */}
+        <Route path="/college/lab/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeLabDashboard /></PrivateRoute>} />
+
+        {/* College Hostel Portal Routes */}
+        <Route path="/college/hostel/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeHostelDashboard /></PrivateRoute>} />
+
+        {/* College Research Portal Routes */}
+        <Route path="/college/research/dashboard" element={<PrivateRoute allowedPortal="college"><CollegeResearchDashboard /></PrivateRoute>} />
         
         {/* 404 Catch-All Route */}
         <Route path="*" element={<div style={{ padding: '2rem', textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom, #0f172a, #1e293b)' }}>
@@ -258,3 +312,5 @@ function App() {
 }
 
 export default App;
+
+
