@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Dict, Any
 from modules.shared.database import get_db
-from modules.auth.dependencies import get_current_user
+from modules.auth.dependencies import get_current_user, require_school_portal
 from modules.auth.dependencies import require_school_authority, require_school_teacher, require_student, require_parent
 from modules.shared.models import User
 # Modular imports
@@ -18,12 +18,9 @@ from modules.school.school_account_section.models import SchoolFee as FeeRecord
 from modules.school.school_groups.models import Group as GroupModel
 from modules.school.school_tests.models import Test
 from modules.school.school_exam_section.models import ExamNotice
-from modules.school.school_assignments.models import Assignment, AssignmentSubmission
-from modules.school.school_courses.models import CourseEnrollment
-from modules.school.school_grades.models import Grade
 from .schemas import AuthorityDashboard, TeacherDashboard, StudentDashboard, ParentDashboard, DashboardStats
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_school_portal)])
 
 
 @router.get("/authority", response_model=AuthorityDashboard)
