@@ -52,5 +52,7 @@ Thumbs.db
 # Uploads
 uploads/*
 !uploads/.gitkeep
-
-
+# Backups and Plans
+backup/
+.kilo/
+plan_*.md
