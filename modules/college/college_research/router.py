@@ -7,7 +7,7 @@ FastAPI endpoints for college research operations.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.auth.dependencies import get_current_user, require_college_portal
 from modules.shared.models import User
 from .service import ResearchService
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/research", tags=["College Research"], dependencies=[
 async def create_project(
     data: ProjectCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a research project (Protected - Dean/Faculty)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -40,7 +40,7 @@ async def list_projects(
     limit: int = 20,
     faculty_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List research projects (Protected)"""
     service = ResearchService(db)
@@ -53,7 +53,7 @@ async def list_projects(
 async def get_project(
     project_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get project by ID (Protected)"""
     service = ResearchService(db)
@@ -68,7 +68,7 @@ async def get_project(
 async def create_publication(
     data: PublicationCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a publication (Protected - Dean/Faculty)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -83,7 +83,7 @@ async def list_publications(
     limit: int = 20,
     faculty_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List publications (Protected)"""
     service = ResearchService(db)
@@ -96,7 +96,7 @@ async def list_publications(
 async def get_publication(
     pub_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get publication by ID (Protected)"""
     service = ResearchService(db)
@@ -111,7 +111,7 @@ async def get_publication(
 async def create_patent(
     data: PatentCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a patent (Protected - Dean/Faculty)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -126,7 +126,7 @@ async def list_patents(
     limit: int = 20,
     faculty_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List patents (Protected)"""
     service = ResearchService(db)

@@ -7,7 +7,7 @@ API endpoints for college research projects.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college import ResearchProject, Publication, Patent
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/research", tags=["College Research"], dependencies=[
 @router.get("/dashboard")
 async def get_research_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get research dashboard"""
     return {"message": "College research dashboard"}
@@ -26,7 +26,7 @@ async def get_research_dashboard(
 
 @router.get("/projects")
 async def get_projects(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get research projects"""
@@ -37,7 +37,7 @@ async def get_projects(
 
 @router.get("/publications")
 async def get_publications(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get publications"""
@@ -48,7 +48,7 @@ async def get_publications(
 
 @router.get("/patents")
 async def get_patents(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get patents"""

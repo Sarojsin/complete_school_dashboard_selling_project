@@ -10,7 +10,7 @@ from sqlalchemy import select, func
 from typing import Optional
 from datetime import datetime, timedelta
 
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.library_models import Book, BookLoan
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/library", tags=["College Library"], dependencies=[De
 @router.get("/dashboard")
 async def get_library_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get library dashboard with overview stats"""
     total_books = await db.execute(select(func.count(Book.id)))
@@ -44,7 +44,7 @@ async def list_books(
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """List all books in the library"""
@@ -77,7 +77,7 @@ async def list_books(
 @router.get("/books/{book_id}")
 async def get_book(
     book_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get book details by ID"""
@@ -103,7 +103,7 @@ async def list_loans(
     status: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """List book loans"""
@@ -136,7 +136,7 @@ async def issue_book(
     book_id: int,
     user_id: int,
     due_days: int = 14,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Issue a book to a user"""
@@ -171,7 +171,7 @@ async def issue_book(
 @router.post("/loans/{loan_id}/return")
 async def return_book(
     loan_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Return a book loan"""

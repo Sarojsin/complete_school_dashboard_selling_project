@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
 
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college.faculty import Faculty
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/faculty", tags=["College Faculty"], dependencies=[De
 @router.get("/dashboard")
 async def get_faculty_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get faculty dashboard with overview stats"""
     total_faculty = await db.execute(select(func.count(Faculty.id)))
@@ -35,7 +35,7 @@ async def list_faculty(
     department_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """List all faculty members"""
@@ -65,7 +65,7 @@ async def list_faculty(
 @router.get("/{faculty_id}")
 async def get_faculty(
     faculty_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get faculty details by ID"""
@@ -97,7 +97,7 @@ async def create_faculty(
     specialization: Optional[str] = None,
     qualification: Optional[str] = None,
     experience_years: Optional[int] = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Create a new faculty member"""

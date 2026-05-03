@@ -54,8 +54,8 @@ from modules.college.college_library.api import router as college_library_router
 # Ensure all models are imported so they register with Base.metadata
 from modules.shared import models as shared_models
 from modules.school.school_teacher import models as teacher_models
+from modules.school.school_parent import models as parent_models  # MUST come before student
 from modules.school.school_student import models as student_models
-from modules.school.school_parent import models as parent_models
 from modules.school.school_authority import models as authority_models
 from modules.school.school_classes import models as class_models
 from modules.school.school_subjects import models as subject_models

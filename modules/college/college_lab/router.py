@@ -7,7 +7,7 @@ FastAPI endpoints for college lab operations.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.auth.dependencies import get_current_user, require_college_portal
 from modules.shared.models import User
 from .service import LabService
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/labs", tags=["College Labs"], dependencies=[Depends(
 async def create_lab(
     data: LabCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new lab (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -40,7 +40,7 @@ async def list_labs(
     limit: int = 20,
     department_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List labs (Protected)"""
     service = LabService(db)
@@ -53,7 +53,7 @@ async def list_labs(
 async def get_lab(
     lab_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get lab by ID (Protected)"""
     service = LabService(db)
@@ -69,7 +69,7 @@ async def add_equipment(
     lab_id: int,
     data: EquipmentCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Add equipment to lab (Protected - Dean/Faculty)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -85,7 +85,7 @@ async def list_equipment(
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List lab equipment (Protected)"""
     service = LabService(db)
@@ -98,7 +98,7 @@ async def create_schedule(
     lab_id: int,
     data: ScheduleCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create lab schedule (Protected - Dean/Faculty)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -114,7 +114,7 @@ async def list_schedules(
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List lab schedules (Protected)"""
     service = LabService(db)

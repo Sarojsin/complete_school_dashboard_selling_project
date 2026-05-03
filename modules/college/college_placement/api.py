@@ -7,7 +7,7 @@ API endpoints for college placement cell.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college import Company, Job, Application
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/placement", tags=["College Placement"], dependencies
 @router.get("/dashboard")
 async def get_placement_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get placement dashboard"""
     return {"message": "College placement dashboard"}
@@ -26,7 +26,7 @@ async def get_placement_dashboard(
 
 @router.get("/companies")
 async def get_companies(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all companies"""
@@ -37,7 +37,7 @@ async def get_companies(
 
 @router.get("/jobs")
 async def get_jobs(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all jobs"""
@@ -50,7 +50,7 @@ async def get_jobs(
 async def get_applications(
     job_id: int = None,
     student_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get applications"""

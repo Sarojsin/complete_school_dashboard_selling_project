@@ -7,7 +7,7 @@ FastAPI endpoints for college hostel operations.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.auth.dependencies import get_current_user, require_college_portal
 from modules.shared.models import User
 from .service import HostelService
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/hostels", tags=["College Hostel"], dependencies=[Dep
 async def create_hostel(
     data: HostelCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new hostel (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -40,7 +40,7 @@ async def list_hostels(
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List hostels (Protected)"""
     service = HostelService(db)
@@ -51,7 +51,7 @@ async def list_hostels(
 async def get_hostel(
     hostel_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get hostel by ID (Protected)"""
     service = HostelService(db)
@@ -66,7 +66,7 @@ async def update_hostel(
     hostel_id: int,
     data: HostelUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update hostel (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -84,7 +84,7 @@ async def create_room(
     hostel_id: int,
     data: RoomCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new room (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -99,7 +99,7 @@ async def list_rooms(
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List rooms in a hostel (Protected)"""
     service = HostelService(db)
@@ -111,7 +111,7 @@ async def list_rooms(
 async def allocate_room(
     data: AllocationCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Allocate room to student (Protected - Dean/Warden)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -127,7 +127,7 @@ async def allocate_room(
 async def get_student_allocation(
     student_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get student's hostel allocation (Protected)"""
     service = HostelService(db)
@@ -141,7 +141,7 @@ async def get_student_allocation(
 async def vacate_room(
     allocation_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Vacate hostel room (Protected - Dean/Warden)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -157,7 +157,7 @@ async def vacate_room(
 async def create_complaint(
     data: ComplaintCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a complaint (Protected - Student)"""
     if current_user.role not in ["student", "super_admin"]:
@@ -180,7 +180,7 @@ async def list_complaints(
     limit: int = 20,
     pending_only: bool = False,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List complaints (Protected)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -196,7 +196,7 @@ async def list_complaints(
 async def resolve_complaint(
     complaint_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Resolve a complaint (Protected - Dean/Warden)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:

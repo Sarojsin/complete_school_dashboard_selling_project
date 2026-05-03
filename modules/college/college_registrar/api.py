@@ -7,7 +7,7 @@ API endpoints for college registrar (student records).
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college import CollegeStudent, Enrollment, Program
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/registrar", tags=["College Registrar"], dependencies
 @router.get("/dashboard")
 async def get_registrar_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get registrar dashboard"""
     total_students = await db.execute(select(func.count(CollegeStudent.id)))
@@ -35,7 +35,7 @@ async def get_all_students(
     program_id: int = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all students"""
@@ -51,7 +51,7 @@ async def get_all_students(
 @router.get("/students/{student_id}")
 async def get_student(
     student_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get student details"""
@@ -68,7 +68,7 @@ async def get_student(
 async def get_enrollments(
     student_id: int = None,
     program_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get student enrollments"""

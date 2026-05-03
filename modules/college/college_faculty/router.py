@@ -7,7 +7,7 @@ FastAPI endpoints for college faculty operations.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.auth.dependencies import get_current_user, require_college_portal
 from modules.shared.models import User
 from .service import FacultyService
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/faculty", tags=["College Faculty"], dependencies=[De
 async def create_faculty(
     data: FacultyCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new faculty member (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -38,7 +38,7 @@ async def list_faculty(
     limit: int = 20,
     department_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List all faculty members (Protected)"""
     service = FacultyService(db)
@@ -51,7 +51,7 @@ async def list_faculty(
 @router.get("/me", response_model=FacultyResponse)
 async def get_my_profile(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get current faculty profile (Protected)"""
     service = FacultyService(db)
@@ -68,7 +68,7 @@ async def get_my_profile(
 async def update_my_profile(
     faculty_data: FacultyUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update current faculty profile (Protected)"""
     service = FacultyService(db)
@@ -85,7 +85,7 @@ async def update_my_profile(
 async def get_faculty(
     faculty_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get faculty by ID (Protected)"""
     service = FacultyService(db)
@@ -103,7 +103,7 @@ async def update_faculty(
     faculty_id: int,
     data: FacultyUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update faculty by ID (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -125,7 +125,7 @@ async def update_faculty(
 async def delete_faculty(
     faculty_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Delete faculty by ID (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -146,7 +146,7 @@ async def delete_faculty(
 @router.get("/dashboard")
 async def get_faculty_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get faculty dashboard (Protected)"""
     service = FacultyService(db)
@@ -170,7 +170,7 @@ async def get_faculty_dashboard(
 @router.get("/my-courses", response_model=List[dict])
 async def get_my_courses(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get courses taught by current faculty (Protected)"""
     service = FacultyService(db)
@@ -181,7 +181,7 @@ async def get_my_courses(
 @router.get("/my-students", response_model=List[dict])
 async def get_my_students(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get students in faculty's courses (Protected)"""
     service = FacultyService(db)

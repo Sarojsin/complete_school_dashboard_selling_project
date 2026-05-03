@@ -7,7 +7,7 @@ API endpoints for college fees and finance.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college.fee import CollegeFee, CollegeFeeRecord
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/account", tags=["College Account"], dependencies=[De
 @router.get("/dashboard")
 async def get_account_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get account dashboard"""
     total_fees = await db.execute(select(func.sum(CollegeFeeRecord.amount)))
@@ -33,7 +33,7 @@ async def get_account_dashboard(
 @router.get("/fee-structures")
 async def get_fee_structures(
     program_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get fee structures"""
@@ -49,7 +49,7 @@ async def get_fee_structures(
 @router.get("/fee-records")
 async def get_fee_records(
     student_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get fee records"""

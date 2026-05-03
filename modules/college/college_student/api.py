@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
 
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college.student import CollegeStudent
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/students", tags=["College Students"], dependencies=[
 @router.get("/dashboard")
 async def get_student_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get college student dashboard with overview stats"""
     total_students = await db.execute(select(func.count(CollegeStudent.id)))
@@ -42,7 +42,7 @@ async def list_students(
     semester_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """List all college students"""
@@ -75,7 +75,7 @@ async def list_students(
 @router.get("/{student_id}")
 async def get_student(
     student_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get college student details by ID"""
@@ -103,7 +103,7 @@ async def create_student(
     roll_number: str,
     program_id: int,
     semester_id: Optional[int] = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Create a new college student"""
@@ -124,7 +124,7 @@ async def create_student(
 async def update_cgpa(
     student_id: int,
     cgpa: float,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Update student CGPA"""

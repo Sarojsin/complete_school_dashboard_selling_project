@@ -30,9 +30,9 @@ class SchoolCourse(Base):
     teacher = relationship(Teacher)
     class_obj = relationship(SchoolClass)
     enrollments = relationship("CourseEnrollment", back_populates="course", cascade="all, delete-orphan")
-    assignments = relationship("Assignment", cascade="all, delete-orphan")
-    notes = relationship("Note", cascade="all, delete-orphan")
-    videos = relationship("Video", cascade="all, delete-orphan")
+    assignments = relationship("Assignment", overlaps="course", cascade="all, delete-orphan")
+    notes = relationship("Note", overlaps="course", cascade="all, delete-orphan")
+    videos = relationship("Video", overlaps="course", cascade="all, delete-orphan")
 
 
 class CourseEnrollment(Base):

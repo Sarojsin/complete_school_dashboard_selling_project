@@ -7,7 +7,7 @@ FastAPI endpoints for college placement operations.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.auth.dependencies import get_current_user, require_college_portal
 from modules.shared.models import User
 from .service import PlacementService
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/placements", tags=["College Placement"], dependencie
 async def create_company(
     data: CompanyCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new company (Protected - Dean/TPO only)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -39,7 +39,7 @@ async def list_companies(
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List companies (Protected)"""
     service = PlacementService(db)
@@ -50,7 +50,7 @@ async def list_companies(
 async def get_company(
     company_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get company by ID (Protected)"""
     service = PlacementService(db)
@@ -65,7 +65,7 @@ async def get_company(
 async def create_job(
     data: JobCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new job (Protected - Dean/TPO only)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -80,7 +80,7 @@ async def list_jobs(
     limit: int = 20,
     active_only: bool = False,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List jobs (Protected)"""
     service = PlacementService(db)
@@ -93,7 +93,7 @@ async def list_jobs(
 async def get_job(
     job_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get job by ID (Protected)"""
     service = PlacementService(db)
@@ -108,7 +108,7 @@ async def get_job(
 async def apply_for_job(
     job_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Apply for a job (Protected - Student)"""
     if current_user.role not in ["student", "super_admin"]:
@@ -132,7 +132,7 @@ async def apply_for_job(
 async def get_student_applications(
     student_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get student's applications (Protected)"""
     service = PlacementService(db)
@@ -143,7 +143,7 @@ async def get_student_applications(
 async def get_job_applications(
     job_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get job applications (Protected - Dean/TPO only)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:
@@ -158,7 +158,7 @@ async def update_application_status(
     status: str,
     notes: str = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update application status (Protected - Dean/TPO only)"""
     if current_user.role not in ["dean", "faculty", "super_admin"]:

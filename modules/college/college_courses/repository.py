@@ -7,7 +7,9 @@ Async CRUD operations for college courses, departments, programs, semesters, enr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
-from .models import CollegeCourse, Department, Program, Semester, Enrollment
+# Import all models from backup to ensure single source of truth
+from backup.models.college import Department, Program, Semester, Enrollment
+from .models import CollegeCourse
 
 
 # ── Course Repository ─────────────────────────────────────────

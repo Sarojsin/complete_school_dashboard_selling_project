@@ -7,7 +7,7 @@ API endpoints for college lab management.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college import Lab, LabEquipment, LabSchedule
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/lab", tags=["College Lab"], dependencies=[Depends(re
 @router.get("/dashboard")
 async def get_lab_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get lab dashboard"""
     return {"message": "College lab dashboard"}
@@ -27,7 +27,7 @@ async def get_lab_dashboard(
 @router.get("/labs")
 async def get_labs(
     department_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all labs"""
@@ -43,7 +43,7 @@ async def get_labs(
 @router.get("/equipment")
 async def get_equipment(
     lab_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get lab equipment"""
@@ -59,7 +59,7 @@ async def get_equipment(
 @router.get("/schedules")
 async def get_schedules(
     lab_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get lab schedules"""

@@ -7,7 +7,7 @@ API endpoints for college hostel management.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college import Hostel, Room, HostelAllocation
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/hostel", tags=["College Hostel"], dependencies=[Depe
 @router.get("/dashboard")
 async def get_hostel_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get hostel dashboard"""
     return {"message": "College hostel dashboard"}
@@ -26,7 +26,7 @@ async def get_hostel_dashboard(
 
 @router.get("/hostels")
 async def get_hostels(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all hostels"""
@@ -38,7 +38,7 @@ async def get_hostels(
 @router.get("/rooms")
 async def get_rooms(
     hostel_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get rooms"""
@@ -54,7 +54,7 @@ async def get_rooms(
 @router.get("/allocations")
 async def get_allocations(
     student_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get hostel allocations"""

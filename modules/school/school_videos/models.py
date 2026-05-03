@@ -19,9 +19,9 @@ class Video(Base):
     is_published = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
+    
     # Relationships
-    course = relationship("SchoolCourse")
+    course = relationship("SchoolCourse", overlaps="videos")
     teacher = relationship("Teacher")
 
 

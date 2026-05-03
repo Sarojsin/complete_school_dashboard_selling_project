@@ -548,7 +548,7 @@ class AuthService:
         
         # Ensure at least one program and one semester exist (required by CollegeStudent model)
         from sqlalchemy import select
-        from modules.college.college_courses.models import Program, Semester
+        from backup.models.college import Program, Semester
         
         # Find any existing program
         result = await self.db.execute(select(Program).limit(1))

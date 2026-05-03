@@ -62,12 +62,10 @@ CollegeBase.metadata.bind = college_sync_engine
 def create_college_tables():
     """Create all college tables in college database"""
     CollegeBase.metadata.create_all(college_sync_engine)
-    print(f"Created {len(CollegeBase.metadata.tables)} college tables")
 
 def drop_college_tables():
     """Drop all college tables (use with caution)"""
     CollegeBase.metadata.drop_all(college_sync_engine)
-    print("Dropped all college tables")
 
 __all__ = [
     "college_sync_engine",

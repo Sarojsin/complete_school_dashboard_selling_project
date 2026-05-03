@@ -23,7 +23,7 @@ class Assignment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    course = relationship("SchoolCourse")
+    course = relationship("SchoolCourse", overlaps="assignments")
     teacher = relationship("Teacher")
     submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete-orphan")
 

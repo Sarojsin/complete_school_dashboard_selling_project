@@ -7,7 +7,7 @@ FastAPI endpoints for college courses, departments, programs, semesters, enrollm
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.auth.dependencies import get_current_user, require_college_portal
 from modules.shared.models import User
 from .service import CollegeCoursesService
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/courses", tags=["College Courses"], dependencies=[De
 async def create_course(
     data: CollegeCourseCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new course (Protected - Dean/Registrar only)"""
     if current_user.role not in ["dean", "registrar", "super_admin"]:
@@ -43,7 +43,7 @@ async def list_courses(
     department_id: int = None,
     semester_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List courses (Protected)"""
     service = CollegeCoursesService(db)
@@ -58,7 +58,7 @@ async def list_courses(
 async def get_course(
     course_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get course by ID (Protected)"""
     service = CollegeCoursesService(db)
@@ -73,7 +73,7 @@ async def update_course(
     course_id: int,
     data: CollegeCourseUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update course (Protected - Dean/Registrar only)"""
     if current_user.role not in ["dean", "registrar", "super_admin"]:
@@ -89,7 +89,7 @@ async def update_course(
 async def delete_course(
     course_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Delete course (Protected - Dean/Registrar only)"""
     if current_user.role not in ["dean", "registrar", "super_admin"]:
@@ -103,7 +103,7 @@ async def delete_course(
 async def create_department(
     data: DepartmentCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new department (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -117,7 +117,7 @@ async def list_departments(
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List departments (Protected)"""
     service = CollegeCoursesService(db)
@@ -128,7 +128,7 @@ async def list_departments(
 async def get_department(
     department_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get department by ID (Protected)"""
     service = CollegeCoursesService(db)
@@ -143,7 +143,7 @@ async def update_department(
     department_id: int,
     data: DepartmentUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update department (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -159,7 +159,7 @@ async def update_department(
 async def delete_department(
     department_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Delete department (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -173,7 +173,7 @@ async def delete_department(
 async def create_program(
     data: ProgramCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new program (Protected - Dean only)"""
     if current_user.role not in ["dean", "super_admin"]:
@@ -188,7 +188,7 @@ async def list_programs(
     limit: int = 20,
     department_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List programs (Protected)"""
     service = CollegeCoursesService(db)
@@ -201,7 +201,7 @@ async def list_programs(
 async def get_program(
     program_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get program by ID (Protected)"""
     service = CollegeCoursesService(db)
@@ -218,7 +218,7 @@ async def list_semesters(
     limit: int = 20,
     program_id: int = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List semesters (Protected)"""
     service = CollegeCoursesService(db)
@@ -231,7 +231,7 @@ async def list_semesters(
 async def get_semester(
     semester_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get semester by ID (Protected)"""
     service = CollegeCoursesService(db)
@@ -246,7 +246,7 @@ async def get_semester(
 async def enroll_student(
     data: EnrollmentCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Enroll student in course (Protected - Dean/Registrar/Faculty)"""
     if current_user.role not in ["dean", "registrar", "faculty", "super_admin"]:
@@ -263,7 +263,7 @@ async def list_enrollments(
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """List enrollments (Protected)"""
     service = CollegeCoursesService(db)
@@ -274,7 +274,7 @@ async def list_enrollments(
 async def get_enrollment(
     enrollment_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get enrollment by ID (Protected)"""
     service = CollegeCoursesService(db)
@@ -289,7 +289,7 @@ async def update_enrollment(
     enrollment_id: int,
     data: EnrollmentUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update enrollment (Protected - Dean/Registrar/Faculty)"""
     if current_user.role not in ["dean", "registrar", "faculty", "super_admin"]:
@@ -305,7 +305,7 @@ async def update_enrollment(
 async def delete_enrollment(
     enrollment_id: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Drop course (Protected - Dean/Registrar)"""
     if current_user.role not in ["dean", "registrar", "super_admin"]:

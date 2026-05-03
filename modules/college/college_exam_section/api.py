@@ -7,7 +7,7 @@ API endpoints for college exams and results.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.exam_models import ExamResult
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/exam-section", tags=["College Exam Section"], depend
 @router.get("/dashboard")
 async def get_exam_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get exam section dashboard"""
     return {"message": "College exam section dashboard"}
@@ -28,7 +28,7 @@ async def get_exam_dashboard(
 async def get_results(
     student_id: int = None,
     course_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get exam results"""

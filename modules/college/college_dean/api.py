@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
 
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college import Department, Program, Faculty, CollegeStudent
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/dean", tags=["College Dean"], dependencies=[Depends(
 @router.get("/dashboard")
 async def get_dean_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get dean dashboard with college overview"""
     # Get department count
@@ -47,7 +47,7 @@ async def get_dean_dashboard(
 async def get_departments(
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all departments"""
@@ -61,7 +61,7 @@ async def get_departments(
 @router.get("/departments/{dept_id}")
 async def get_department(
     dept_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get department details"""
@@ -79,7 +79,7 @@ async def get_programs(
     department_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all programs"""
@@ -97,7 +97,7 @@ async def get_faculty(
     department_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all faculty members"""
@@ -125,7 +125,7 @@ async def get_students(
     semester: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all college students"""

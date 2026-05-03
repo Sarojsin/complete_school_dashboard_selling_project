@@ -10,7 +10,8 @@ from .repository import (
     CollegeCourseRepository, DepartmentRepository, ProgramRepository,
     SemesterRepository, EnrollmentRepository
 )
-from .models import CollegeCourse, Department, Program, Semester, Enrollment
+from .models import CollegeCourse
+from backup.models.college import Department, Program, Semester, Enrollment
 from .schemas import (
     CollegeCourseCreate, CollegeCourseUpdate,
     DepartmentCreate, DepartmentUpdate,

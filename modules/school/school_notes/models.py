@@ -21,7 +21,7 @@ class Note(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    course = relationship("SchoolCourse")
+    course = relationship("SchoolCourse", overlaps="notes")
     teacher = relationship("Teacher")
 
 

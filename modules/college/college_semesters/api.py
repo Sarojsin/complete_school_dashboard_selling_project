@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 
-from modules.shared.database import get_db as get_async_db
+from modules.college.database import get_college_async_db as get_async_db
 from modules.shared.models import User
-from modules.college.college_courses.models import Semester
+from backup.models.college import Semester
 from modules.auth.dependencies import get_current_user, require_college_portal
 
 router = APIRouter(prefix="/semesters", tags=["Semesters"], dependencies=[Depends(require_college_portal)])

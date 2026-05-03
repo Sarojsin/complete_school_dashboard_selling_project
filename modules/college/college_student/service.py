@@ -34,25 +34,17 @@ class CollegeStudentService:
         if student:
             return {"student": student}
         return None
-
-    async def get_my_profile(self, user_id: int) -> Optional[Dict[str, Any]]:
-        """Get college student profile for current logged-in user"""
-        student = await self.repository.get_by_user_id(user_id)
-        if student:
-            return {"student": student}
-        return None
-    
+     
     async def list_students(self, program_id: Optional[int] = None,
-                          semester_id: Optional[int] = None,
-                          skip: int = 0, limit: int = 100) -> Dict[str, Any]:
+                           semester_id: Optional[int] = None,
+                           skip: int = 0, limit: int = 100) -> Dict[str, Any]:
         students = await self.repository.list(program_id, semester_id, skip, limit)
         total = await self.repository.count(program_id)
         return {"total": total, "students": students}
 
     async def get_my_courses(self, user_id: int) -> List[Dict[str, Any]]:
         """Get courses enrolled by current student via enrollments"""
-        from modules.college.college_enrollments.models import Enrollment
-        from modules.college.college_courses.models import CollegeCourse
+        from backup.models.college import Enrollment, CollegeCourse
         
         # Get student profile first
         student = await self.repository.get_by_user_id(user_id)

@@ -7,7 +7,7 @@ API endpoints for college department heads.
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from modules.shared.database import get_db
+from modules.college.database import get_college_async_db
 from modules.shared.models import User
 from backup.models.college import Department, Faculty, CollegeCourse
 from modules.auth.dependencies import get_current_user, require_college_portal
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/hod", tags=["College HOD"], dependencies=[Depends(re
 @router.get("/dashboard")
 async def get_hod_dashboard(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get HOD dashboard"""
     # Get departments where user is HOD
@@ -36,7 +36,7 @@ async def get_hod_dashboard(
 @router.get("/department/{dept_id}")
 async def get_department(
     dept_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get department details"""
@@ -52,7 +52,7 @@ async def get_department(
 @router.get("/faculty")
 async def get_department_faculty(
     department_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get faculty in department"""
@@ -66,7 +66,7 @@ async def get_department_faculty(
 @router.get("/courses")
 async def get_department_courses(
     department_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_college_async_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get courses in department"""
