@@ -1,8 +1,8 @@
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.models.models import User
-from app.core.database import engine
+from backup.models.models import User
+from backup.core.database import engine
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

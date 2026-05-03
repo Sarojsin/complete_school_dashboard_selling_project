@@ -1,0 +1,230 @@
+/* Assignment Detail Page */
+.assignment-detail-page {
+  padding: 30px;
+  background: #f5f7fa;
+  min-height: 100%;
+}
+
+.assignment-detail-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.assignment-detail-page .page-header h1 {
+  margin: 0;
+  color: #333;
+}
+
+.status-badge {
+  padding: 6px 15px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.assignment-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 25px;
+}
+
+.info-card,
+.submission-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.info-card h2,
+.submission-card h2 {
+  margin: 0 0 20px;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-item .label {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 3px;
+}
+
+.info-item .value {
+  color: #333;
+  font-weight: 500;
+}
+
+.description {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.description h3 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.description p {
+  margin: 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.attachments {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.attachments h3 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.attachment {
+  display: block;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  color: #3498db;
+  text-decoration: none;
+}
+
+.attachment:hover {
+  background: #e9ecef;
+}
+
+.submission-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.submission-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  resize: vertical;
+  font-size: 1rem;
+}
+
+.submission-form textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.file-upload label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.file-upload input {
+  padding: 8px;
+}
+
+.submit-btn {
+  padding: 12px 25px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #219a52;
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submitted-info {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.submitted-info p {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.submitted-info .submission-content {
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.submission-file {
+  display: inline-block;
+  padding: 10px 15px;
+  background: #3498db;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.feedback {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e8f5e9;
+  border-radius: 8px;
+}
+
+.feedback h3 {
+  margin: 0 0 10px;
+  color: #27ae60;
+}
+
+.feedback p {
+  margin: 0;
+  color: #333;
+}
+
+.assignment-loading,
+.assignment-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+@media (max-width: 1024px) {
+  .assignment-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}

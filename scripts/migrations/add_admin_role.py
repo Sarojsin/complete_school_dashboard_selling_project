@@ -10,7 +10,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from sqlalchemy import text
-from app.core.database import engine
+from backup.core.database import engine
 
 
 def add_admin_role():

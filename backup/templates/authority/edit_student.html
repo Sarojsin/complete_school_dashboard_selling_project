@@ -1,0 +1,254 @@
+<!-- templates/authority/edit_student.html -->
+{% extends 'base.html' %}
+
+{% block title %}Edit Student - {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('authority_students') }}">Students</a></li>
+                    <li class="breadcrumb-item active">Edit Student</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Student Information</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-4">
+                                <div class="mb-3">
+                                    <img src="{{ student.profile_pic or '/static/images/default-avatar.png' }}" 
+                                         class="rounded-circle" width="150" height="150" alt="Profile Picture" id="profilePreview">
+                                </div>
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" name="profile_pic" 
+                                           accept="image/*" id="profileInput">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Student ID</label>
+                                    <input type="text" class="form-control" value="{{ student.id }}" readonly>
+                                </div>
+                            </div>
+
+                            <div class="col-md-8">
+                                <h5 class="mb-3">Personal Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Full Name *</label>
+                                            <input type="text" class="form-control" name="name" 
+                                                   value="{{ student.name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email Address *</label>
+                                            <input type="email" class="form-control" name="email" 
+                                                   value="{{ student.email }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" name="phone" 
+                                                   value="{{ student.phone }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Date of Birth</label>
+                                            <input type="date" class="form-control" name="dob" 
+                                                   value="{{ student.dob }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-control" name="address" rows="3">{{ student.address }}</textarea>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h5 class="mb-3">Academic Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Grade/Class *</label>
+                                            <select class="form-select" name="grade" required>
+                                                <option value="">Select Grade</option>
+                                                {% for grade in grades %}
+                                                <option value="{{ grade }}" {% if student.grade == grade %}selected{% endif %}>
+                                                    {{ grade }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Section *</label>
+                                            <select class="form-select" name="section" required>
+                                                <option value="">Select Section</option>
+                                                {% for section in sections %}
+                                                <option value="{{ section }}" {% if student.section == section %}selected{% endif %}>
+                                                    {{ section }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Roll Number *</label>
+                                            <input type="text" class="form-control" name="roll_number" 
+                                                   value="{{ student.roll_number }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Admission Date</label>
+                                            <input type="date" class="form-control" name="admission_date" 
+                                                   value="{{ student.admission_date }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Status</label>
+                                            <select class="form-select" name="status">
+                                                <option value="active" {% if student.status == 'active' %}selected{% endif %}>Active</option>
+                                                <option value="inactive" {% if student.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                                <option value="suspended" {% if student.status == 'suspended' %}selected{% endif %}>Suspended</option>
+                                                <option value="graduated" {% if student.status == 'graduated' %}selected{% endif %}>Graduated</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h5 class="mb-3">Parent/Guardian Information</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Father's Name</label>
+                                            <input type="text" class="form-control" name="father_name" 
+                                                   value="{{ student.father_name }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Mother's Name</label>
+                                            <input type="text" class="form-control" name="mother_name" 
+                                                   value="{{ student.mother_name }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Parent's Phone</label>
+                                            <input type="tel" class="form-control" name="parent_phone" 
+                                                   value="{{ student.parent_phone }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Parent's Email</label>
+                                            <input type="email" class="form-control" name="parent_email" 
+                                                   value="{{ student.parent_email }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Emergency Contact</label>
+                                    <input type="text" class="form-control" name="emergency_contact" 
+                                           value="{{ student.emergency_contact }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('authority_students') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                                    </a>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-danger me-2" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                            <i class="fas fa-trash me-2"></i> Delete Student
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i> Update Student
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete student <strong>{{ student.name }}</strong>?</p>
+                <p class="text-danger"><strong>Warning:</strong> This action cannot be undone. All student data including grades, attendance, and assignments will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('authority_delete_student', id=student.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Student</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile picture preview
+    const profileInput = document.getElementById('profileInput');
+    const profilePreview = document.getElementById('profilePreview');
+
+    profileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

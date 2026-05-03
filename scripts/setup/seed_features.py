@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.core.config import settings
-from app.models.models import UserRole
+from backup.core.config import settings
+from backup.models.models import UserRole
 
 
 # Default features to create
@@ -295,9 +295,9 @@ async def seed_features():
     
     # Create tables first if they don't exist
     print("Creating tables if they don't exist...")
-    from app.core.database import Base
+    from backup.core.database import Base
     # Only import what we actually need for the script
-    from app.models.admin_models import SystemFeature, FeatureRolePermission, AdminAuditLog
+    from backup.models.admin_models import SystemFeature, FeatureRolePermission, AdminAuditLog
     
     async with engine.begin() as conn:
         # Create tables (only if they don't exist)
@@ -310,7 +310,7 @@ async def seed_features():
     
     async with AsyncSessionLocal() as session:
         # Import here to avoid circular imports
-        from app.models.admin_models import SystemFeature
+        from backup.models.admin_models import SystemFeature
         from sqlalchemy import select
         
         print("Seeding features...")

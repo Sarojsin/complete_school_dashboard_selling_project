@@ -1,5 +1,3 @@
-# CRITICAL: Import bcrypt compatibility fix FIRST before anything else
-import app.utils.bcrypt_compat  # noqa: F401
 from app.main import app
 
 if __name__ == "__main__":

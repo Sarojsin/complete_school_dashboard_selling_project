@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block sidebar_content %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link active" href="/teacher/dashboard">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/students">
+            <i class="bi bi-people me-2"></i>Students
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/courses">
+            <i class="bi bi-book me-2"></i>Courses
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/assignments">
+            <i class="bi bi-journal-text me-2"></i>Assignments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/grades">
+            <i class="bi bi-graph-up me-2"></i>Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/attendance">
+            <i class="bi bi-calendar-check me-2"></i>Attendance
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/tests">
+            <i class="bi bi-pencil-square me-2"></i>Tests
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/timetable">
+            <i class="bi bi-calendar3 me-2"></i>Timetable
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/chat">
+            <i class="bi bi-chat-dots me-2"></i>Chat
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/teacher/groups">
+            <i class="bi bi-people-fill me-2"></i>Groups
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block page_title %}Teacher Dashboard{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <button class="btn btn-sm btn-outline-primary">Today</button>
+    <button class="btn btn-sm btn-outline-primary">This Week</button>
+    <button class="btn btn-sm btn-outline-primary">This Month</button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card primary animate-up" style="animation-delay: 0.1s;">
+            <div class="stat-content">
+                <div class="text-xs fw-bold text-uppercase mb-1 opacity-75">Total Students</div>
+                <div class="h2 mb-0 fw-bold">{{ stats.total_students }}</div>
+            </div>
+            <i class="bi bi-people"></i>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card success animate-up" style="animation-delay: 0.2s;">
+            <div class="stat-content">
+                <div class="text-xs fw-bold text-uppercase mb-1 opacity-75">Active Courses</div>
+                <div class="h2 mb-0 fw-bold">{{ courses|length }}</div>
+            </div>
+            <i class="bi bi-book"></i>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card info animate-up" style="animation-delay: 0.3s;">
+            <div class="stat-content">
+                <div class="text-xs fw-bold text-uppercase mb-1 opacity-75">Pending Assignments</div>
+                <div class="h2 mb-0 fw-bold">{{ stats.pending_assignments }}</div>
+            </div>
+            <i class="bi bi-journal-check"></i>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card warning animate-up" style="animation-delay: 0.4s;">
+            <div class="stat-content">
+                <div class="text-xs fw-bold text-uppercase mb-1 opacity-75">Avg. Attendance</div>
+                <div class="h2 mb-0 fw-bold">{{ stats.average_attendance }}</div>
+            </div>
+            <i class="bi bi-calendar-check"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card glass-card border-0">
+            <div class="card-header bg-transparent border-0 py-4">
+                <h4 class="card-title mb-0 fw-bold"><i class="bi bi-lightning-charge-fill me-2 text-warning"></i>Quick
+                    Launch Hub</h4>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="row g-4">
+                    <!-- Action Grid -->
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <a href="/teacher/attendance/take" class="text-decoration-none group">
+                            <div class="card hover-lift border-0 bg-light-primary text-center p-3 h-100">
+                                <div class="icon-box primary mb-3 mx-auto">
+                                    <i class="bi bi-calendar2-check-fill fs-3"></i>
+                                </div>
+                                <h6 class="mb-1 text-dark fw-bold">Attendance</h6>
+                                <small class="text-muted">Today's Class</small>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <a href="/teacher/assignments/create" class="text-decoration-none">
+                            <div class="card hover-lift border-0 bg-light-success text-center p-3 h-100">
+                                <div class="icon-box success mb-3 mx-auto">
+                                    <i class="bi bi-plus-circle-fill fs-3"></i>
+                                </div>
+                                <h6 class="mb-1 text-dark fw-bold">New Task</h6>
+                                <small class="text-muted">Assignment</small>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <a href="/teacher/grades/add" class="text-decoration-none">
+                            <div class="card hover-lift border-0 bg-light-info text-center p-3 h-100">
+                                <div class="icon-box info mb-3 mx-auto">
+                                    <i class="bi bi-award-fill fs-3"></i>
+                                </div>
+                                <h6 class="mb-1 text-dark fw-bold">Grading</h6>
+                                <small class="text-muted">Post Marks</small>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <a href="/teacher/tests/create" class="text-decoration-none">
+                            <div class="card hover-lift border-0 bg-light-danger text-center p-3 h-100">
+                                <div class="icon-box danger mb-3 mx-auto">
+                                    <i class="bi bi-file-earmark-diff-fill fs-3"></i>
+                                </div>
+                                <h6 class="mb-1 text-dark fw-bold">Test</h6>
+                                <small class="text-muted">Create Quiz</small>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <a href="/teacher/notes/upload" class="text-decoration-none">
+                            <div class="card hover-lift border-0 bg-light-warning text-center p-3 h-100">
+                                <div class="icon-box warning mb-3 mx-auto">
+                                    <i class="bi bi-folder-fill fs-3"></i>
+                                </div>
+                                <h6 class="mb-1 text-dark fw-bold">Material</h6>
+                                <small class="text-muted">Upload Notes</small>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <a href="/teacher/chat" class="text-decoration-none">
+                            <div class="card hover-lift border-0 bg-light-secondary text-center p-3 h-100">
+                                <div class="icon-box secondary mb-3 mx-auto">
+                                    <i class="bi bi-chat-square-text-fill fs-3"></i>
+                                </div>
+                                <h6 class="mb-1 text-dark fw-bold">Chat</h6>
+                                <small class="text-muted">Parent Hub</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Management Links -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-gear-fill me-2"></i>Management</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="/teacher/assignments" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-list-ul me-2"></i>View All Assignments
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/grades" class="btn btn-outline-info w-100 py-3">
+                            <i class="bi bi-bar-chart me-2"></i>View All Grades
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/attendance" class="btn btn-outline-success w-100 py-3">
+                            <i class="bi bi-calendar-week me-2"></i>Attendance Records
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/tests" class="btn btn-outline-warning w-100 py-3">
+                            <i class="bi bi-clipboard-check me-2"></i>View All Tests
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/courses" class="btn btn-outline-secondary w-100 py-3">
+                            <i class="bi bi-book-half me-2"></i>My Courses
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/teacher/timetable" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-calendar3 me-2"></i>Class Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity & Stats -->
+<div class="row g-4 mb-4">
+    <!-- Attendance Overview -->
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 h-100">
+            <div
+                class="card-header bg-transparent border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">Performance Analytics</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
+                        Last 7 Days <i class="bi bi-chevron-down ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu border-0 shadow-sm">
+                        <li><a class="dropdown-item" href="#">Today</a></li>
+                        <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <canvas id="performanceChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-lg-4">
+        <div class="card glass-card border-0 h-100">
+            <div class="card-header bg-transparent border-0 py-4 px-4">
+                <h5 class="card-title mb-0 fw-bold">System Pulse</h5>
+            </div>
+            <div class="card-body px-4 pt-0">
+                <div class="mb-4 text-center">
+                    <div class="display-4 fw-bold text-primary">{{ stats.average_attendance }}%</div>
+                    <small class="text-muted text-uppercase fw-bold">Avg. Attendance</small>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-bold">Pending Grades</small>
+                            <small class="text-muted">{{ stats.pending_assignments }} tasks</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-bold">Active Students</small>
+                            <small class="text-muted">{{ stats.active_students_rate }}%</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                style="width: {{ stats.active_students_rate }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-bold">Course Progress</small>
+                            <small class="text-muted">62%</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 62%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Attendance Rate',
+                    data: [85, 92, 88, 95, 89, 45, 0],
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#4361ee',
+                    pointBorderWidth: 2
+                }, {
+                    label: 'Grade Submissions',
+                    data: [20, 35, 60, 45, 30, 10, 5],
+                    borderColor: '#10b981',
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#10b981',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        cornerRadius: 8,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            padding: 10
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            padding: 10
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .icon-box {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .icon-box.primary {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+    }
+
+    .icon-box.success {
+        background: rgba(16, 201, 129, 0.1);
+        color: #10b981;
+    }
+
+    .icon-box.info {
+        background: rgba(72, 149, 239, 0.1);
+        color: var(--info);
+    }
+
+    .icon-box.warning {
+        background: rgba(247, 37, 133, 0.1);
+        color: var(--warning);
+    }
+
+    .icon-box.danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .icon-box.secondary {
+        background: rgba(63, 55, 201, 0.1);
+        color: var(--secondary);
+    }
+
+    .bg-light-primary {
+        background-color: #f0f3ff;
+    }
+
+    .bg-light-success {
+        background-color: #f0fff4;
+    }
+
+    .bg-light-info {
+        background-color: #e0f7ff;
+    }
+
+    .bg-light-warning {
+        background-color: #fff0f6;
+    }
+
+    .bg-light-danger {
+        background-color: #fff5f5;
+    }
+
+    .bg-light-secondary {
+        background-color: #f5f3ff;
+    }
+
+    .hover-lift:hover .icon-box {
+        transform: scale(1.1);
+        filter: brightness(1.2);
+    }
+</style>
+{% endblock %}

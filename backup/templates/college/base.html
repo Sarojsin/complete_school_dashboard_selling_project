@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}College Portal{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/college.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="college-nav">
+        <div class="nav-brand">
+            <a href="/">College Portal</a>
+        </div>
+        <ul class="nav-menu">
+            {% if user.role == 'dean' %}
+            <li><a href="/college/dean/dashboard">Dashboard</a></li>
+            <li><a href="/college/dean/departments">Departments</a></li>
+            <li><a href="/college/dean/faculty">Faculty</a></li>
+            <li><a href="/college/dean/analytics">Analytics</a></li>
+            {% elif user.role == 'hod' %}
+            <li><a href="/college/hod/dashboard">Dashboard</a></li>
+            <li><a href="/college/hod/faculty">Faculty</a></li>
+            <li><a href="/college/hod/courses">Courses</a></li>
+            <li><a href="/college/hod/students">Students</a></li>
+            {% elif user.role == 'faculty' %}
+            <li><a href="/college/faculty/dashboard">Dashboard</a></li>
+            <li><a href="/college/faculty/courses">My Courses</a></li>
+            <li><a href="/college/faculty/students">Students</a></li>
+            <li><a href="/college/faculty/research">Research</a></li>
+            {% elif user.role == 'registrar' %}
+            <li><a href="/college/registrar/dashboard">Dashboard</a></li>
+            <li><a href="/college/registrar/enrollments">Enrollments</a></li>
+            <li><a href="/college/registrar/transcripts">Transcripts</a></li>
+            {% elif user.role == 'student' %}
+            <li><a href="/college/student/dashboard">Dashboard</a></li>
+            <li><a href="/college/student/courses">Courses</a></li>
+            <li><a href="/college/student/enrollments">Enrollments</a></li>
+            <li><a href="/college/student/grades">Grades</a></li>
+            <li><a href="/college/student/timetable">Timetable</a></li>
+            <li><a href="/college/student/placement">Placements</a></li>
+            {% endif %}
+            <li><a href="/college/account/profile">Profile</a></li>
+            <li><a href="/auth/logout">Logout</a></li>
+        </ul>
+    </nav>
+    
+    <main class="college-main">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="college-footer">
+        <p>&copy; 2024 College Management System</p>
+    </footer>
+    
+    <script src="/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Examination Results - Filter & View{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Examination Results</h2>
+            <p class="text-muted">Search and filter through all published student marks.</p>
+        </div>
+        <div>
+            <a href="/exam-section/post-result" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-circle me-2"></i>New Mark Sheet
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-4 border-0 shadow-sm bg-light">
+        <div class="card-body">
+            <form action="/exam-section/results" method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-uppercase">Student Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i
+                                class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0"
+                            placeholder="Name or Student ID" value="{{ query.search or '' }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase">Grade/Class</label>
+                    <select name="grade_level" class="form-select">
+                        <option value="">All Grades</option>
+                        {% for grade in filters.grades %}
+                        <option value="{{ grade }}" {% if query.grade_level==grade %}selected{% endif %}>{{ grade }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small fw-bold text-uppercase">Section</label>
+                    <select name="section" class="form-select">
+                        <option value="">All</option>
+                        {% for section in filters.sections %}
+                        <option value="{{ section }}" {% if query.section==section %}selected{% endif %}>{{ section }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase">Exam Type</label>
+                    <select name="exam_type" class="form-select text-capitalize">
+                        <option value="">All Types</option>
+                        {% for type in filters.exam_types %}
+                        <option value="{{ type }}" {% if query.exam_type==type %}selected{% endif %}>{{ type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase">Semester</label>
+                    <select name="semester" class="form-select">
+                        <option value="">All Semesters</option>
+                        {% for sem in filters.semesters %}
+                        <option value="{{ sem }}" {% if query.semester==sem %}selected{% endif %}>{{ sem }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-dark w-100">Apply Filters</button>
+                    <a href="/exam-section/results" class="btn btn-link text-muted ms-2"><i
+                            class="bi bi-x-circle"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Student</th>
+                            <th>Class/Sec</th>
+                            <th>Subject</th>
+                            <th>Exam Info</th>
+                            <th>Marks</th>
+                            <th>Grade</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if results %}
+                        {% for result in results %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold">{{ result.student_name }}</div>
+                                <div class="small text-muted">{{ result.student_id_code }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ result.grade_level }} - {{
+                                    result.section }}</span>
+                            </td>
+                            <td>{{ result.course_name }}</td>
+                            <td>
+                                <div class="text-capitalize">{{ result.exam_type }}</div>
+                                <div class="small text-muted">{{ result.semester }}</div>
+                            </td>
+                            <td>
+                                <span class="fw-bold">{{ result.marks }}</span>
+                                <span class="text-muted small">/ {{ result.max_marks }}</span>
+                            </td>
+                            <td>
+                                <span
+                                    class="badge {% if result.grade == 'A' %}bg-success{% elif result.grade == 'F' %}bg-danger{% else %}bg-info{% endif %}">
+                                    {{ result.grade }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if result.marks >= (result.max_marks * 0.4) %}
+                                <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Pass</span>
+                                {% else %}
+                                <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Fail</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group shadow-sm">
+                                    <a href="/exam-section/grade-sheet/{{ result.student_db_id }}?semester={{ result.semester }}"
+                                        class="btn btn-white btn-sm border" title="View Full Marksheet">
+                                        <i class="bi bi-file-earmark-text text-primary"></i>
+                                    </a>
+                                    <button class="btn btn-white btn-sm border" disabled>
+                                        <i class="bi bi-pencil text-muted"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="text-muted mb-3">
+                                    <i class="bi bi-clipboard-x fs-1"></i>
+                                </div>
+                                <h5>No matching results found</h5>
+                                <p>Try adjusting your filters or search terms.</p>
+                                <a href="/exam-section/results" class="btn btn-outline-secondary mt-2">Clear All
+                                    Filters</a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-white {
+        background-color: white;
+    }
+
+    .table thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.8em;
+    }
+</style>
+{% endblock %}

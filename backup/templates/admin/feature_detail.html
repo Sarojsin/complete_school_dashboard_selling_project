@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Admin | {{ feature.name }}</title>
+    <link href="{{ url_for('static', path='css/admin.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-symbols-outlined">shield_person</span>
+                </div>
+                <h1 class="sidebar-title">NEXUS ELITE</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/admin/dashboard" class="sidebar-link">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span>Command Center</span>
+                </a>
+                <a href="/admin/features" class="sidebar-link active">
+                    <span class="material-symbols-outlined">vitals</span>
+                    <span>Feature Matrix</span>
+                </a>
+                <a href="/admin/audit" class="sidebar-link">
+                    <span class="material-symbols-outlined">history_edu</span>
+                    <span>Audit Spectrum</span>
+                </a>
+                <a href="/admin/settings" class="sidebar-link">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span>System Tuning</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <!-- Header -->
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <a href="/admin/features" class="btn"
+                        style="border: 1px solid var(--border-color); padding: 0.5rem;">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </a>
+                    <div>
+                        <h2 style="font-size: 1.875rem; font-weight: 800; letter-spacing: -0.025em;">{{ feature.name }}
+                        </h2>
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">Feature code: <code
+                                style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{{ feature.feature_code }}</code>
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #059669; font-size: 0.75rem; font-weight: 700;">
+                        <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+                        LIVE NODE
+                    </span>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                <!-- Left: Permissions Table -->
+                <div>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Role Permissions Matrix</h3>
+                            <button onclick="syncPermissions()" class="btn btn-primary"
+                                style="font-size: 0.875rem; gap: 0.5rem;">
+                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">sync</span>
+                                Sync Matrix
+                            </button>
+                        </div>
+                        <div class="panel-body">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--border-color);">
+                                        <th
+                                            style="text-align: left; padding: 0.75rem 0; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                                            System Role</th>
+                                        <th
+                                            style="text-align: center; padding: 0.75rem 0; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                                            Read</th>
+                                        <th
+                                            style="text-align: center; padding: 0.75rem 0; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                                            Create</th>
+                                        <th
+                                            style="text-align: center; padding: 0.75rem 0; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                                            Update</th>
+                                        <th
+                                            style="text-align: center; padding: 0.75rem 0; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                                            Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="permissionsTable">
+                                    {% for role in roles %}
+                                    {% set p = permissions[role] if permissions[role] else None %}
+                                    <tr style="border-bottom: 1px solid var(--border-color);" data-role="{{ role }}">
+                                        <td style="padding: 1rem 0;">
+                                            <p style="font-weight: 700;">{{ role }}</p>
+                                            <p style="font-size: 0.75rem; color: var(--text-muted);">Global Entity</p>
+                                        </td>
+                                        {% for action in ['can_read', 'can_create', 'can_update', 'can_delete'] %}
+                                        <td style="text-align: center; padding: 1rem 0;">
+                                            <input type="checkbox" data-action="{{ action }}" {{ 'checked' if p and
+                                                getattr(p, action) else '' }}
+                                                style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color);" />
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Feature Info -->
+                    <section class="panel" style="margin-top: 1.5rem;">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Module Definition</h3>
+                        </div>
+                        <div class="panel-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div>
+                                <p
+                                    style="font-size: 0.75rem; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                                    Internal Code</p>
+                                <code
+                                    style="font-family: monospace; background: #f1f5f9; padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.875rem;">{{ feature.feature_code }}</code>
+                            </div>
+                            <div>
+                                <p
+                                    style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                                    Description</p>
+                                <p style="font-size: 0.875rem; color: var(--text-main);">{{ feature.description }}</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right: Audit Trail -->
+                <div>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Module Trace</h3>
+                        </div>
+                        <div class="panel-body">
+                            {% if logs %}
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                {% for log in logs %}
+                                <div
+                                    style="padding: 0.75rem; background: #f8fafc; border-radius: 8px; border-left: 3px solid var(--primary-color);">
+                                    <p style="font-weight: 700; font-size: 0.875rem;">{{ log.action }}</p>
+                                    {% if log.description %}
+                                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">{{
+                                        log.description }}</p>
+                                    {% endif %}
+                                    <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem;">{{
+                                        log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else 'N/A' }}</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                <span class="material-symbols-outlined"
+                                    style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">analytics</span>
+                                <p style="font-size: 0.875rem; font-weight: 600;">No trace data available</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function syncPermissions() {
+            const featureCode = '{{ feature.feature_code }}';
+            const table = document.getElementById('permissionsTable');
+            const rows = table.querySelectorAll('tr[data-role]');
+
+            const updates = Array.from(rows).map(row => ({
+                role: row.dataset.role,
+                can_read: row.querySelector('[data-action="can_read"]').checked,
+                can_create: row.querySelector('[data-action="can_create"]').checked,
+                can_update: row.querySelector('[data-action="can_update"]').checked,
+                can_delete: row.querySelector('[data-action="can_delete"]').checked,
+            }));
+
+            try {
+                const response = await fetch(`/api/admin/features/${featureCode}/permissions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ permissions: updates })
+                });
+                if (response.ok) {
+                    alert('Permissions synced successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error syncing permissions.');
+                }
+            } catch (e) {
+                alert('Network error. Please try again.');
+            }
+        }
+    </script>
+</body>
+
+</html>

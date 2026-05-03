@@ -1,0 +1,90 @@
+/* Post specific styles */
+.post-card {
+    border-left: 4px solid transparent;
+}
+
+.post-card.notice {
+    border-left-color: #dc3545;
+}
+
+.post-card.note {
+    border-left-color: #0d6efd;
+}
+
+.post-card.link {
+    border-left-color: #198754;
+}
+
+.post-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.post-content {
+    line-height: 1.6;
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.375rem;
+}
+
+.link-preview {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.link-preview:hover {
+    background-color: #e9ecef;
+    text-decoration: none;
+}
+
+/* Post type icons */
+.bi-megaphone {
+    color: #dc3545;
+}
+
+.bi-file-text {
+    color: #0d6efd;
+}
+
+.bi-link-45deg {
+    color: #198754;
+}
+
+/* Code blocks in posts */
+pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    overflow-x: auto;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.2rem;
+    font-size: 0.875em;
+}
+
+/* Pagination */
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .post-card .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .post-card .card-header .btn-group {
+        margin-top: 0.5rem;
+        align-self: flex-end;
+    }
+}

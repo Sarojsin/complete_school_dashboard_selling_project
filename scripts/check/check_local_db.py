@@ -1,6 +1,6 @@
 
-from app.core.database import SessionLocal
-from app.models.models import FeeRecord, Student, FeeStructure
+from backup.core.database import SessionLocal
+from backup.models.models import FeeRecord, Student, FeeStructure
 
 db = SessionLocal()
 

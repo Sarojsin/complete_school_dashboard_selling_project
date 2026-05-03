@@ -6,9 +6,9 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from app.core.database import SessionLocal
-from app.models.models import Student, Course
-from app.models.test_models import Test
+from backup.core.database import SessionLocal
+from backup.models.models import Student, Course
+from backup.models.test_models import Test
 from sqlalchemy import text
 
 

@@ -1,0 +1,306 @@
+/* Authority Groups Page */
+.authority-groups-page {
+  padding: 30px;
+  background: #f5f7fa;
+  min-height: 100%;
+}
+
+.authority-groups-page .page-header {
+  margin-bottom: 30px;
+}
+
+.authority-groups-page .page-header h1 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.authority-groups-page .page-header p {
+  margin: 0;
+  color: #666;
+}
+
+.create-group-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+}
+
+.help-text {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.form-actions {
+  margin-top: 30px;
+}
+
+.btn-submit {
+  padding: 12px 30px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #219a52;
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.group-templates {
+  margin-top: 40px;
+}
+
+.group-templates h3 {
+  margin: 0 0 20px;
+  color: #333;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.template-card {
+  background: white;
+  padding: 25px;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-card:hover {
+  border-color: #3498db;
+  transform: translateY(-3px);
+}
+
+.template-icon {
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+/* Groups List Styles */
+.groups-list-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.groups-list-card h3 {
+  margin: 0 0 20px;
+  color: #333;
+}
+
+.groups-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.groups-table th,
+.groups-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.groups-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #555;
+}
+
+.group-type-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.private-badge {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+/* Manage Group Styles */
+.manage-group-page {
+  padding: 30px;
+  background: #f5f7fa;
+  min-height: 100%;
+}
+
+.group-info-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.group-info-card h2 {
+  margin: 0 0 15px;
+  color: #333;
+}
+
+.group-info-card p {
+  margin: 0;
+  color: #666;
+}
+
+.members-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.members-section h3 {
+  margin: 0 0 20px;
+  color: #333;
+}
+
+.members-list {
+  display: grid;
+  gap: 15px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #3498db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+}
+
+.member-details span {
+  display: block;
+}
+
+.member-details .name {
+  font-weight: 600;
+  color: #333;
+}
+
+.member-details .role {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.member-actions button {
+  padding: 6px 12px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1024px) {
+  .templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .templates-grid {
+    grid-template-columns: 1fr;
+  }
+}

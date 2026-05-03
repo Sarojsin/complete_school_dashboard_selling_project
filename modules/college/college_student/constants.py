@@ -1,0 +1,12 @@
+"""
+College Student Constants
+"""
+
+STUDENT_STATUS_ACTIVE = "active"
+STUDENT_STATUS_GRADUATED = "graduated"
+STUDENT_STATUS_SUSPENDED = "suspended"
+STUDENT_STATUS_DROPPED = "dropped"
+
+MIN_CGPA = 0.0
+MAX_CGPA = 10.0
+MIN_CGPA_FOR_GOOD_STANDING = 5.0

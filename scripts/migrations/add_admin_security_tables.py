@@ -15,8 +15,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from app.core.database import engine
-from app.models.admin_models import LoginHistory, FailedLoginAttempt, UserSecurityState
+from backup.core.database import engine
+from backup.models.admin_models import LoginHistory, FailedLoginAttempt, UserSecurityState
 
 
 def add_admin_security_tables() -> None:

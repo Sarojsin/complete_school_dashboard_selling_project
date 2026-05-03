@@ -1,7 +1,7 @@
 import asyncio
-from app.core.database import AsyncSessionLocal
-from app.repositories.test_repository import TestRepository
-from app.models.test_models import Test
+from backup.core.database import AsyncSessionLocal
+from backup.repositories.test_repository import TestRepository
+from backup.models.test_models import Test
 
 async def check_test():
     async with AsyncSessionLocal() as db:

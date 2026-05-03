@@ -3,7 +3,7 @@ import requests
 import random
 import string
 from sqlalchemy import create_engine, text
-from app.core.database import engine
+from backup.core.database import engine
 
 def generate_random_string(length=8):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))

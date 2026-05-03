@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - School Management System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Sign Up & Join Our School</h2>
+        <p class="text-muted">Choose your role to get started</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <!-- Student -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 text-center p-4">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Student</h5>
+                <p class="text-muted small mb-4">Register as a student to access study materials and attendance.</p>
+                <a href="/signup/student" class="btn btn-outline-primary mt-auto">Sign Up</a>
+            </div>
+        </div>
+
+        <!-- Teacher -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 text-center p-4">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Teacher</h5>
+                <p class="text-muted small mb-4">Register as a teacher to manage classes and assignments.</p>
+                <a href="/signup/teacher" class="btn btn-outline-primary mt-auto">Sign Up</a>
+            </div>
+        </div>
+
+        <!-- Parent -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 text-center p-4">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Parent</h5>
+                <p class="text-muted small mb-4">Register as a parent to monitor your child's progress.</p>
+                <a href="/signup/parent" class="btn btn-outline-primary mt-auto">Sign Up</a>
+            </div>
+        </div>
+
+        <!-- Other Roles (Admin) -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 text-center p-4">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Staff / Authority</h5>
+                <p class="text-muted small mb-4">For HODs, Exam Section, Library, and Accounts.</p>
+                <div class="dropdown mt-auto">
+                    <button class="btn btn-outline-primary dropdown-toggle w-100" type="button"
+                        data-bs-toggle="dropdown">
+                        Select Role
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/signup/hod">HOD</a></li>
+                        <li><a class="dropdown-item" href="/signup/exam-section">Exam Section</a></li>
+                        <li><a class="dropdown-item" href="/signup/library">Library Manager</a></li>
+                        <li><a class="dropdown-item" href="/signup/account">Account Section</a></li>
+                        <li><a class="dropdown-item" href="/signup/authority">Other Authority</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <p class="text-muted">Already have an account? <a href="/login"
+                class="text-primary text-decoration-none fw-medium">Login here</a></p>
+    </div>
+</div>
+{% endblock %}

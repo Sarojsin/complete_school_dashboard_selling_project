@@ -1,5 +1,5 @@
-from app.core.database import SessionLocal
-from app.repositories.student_repository import StudentRepository
+from backup.core.database import SessionLocal
+from backup.repositories.student_repository import StudentRepository
 
 def verify_fix():
     db = SessionLocal()

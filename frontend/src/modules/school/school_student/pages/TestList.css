@@ -1,0 +1,169 @@
+/* Test List Page */
+.test-list-page {
+  padding: 30px;
+  background: #f5f7fa;
+  min-height: 100%;
+}
+
+.test-list-page .page-header {
+  margin-bottom: 30px;
+}
+
+.test-list-page .page-header h1 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.test-list-page .page-header p {
+  margin: 0;
+  color: #666;
+}
+
+.tests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+.test-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.test-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.test-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.test-info {
+  padding: 20px;
+}
+
+.test-info .subject {
+  color: #667eea;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.test-info .description {
+  color: #666;
+  margin: 0 0 15px;
+  font-size: 0.9rem;
+}
+
+.test-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+.test-marks {
+  color: #333;
+  font-weight: 500;
+}
+
+.test-actions {
+  padding: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.start-btn,
+.result-btn,
+.continue-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.start-btn {
+  background: #27ae60;
+  color: white;
+}
+
+.start-btn:hover {
+  background: #219a52;
+}
+
+.continue-btn {
+  background: #f39c12;
+  color: white;
+}
+
+.continue-btn:hover {
+  background: #e67e22;
+}
+
+.result-btn {
+  background: #3498db;
+  color: white;
+}
+
+.result-btn:hover {
+  background: #2980b9;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px;
+  background: white;
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #666;
+}
+
+.test-list-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .tests-grid {
+    grid-template-columns: 1fr;
+  }
+}

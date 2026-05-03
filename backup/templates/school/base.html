@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School Portal{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/school.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="school-nav">
+        <div class="nav-brand">
+            <a href="/">School Portal</a>
+        </div>
+        <ul class="nav-menu">
+            {% if user.role == 'authority' %}
+            <li><a href="/authority/dashboard">Dashboard</a></li>
+            <li><a href="/authority/students">Students</a></li>
+            <li><a href="/authority/teachers">Teachers</a></li>
+            <li><a href="/authority/courses">Courses</a></li>
+            <li><a href="/authority/fees">Fees</a></li>
+            {% elif user.role == 'teacher' %}
+            <li><a href="/teacher/dashboard">Dashboard</a></li>
+            <li><a href="/teacher/courses">My Courses</a></li>
+            <li><a href="/teacher/assignments">Assignments</a></li>
+            <li><a href="/teacher/attendance">Attendance</a></li>
+            {% elif user.role == 'student' %}
+            <li><a href="/student/dashboard">Dashboard</a></li>
+            <li><a href="/student/courses">My Courses</a></li>
+            <li><a href="/student/assignments">Assignments</a></li>
+            <li><a href="/student/grades">Grades</a></li>
+            <li><a href="/student/attendance">Attendance</a></li>
+            <li><a href="/student/fees">Fees</a></li>
+            {% elif user.role == 'parent' %}
+            <li><a href="/parent/dashboard">Dashboard</a></li>
+            <li><a href="/parent/children">My Children</a></li>
+            <li><a href="/parent/notices">Notices</a></li>
+            {% endif %}
+            <li><a href="/account/profile">Profile</a></li>
+            <li><a href="/auth/logout">Logout</a></li>
+        </ul>
+    </nav>
+    
+    <main class="school-main">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="school-footer">
+        <p>&copy; 2024 School Management System</p>
+    </footer>
+    
+    <script src="/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

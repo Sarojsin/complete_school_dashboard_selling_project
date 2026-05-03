@@ -1,0 +1,130 @@
+/* Attendance Page Styles */
+.attendance-page {
+  padding: var(--spacing-xl);
+  background: var(--bg-primary);
+  min-height: 100vh;
+}
+
+.attendance-page h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Calendar Styles */
+.attendance-calendar {
+  padding: var(--spacing-sm) 0;
+}
+
+.attendance-calendar .day-cell {
+  padding: 8px 4px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  min-height: 60px;
+}
+
+.attendance-calendar .day-cell:hover {
+  background-color: #f8f9fa;
+}
+
+.attendance-calendar .date-number {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.attendance-calendar .attendance-status {
+  font-size: 1.2rem;
+}
+
+/* Course-wise Attendance */
+.attendance-page .course-attendance {
+  margin-bottom: var(--spacing-md);
+}
+
+.attendance-page .course-attendance hr {
+  margin: var(--spacing-md) 0;
+  border-color: #f1f5f9;
+}
+
+/* Legend */
+.attendance-page .legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.attendance-page .legend-item i {
+  font-size: var(--font-size-md);
+}
+
+/* Detailed Records */
+.attendance-page .table th {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.attendance-page .table td {
+  vertical-align: middle;
+}
+
+/* Policy Section */
+.attendance-page .alert {
+  border-radius: var(--radius-md);
+}
+
+.attendance-page .list-unstyled li {
+  padding: var(--spacing-xs) 0;
+}
+
+/* Stat Card */
+.attendance-page .card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.attendance-page .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+/* Progress Bar */
+.attendance-page .progress {
+  border-radius: var(--radius-sm);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .attendance-page .col-lg-8, 
+  .attendance-page .col-lg-4 {
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .attendance-page {
+    padding: var(--spacing-md);
+  }
+  
+  .attendance-page .row.g-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .attendance-page .table {
+    font-size: var(--font-size-sm);
+  }
+  
+  .attendance-page .attendance-calendar .day-cell {
+    min-height: 40px;
+    padding: 4px 2px;
+  }
+  
+  .attendance-page .attendance-calendar .date-number {
+    font-size: 0.75rem;
+  }
+  
+  .attendance-page .attendance-calendar .attendance-status {
+    font-size: 0.9rem;
+  }
+}

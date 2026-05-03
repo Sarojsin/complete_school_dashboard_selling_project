@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School Management System{% endblock %}</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #10b981;
+            --info: #4895ef;
+            --warning: #f72585;
+            --danger: #ef4444;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-info: linear-gradient(135deg, #4895ef 0%, #3f37c9 100%);
+            --gradient-warning: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+            --gradient-dark: linear-gradient(135deg, #212529 0%, #000000 100%);
+            --gradient: var(--gradient-primary);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 16px;
+        }
+
+        .glass-card-dark {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 16px;
+        }
+
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
+            filter: brightness(1.1);
+        }
+
+
+        .stat-card.primary {
+            background: var(--gradient-primary);
+        }
+
+        .stat-card.success {
+            background: var(--gradient-success);
+        }
+
+        .stat-card.info {
+            background: var(--gradient-info);
+        }
+
+        .stat-card.warning {
+            background: var(--gradient-warning);
+        }
+
+        .stat-card.danger {
+            background: var(--gradient-danger);
+        }
+
+        .stat-card {
+            color: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card i {
+            position: absolute;
+            right: -10px;
+            bottom: -10px;
+            font-size: 5rem;
+            opacity: 0.15;
+            transform: rotate(-15deg);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            padding: 1rem;
+        }
+
+        .sidebar .nav-link {
+            color: #475569;
+            padding: 14px 18px;
+            margin: 6px 0;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+
+        .sidebar .nav-link i {
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .hero-section {
+            background: var(--gradient);
+            color: white;
+            padding: 4rem 0;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 3rem;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .feature-icon i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .badge-online {
+            background: #10b981;
+        }
+
+        .badge-offline {
+            background: #6b7280;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token(request) }}">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: var(--gradient);">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-mortarboard-fill me-2"></i>
+                saroj_EduManage
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user %}
+                    <li class="nav-item">
+                        {% set role_val = (current_user.role.value if hasattr(current_user.role, 'value') else
+                        current_user.role)|lower %}
+                        {% if role_val == 'student' %}
+                        <a class="nav-link" href="/student/dashboard">Dashboard</a>
+                        {% elif role_val == 'teacher' %}
+                        <a class="nav-link" href="/teacher/dashboard">Dashboard</a>
+                        {% elif role_val == 'authority' %}
+                        <a class="nav-link" href="/authority/dashboard">Dashboard</a>
+                        {% elif role_val == 'parent' %}
+                        <a class="nav-link" href="/parent/dashboard">Dashboard</a>
+                        {% elif role_val == 'hod' %}
+                        <a class="nav-link" href="/hod/dashboard">Dashboard</a>
+                        {% elif role_val == 'exam_section' %}
+                        <a class="nav-link" href="/exam-section/dashboard">Dashboard</a>
+                        {% elif role_val == 'library_manager' %}
+                        <a class="nav-link" href="/library/dashboard">Dashboard</a>
+                        {% elif role_val == 'account_section' %}
+                        <a class="nav-link" href="/account/dashboard">Dashboard</a>
+                        {% elif role_val == 'admin' %}
+                        <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                        {% else %}
+                        <a class="nav-link" href="/">Dashboard</a>
+                        {% endif %}
+                    </li>
+
+                    <!-- Role Base Navigation -->
+                    {% if role_val == "hod" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hod/dashboard">HOD Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    {% if role_val == "exam_section" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/exam-section/dashboard">Exam Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    {% if role_val == "library_manager" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/library/dashboard">Library Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    {% if role_val == "account_section" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/account/dashboard">Account Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
+                            data-bs-toggle="dropdown">
+                            {% if current_user.profile_picture %}
+                            <img src="{{ current_user.profile_picture }}" class="rounded-circle me-2" width="30"
+                                height="30" style="object-fit: cover;">
+                            {% else %}
+                            <div class="user-avatar me-2">
+                                {{ current_user.full_name[0] | upper }}
+                            </div>
+                            {% endif %}
+                            {{ current_user.full_name }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item"
+                                    href="/{{ (current_user.role.value if hasattr(current_user.role, 'value') else current_user.role).lower() }}/profile"><i
+                                        class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear me-2"></i>Settings</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="/logout"><i
+                                        class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-light ms-2" href="/register">Get Started</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% set _sidebar_html %}
+        {% block sidebar_content %}{% endblock %}
+        {% endset %}
+        {% set _sidebar_html = _sidebar_html | trim %}
+
+        {% if _sidebar_html %}
+        <div class="container-fluid py-4">
+            <div class="row">
+                <!-- Sidebar (Desktop) -->
+                <div class="col-xl-2 col-lg-3 d-none d-lg-block">
+                    <div class="sidebar p-3">
+                        {{ _sidebar_html }}
+                    </div>
+                </div>
+                <!-- Mobile Sidebar Toggle -->
+                <div class="col-12 d-lg-none mb-3">
+                    <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mobileSidebar">
+                        <i class="bi bi-list me-2"></i>Navigation Menu
+                    </button>
+                    <div class="collapse mt-2" id="mobileSidebar">
+                        <div class="sidebar p-3">
+                            {{ _sidebar_html }}
+                        </div>
+                    </div>
+                </div>
+                <!-- Main Content Area -->
+                <div class="col-xl-10 col-lg-9">
+                    {% if self.page_title() | trim %}
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fw-bold mb-0">{% block page_title %}{% endblock %}</h3>
+                        {% block page_actions %}{% endblock %}
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% block content %}{% endblock %}
+
+                    {% if _sidebar_html %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="mb-3"><i class="bi bi-mortarboard-fill me-2"></i>EduManage</h5>
+                    <p class="text-light">Comprehensive school management system for modern educational institutions.
+                    </p>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="mb-3">Platform</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light text-decoration-none">For Students</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">For Teachers</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">For Schools</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="mb-3">Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light text-decoration-none">Help Center</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Contact Us</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Documentation</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="mb-3">Stay Connected</h6>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-light"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-light"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="text-light"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="text-light"><i class="bi bi-github"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2024 EduManage. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS -->
+    <script>
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Initialize theme
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        });
+
+        // Global CSRF Protection
+        (function () {
+            const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+            // 1. Handle Standard Form Submissions
+            document.addEventListener('submit', function (event) {
+                const form = event.target;
+                if (form.method && form.method.toUpperCase() === 'POST') {
+                    if (!form.querySelector('input[name="csrf_token"]')) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'csrf_token';
+                        input.value = getCsrfToken();
+                        form.appendChild(input);
+                    }
+                }
+            });
+
+            // 2. Handle Fetch API
+            const originalFetch = window.fetch;
+            window.fetch = async function (...args) {
+                let [resource, config] = args;
+                if (config && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase())) {
+                    const token = getCsrfToken();
+                    if (token) {
+                        config.headers = config.headers || {};
+                        if (config.headers instanceof Headers) {
+                            config.headers.set('X-CSRF-Token', token);
+                        } else {
+                            config.headers['X-CSRF-Token'] = token;
+                        }
+                    }
+                }
+                return originalFetch(...args);
+            };
+        })();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

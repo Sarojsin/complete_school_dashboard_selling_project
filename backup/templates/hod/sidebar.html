@@ -1,0 +1,17 @@
+<div class="sidebar p-3 mb-4">
+    <h6 class="text-uppercase text-muted mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">HOD Menu</h6>
+    <nav class="nav flex-column">
+        <a class="nav-link {% if request.url.path == '/hod/dashboard' %}active{% endif %}" href="/hod/dashboard">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a class="nav-link {% if request.url.path == '/hod/teachers' %}active{% endif %}" href="/hod/teachers">
+            <i class="bi bi-people-fill"></i> Teachers
+        </a>
+        <a class="nav-link {% if request.url.path == '/hod/students' %}active{% endif %}" href="/hod/students">
+            <i class="bi bi-mortarboard"></i> Students
+        </a>
+        <a class="nav-link {% if request.url.path == '/hod/reports' %}active{% endif %}" href="/hod/reports">
+            <i class="bi bi-graph-up"></i> Reports
+        </a>
+    </nav>
+</div>

@@ -3,8 +3,8 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, func
-from app.models.models import Teacher, User
-from app.core.config import settings
+from backup.models.models import Teacher, User
+from backup.core.config import settings
 
 ASYNC_DATABASE_URL = settings.DATABASE_URL_FIXED.replace("postgresql://", "postgresql+asyncpg://")
 

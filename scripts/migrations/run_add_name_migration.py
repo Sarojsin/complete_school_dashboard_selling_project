@@ -1,4 +1,4 @@
-from app.core.database import engine
+from backup.core.database import engine
 from sqlalchemy import text
 
 def run_migration():

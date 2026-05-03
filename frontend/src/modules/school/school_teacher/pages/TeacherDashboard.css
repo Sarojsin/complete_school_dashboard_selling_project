@@ -1,0 +1,135 @@
+/* Teacher Dashboard Styles */
+.teacher-dashboard {
+  padding: var(--spacing-xl);
+  background: var(--bg-primary);
+  min-height: 100vh;
+}
+
+/* Page Header */
+.teacher-dashboard h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.teacher-dashboard h1 + p {
+  color: var(--text-muted);
+}
+
+/* Button Group */
+.btn-group .btn {
+  border-radius: var(--radius-md);
+}
+
+.btn-group .btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Stats Cards Grid */
+.teacher-dashboard .row.g-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 1200px) {
+  .teacher-dashboard .row.g-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .teacher-dashboard .row.g-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Quick Actions */
+.teacher-dashboard .d-flex.flex-wrap.gap-2 {
+  gap: var(--spacing-sm);
+}
+
+.teacher-dashboard .d-flex.flex-wrap.gap-2 .btn {
+  white-space: nowrap;
+}
+
+/* Schedule Timeline */
+.schedule-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+}
+
+.schedule-item:hover {
+  background: #f1f5f9;
+}
+
+.schedule-time {
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 80px;
+  font-size: var(--font-size-sm);
+}
+
+.schedule-content {
+  flex: 1;
+}
+
+.schedule-content h6 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.schedule-content p {
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* Table */
+.teacher-dashboard .table th {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.teacher-dashboard .table td {
+  vertical-align: middle;
+}
+
+/* List Group */
+.teacher-dashboard .list-group-item {
+  background: transparent;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .teacher-dashboard {
+    padding: var(--spacing-md);
+  }
+  
+  .teacher-dashboard .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: flex-start !important;
+  }
+  
+  .schedule-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+}

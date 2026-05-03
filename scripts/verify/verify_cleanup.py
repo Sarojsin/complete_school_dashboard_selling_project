@@ -1,8 +1,8 @@
 
-from app.core.database import SessionLocal
-from app.models.models import Student
-from app.models.test_models import Test
-from app.repositories.test_repository import TestRepository
+from backup.core.database import SessionLocal
+from backup.models.models import Student
+from backup.models.test_models import Test
+from backup.repositories.test_repository import TestRepository
 
 def verify_cleanup():
     db = SessionLocal()

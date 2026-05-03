@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Notices - Exam Section{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Exam Notices</h2>
+        <div>
+            <a href="/exam-section/notices/create" class="btn btn-primary me-2">
+                <i class="bi bi-megaphone me-1"></i>Post New Notice
+            </a>
+            <a href="/exam-section/dashboard" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        {% if notices %}
+        {% for notice in notices %}
+        <div class="col-md-6 mb-4">
+            <div
+                class="card h-100 border-start border-4 {% if notice.notice_type == 'schedule' %}border-info{% elif notice.notice_type == 'result' %}border-success{% else %}border-warning{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span
+                            class="badge {% if notice.notice_type == 'schedule' %}bg-info{% elif notice.notice_type == 'result' %}bg-success{% else %}bg-warning text-dark{% endif %} text-uppercase">
+                            {{ notice.notice_type }}
+                        </span>
+                        <small class="text-muted">{{ notice.created_at.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    <h5 class="card-title">{{ notice.title }}</h5>
+                    {% if notice.exam_date %}
+                    <p class="text-primary mb-1">
+                        <i class="bi bi-calendar-event me-2"></i>Exam Date: {{ notice.exam_date }}
+                    </p>
+                    {% endif %}
+                    <p class="card-text">{{ notice.content }}</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end pb-3">
+                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-megaphone text-muted" style="font-size: 3rem;"></i>
+            <p class="mt-3 text-muted">No notices posted yet.</p>
+            <a href="/exam-section/notices/create" class="btn btn-primary mt-2">Post First Notice</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

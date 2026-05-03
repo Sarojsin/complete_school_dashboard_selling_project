@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from sqlalchemy import text
-from app.core.database import engine
+from backup.core.database import engine
 
 def add_exam_results_columns():
     """Add new columns to exam_results table."""

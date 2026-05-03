@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Nexus Elite | Finance Management</title>
+    <link href="{{ url_for('static', path='css/admin.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-symbols-outlined">shield_person</span>
+                </div>
+                <h1 class="sidebar-title">NEXUS ELITE</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/admin/dashboard" class="sidebar-link">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span>Command Center</span>
+                </a>
+                <a href="/admin/users" class="sidebar-link">
+                    <span class="material-symbols-outlined">people</span>
+                    <span>User Management</span>
+                </a>
+                <a href="/admin/academic" class="sidebar-link">
+                    <span class="material-symbols-outlined">school</span>
+                    <span>Academic</span>
+                </a>
+                <a href="/admin/finance" class="sidebar-link active">
+                    <span class="material-symbols-outlined">payments</span>
+                    <span>Finance</span>
+                </a>
+                <a href="/admin/features" class="sidebar-link">
+                    <span class="material-symbols-outlined">vitals</span>
+                    <span>Feature Matrix</span>
+                </a>
+                <a href="/admin/audit" class="sidebar-link">
+                    <span class="material-symbols-outlined">history_edu</span>
+                    <span>Audit Spectrum</span>
+                </a>
+                <a href="/admin/settings" class="sidebar-link">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span>System Tuning</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="admin-content">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h2 style="font-size: 1.875rem; font-weight: 800;">Finance Management</h2>
+                    <p style="color: var(--text-muted); font-weight: 500;">Manage fees, payments, and financial reports</p>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" style="background: var(--surface-color); border: 1px solid var(--border-color);">
+                        <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.5rem;">download</span>
+                        Export CSV
+                    </button>
+                    <button class="btn btn-primary">
+                        <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.5rem;">add</span>
+                        Create Fee Structure
+                    </button>
+                </div>
+            </header>
+
+            <!-- Finance Overview Cards -->
+            <section class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+                <div class="stat-card" style="border-left: 4px solid #10b981;">
+                    <p class="stat-label">Total Revenue</p>
+                    <span class="stat-value" style="color: #10b981;">${{ stats.total_revenue|default(0)|round(2) }}</span>
+                    <p style="color: #10b981; font-size: 0.875rem; font-weight: 600; margin-top: 0.5rem;">Fees Collected</p>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #ef4444;">
+                    <p class="stat-label">Pending Fees</p>
+                    <span class="stat-value" style="color: #ef4444;">${{ stats.pending_fees|default(0)|round(2) }}</span>
+                    <p style="color: #ef4444; font-size: 0.875rem; font-weight: 600; margin-top: 0.5rem;">Awaiting Payment</p>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #3b82f6;">
+                    <p class="stat-label">Fee Structures</p>
+                    <span class="stat-value">{{ fee_structures|length }}</span>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+                    <p class="stat-label">Total Records</p>
+                    <span class="stat-value">{{ fee_records|length }}</span>
+                </div>
+            </section>
+
+            <!-- Fee Records -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Recent Fee Records</h3>
+                </div>
+                <div class="panel-body">
+                    {% if fee_records %}
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="text-align: left; padding: 1rem;">Student</th>
+                                <th style="text-align: left; padding: 1rem;">Fee Type</th>
+                                <th style="text-align: left; padding: 1rem;">Amount</th>
+                                <th style="text-align: left; padding: 1rem;">Paid</th>
+                                <th style="text-align: left; padding: 1rem;">Due Date</th>
+                                <th style="text-align: left; padding: 1rem;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fee in fee_records[:10] %}
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 1rem; font-weight: 600;">{{ fee.student.full_name if fee.student else 'N/A' }}</td>
+                                <td style="padding: 1rem;">{{ fee.fee_type }}</td>
+                                <td style="padding: 1rem;">${{ fee.amount }}</td>
+                                <td style="padding: 1rem;">${{ fee.paid_amount }}</td>
+                                <td style="padding: 1rem;">{{ fee.due_date }}</td>
+                                <td style="padding: 1rem;">
+                                    <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+                                        {% if fee.status == 'paid' %}background: #dcfce7; color: #16a34a;
+                                        {% elif fee.status == 'pending' %}background: #fef3c7; color: #d97706;
+                                        {% elif fee.status == 'overdue' %}background: #fee2e2; color: #dc2626;
+                                        {% else %}background: #e0e7ff; color: #4f46e5;{% endif %}">
+                                        {{ fee.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                        <span class="material-symbols-outlined" style="font-size: 3rem;">payments</span>
+                        <p>No fee records found.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Finance Chart
+        const financeCtx = document.getElementById('financeChart');
+        if (financeCtx) {
+            new Chart(financeCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Income',
+                        data: [12000, 15000, 18000, 14000, 16000, 20000, 22000, 19000, 21000, 25000, 23000, 28000],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Expenses',
+                        data: [8000, 9000, 7500, 8500, 9500, 10000, 11000, 10500, 11500, 12000, 11000, 13000],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

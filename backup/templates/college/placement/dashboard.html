@@ -1,0 +1,100 @@
+{% extends "college/base.html" %}
+
+{% block title %}Placement Dashboard - College Portal{% endblock %}
+
+{% block content %}
+<div class="placement-dashboard">
+    <h1>Placement Cell</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Companies</h3>
+            <p class="stat-number">{{ company_count|default(0) }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Active Job Posts</h3>
+            <p class="stat-number">{{ job_count|default(0) }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Students Placed</h3>
+            <p class="stat-number">{{ placed_count|default(0) }}</p>
+        </div>
+    </div>
+    
+    <div class="dashboard-sections">
+        <section class="companies">
+            <h2>Recruiting Companies</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Industry</th>
+                        <th>Open Positions</th>
+                        <th>Apply By</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if companies %}
+                    {% for company in companies %}
+                    <tr>
+                        <td>{{ company.name }}</td>
+                        <td>{{ company.industry }}</td>
+                        <td>{{ company.positions }}</td>
+                        <td>{{ company.apply_by }}</td>
+                        <td><a href="/college/placement/company/{{ company.id }}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr><td colspan="5">No companies currently recruiting</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </section>
+        
+        <section class="job-openings">
+            <h2>Latest Job Openings</h2>
+            {% if jobs %}
+            {% for job in jobs %}
+            <div class="job-card">
+                <h3>{{ job.title }}</h3>
+                <p>{{ job.company }}</p>
+                <p>Package: {{ job.package }}</p>
+                <a href="/college/placement/job/{{ job.id }}" class="btn">Apply</a>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p>No job openings available</p>
+            {% endif %}
+        </section>
+        
+        <section class="my-applications">
+            <h2>My Applications</h2>
+            {% if applications %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                        <th>Applied Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td>{{ app.company }}</td>
+                        <td>{{ app.position }}</td>
+                        <td class="status-{{ app.status }}">{{ app.status }}</td>
+                        <td>{{ app.applied_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No applications yet</p>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

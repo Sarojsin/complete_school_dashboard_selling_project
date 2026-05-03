@@ -1,0 +1,140 @@
+<!-- templates/student/assignments_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}Assignment Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Sidebar -->
+            {% include 'student/sidebar.html' %}
+        </div>
+        <div class="col-md-9">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('student_assignments') }}">Assignments</a></li>
+                    <li class="breadcrumb-item active">Assignment Details</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ assignment.title }}</h4>
+                    <span
+                        class="badge bg-{% if assignment.status == 'submitted' %}success{% elif assignment.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                        {{ assignment.status|title }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Course:</strong> {{ assignment.course }}</p>
+                            <p><strong>Teacher:</strong> {{ assignment.teacher_name }}</p>
+                            <p><strong>Due Date:</strong>
+                                <span class="{% if assignment.is_overdue %}text-danger{% endif %}">
+                                    {{ assignment.due_date }}
+                                    {% if assignment.is_overdue %}(Overdue){% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Points:</strong> {{ assignment.max_score }}</p>
+                            <p><strong>Status:</strong>
+                                <span
+                                    class="badge bg-{% if assignment.status == 'submitted' %}success{% elif assignment.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                    {{ assignment.status|title }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Instructions</h5>
+                        <div class="border p-3 bg-light rounded">
+                            {{ assignment.description|safe }}
+                        </div>
+                    </div>
+
+                    {% if assignment.file_path %}
+                    <div class="mb-4">
+                        <h5>Attachments</h5>
+                        <div class="list-group">
+                            <a href="{{ assignment.file_path }}" class="list-group-item list-group-item-action"
+                                target="_blank">
+                                <i class="fas fa-file me-2"></i>
+                                Download Attachment
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Submission Section -->
+                    <div class="border-top pt-4">
+                        <h5>Your Submission</h5>
+
+                        {% if assignment.status == 'submitted' or assignment.status == 'graded' %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Submitted on {{ assignment.submission.submitted_at }}
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>Your Work:</strong>
+                            <div class="border p-3 mt-2 bg-light rounded">
+                                {{ assignment.submission.submission_text|safe if assignment.submission.submission_text
+                                else 'No text submission.' }}
+                            </div>
+                        </div>
+
+                        {% if assignment.submission.file_path %}
+                        <div class="mb-3">
+                            <strong>Submitted Files:</strong>
+                            <div class="list-group mt-2">
+                                <a href="{{ assignment.submission.file_path }}"
+                                    class="list-group-item list-group-item-action" target="_blank">
+                                    <i class="fas fa-file me-2"></i>
+                                    View Submitted File
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if assignment.status == 'graded' %}
+                        <div class="alert alert-info">
+                            <strong>Grade:</strong> {{ assignment.submission.score }}/{{ assignment.max_score }}
+                            {% if assignment.submission.feedback %}
+                            <br><strong>Feedback:</strong> {{ assignment.submission.feedback }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% else %}
+                        <form action="/student/assignments/{{ assignment.id }}/submit" method="POST"
+                            enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label">Your Response</label>
+                                <textarea class="form-control" name="submission_text" rows="6"
+                                    placeholder="Type your assignment response here..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Attach Files</label>
+                                <input type="file" class="form-control" name="file">
+                                <div class="form-text">Upload your assignment file here.</div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-2"></i> Submit Assignment
+                                </button>
+                            </div>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

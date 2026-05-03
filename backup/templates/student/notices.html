@@ -1,0 +1,306 @@
+<!-- templates/student/notices.html -->
+{% extends 'base.html' %}
+
+{% block title %}Notices & Announcements{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Notices & Announcements</h2>
+                    <p class="text-muted mb-0">Stay updated with the latest news from all departments.</p>
+                </div>
+            </div>
+
+            <!-- Category Tabs -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-2">
+                    <ul class="nav nav-pills nav-fill">
+                        {% for cat in categories %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if current_category|lower == cat|lower %}active{% endif %} fw-bold"
+                                href="?category={{ cat|lower }}">
+                                {{ cat }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Important Notices Carousel or Alert -->
+            {% if important_notices and current_category == 'all' %}
+            <div class="alert alert-custom-important border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-box bg-white text-danger me-3 shadow-sm">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h5 class="mb-0 fw-bold">Priority Announcements</h5>
+                </div>
+                <div class="row g-3">
+                    {% for notice in important_notices %}
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100 notice-card-important clickable"
+                            data-bs-toggle="modal" data-bs-target="#noticeModal{{ notice.id }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="badge rounded-pill bg-danger">IMPORTANT</span>
+                                    <small class="text-muted">{{ notice.date }}</small>
+                                </div>
+                                <h6 class="fw-bold">{{ notice.title }}</h6>
+                                <p class="small text-muted mb-0">{{ notice.content|truncate(60) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Notice List -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 fw-bold">
+                        {% if current_category == 'all' %}
+                        Recent Updates
+                        {% else %}
+                        {{ current_category }} Announcements
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if notices %}
+                    <div class="list-group list-group-flush">
+                        {% for notice in notices %}
+                        <div class="list-group-item list-group-item-action py-3 border-bottom-0 notice-item clickable"
+                            data-bs-toggle="modal" data-bs-target="#noticeModal{{ notice.id }}">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <div class="category-indicator bg-{{ notice.category|lower }}"></div>
+                                </div>
+                                <div class="col">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <h6 class="mb-0 fw-bold">{{ notice.title }}</h6>
+                                        <small class="text-muted">{{ notice.date }}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span
+                                            class="badge category-badge-{{ notice.category|lower }} small text-uppercase">
+                                            {{ notice.category }}
+                                        </span>
+                                        <span class="text-muted smaller">• By {{ notice.author }}</span>
+                                    </div>
+                                    <p class="text-muted small mb-0">{{ notice.content|truncate(120) }}</p>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-chevron-right text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <div class="card-footer bg-white py-3 border-top">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+                                    <a class="page-link"
+                                        href="?category={{ current_category }}&page={{ current_page - 1 }}">Previous</a>
+                                </li>
+                                {% for p in range(1, total_pages + 1) %}
+                                <li class="page-item {% if p == current_page %}active{% endif %}">
+                                    <a class="page-link" href="?category={{ current_category }}&page={{ p }}">{{ p
+                                        }}</a>
+                                </li>
+                                {% endfor %}
+                                <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+                                    <a class="page-link"
+                                        href="?category={{ current_category }}&page={{ current_page + 1 }}">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-bell-slash display-4 text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No notices in this category</h5>
+                        <p class="text-muted small">We'll notify you when something new arrives.</p>
+                        <a href="?category=all" class="btn btn-sm btn-outline-primary mt-2">View All Notices</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notice Detail Modals -->
+{% for notice in (important_notices + notices) %}
+<div class="modal fade" id="noticeModal{{ notice.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <div class="text-center mb-4">
+                    <span class="badge category-badge-{{ notice.category|lower }} text-uppercase mb-2 px-3">
+                        {{ notice.category }}
+                    </span>
+                    <h4 class="fw-bold">{{ notice.title }}</h4>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-person me-1"></i>{{ notice.author }} •
+                        <i class="bi bi-calendar3 me-1"></i>{{ notice.date }} at {{ notice.time }}
+                    </p>
+                </div>
+                <div class="notice-content-detail p-3 bg-light rounded shadow-inner">
+                    {{ notice.content|safe }}
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+    :root {
+        --cat-exam: #ff4757;
+        --cat-library: #2ed573;
+        --cat-account: #ffa502;
+        --cat-hod: #5352ed;
+        --cat-teacher: #1e90ff;
+        --cat-authority: #747d8c;
+    }
+
+    .nav-pills .nav-link {
+        color: #747d8c;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .nav-pills .nav-link:hover {
+        background-color: #f1f2f6;
+    }
+
+    .nav-pills .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    }
+
+    .alert-custom-important {
+        background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
+        border-left: 5px solid #ff4757 !important;
+    }
+
+    .icon-box {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 1.2rem;
+    }
+
+    .notice-card-important {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .notice-card-important:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .category-indicator {
+        width: 4px;
+        height: 40px;
+        border-radius: 10px;
+    }
+
+    .bg-exam {
+        background-color: var(--cat-exam);
+    }
+
+    .bg-library {
+        background-color: var(--cat-library);
+    }
+
+    .bg-account {
+        background-color: var(--cat-account);
+    }
+
+    .bg-hod {
+        background-color: var(--cat-hod);
+    }
+
+    .bg-teacher {
+        background-color: var(--cat-teacher);
+    }
+
+    .bg-authority {
+        background-color: var(--cat-authority);
+    }
+
+    .category-badge-exam {
+        background-color: #ffeef0;
+        color: var(--cat-exam);
+    }
+
+    .category-badge-library {
+        background-color: #e3f9eb;
+        color: var(--cat-library);
+    }
+
+    .category-badge-account {
+        background-color: #fff4e5;
+        color: var(--cat-account);
+    }
+
+    .category-badge-hod {
+        background-color: #ececfd;
+        color: var(--cat-hod);
+    }
+
+    .category-badge-teacher {
+        background-color: #e5f2ff;
+        color: var(--cat-teacher);
+    }
+
+    .category-badge-authority {
+        background-color: #f1f2f6;
+        color: var(--cat-authority);
+    }
+
+    .clickable {
+        cursor: pointer;
+    }
+
+    .smaller {
+        font-size: 0.75rem;
+    }
+
+    .shadow-inner {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .notice-item {
+        transition: background-color 0.2s;
+    }
+
+    .notice-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}

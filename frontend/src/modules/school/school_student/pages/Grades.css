@@ -1,0 +1,128 @@
+/* Grades Page Styles */
+.grades-page {
+  padding: var(--spacing-xl);
+  background: var(--bg-primary);
+  min-height: 100vh;
+}
+
+.grades-page h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Grade Badge - Legacy */
+.grade-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.grade-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.grade-info {
+  background: rgba(72, 149, 239, 0.1);
+  color: var(--info);
+}
+
+.grade-warning {
+  background: rgba(247, 37, 133, 0.1);
+  color: var(--warning);
+}
+
+.grade-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+/* Table Styles */
+.grades-page .table th {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grades-page .table td {
+  vertical-align: middle;
+}
+
+/* Grade Distribution */
+.grade-distribution {
+  padding: var(--spacing-sm) 0;
+}
+
+.grade-distribution .progress {
+  border-radius: var(--radius-sm);
+}
+
+/* Semester History */
+.semester-history {
+  font-size: var(--font-size-sm);
+}
+
+.semester-history .border-bottom {
+  border-color: #f1f5f9 !important;
+}
+
+.semester-history .border-bottom:last-child {
+  border-bottom: none !important;
+}
+
+/* Stat Card Custom */
+.grades-page .card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.grades-page .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+/* Overall Progress */
+.overall-progress {
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+.overall-progress .display-6 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .grades-page .col-lg-8, 
+  .grades-page .col-lg-4 {
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .grades-page {
+    padding: var(--spacing-md);
+  }
+  
+  .grades-page .row.g-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grades-page .table {
+    font-size: var(--font-size-sm);
+  }
+  
+  .grades-page .d-flex.align-items-center {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .grades-page .d-flex.align-items-center .progress {
+    width: 100% !important;
+    margin-bottom: var(--spacing-xs);
+  }
+}

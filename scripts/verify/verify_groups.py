@@ -5,15 +5,15 @@ import os
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.core.database import SessionLocal, engine, Base
-from app.models.group_models import Group, GroupMember
-from app.models.models import User, UserRole
-from app.repositories.group_repository import GroupRepository
-from app.repositories.group_post_repository import GroupPostRepository
-from app.services.group_service import GroupService
-from app.services.group_post_service import GroupPostService
-from app.legacy.schemas.group_schemas import GroupCreate, GroupInviteRequest
-from app.legacy.schemas.group_post_schemas import GroupPostCreate
+from backup.core.database import SessionLocal, engine, Base
+from backup.models.group_models import Group, GroupMember
+from backup.models.models import User, UserRole
+from backup.repositories.group_repository import GroupRepository
+from backup.repositories.group_post_repository import GroupPostRepository
+from backup.services.group_service import GroupService
+from backup.services.group_post_service import GroupPostService
+from backup.legacy.schemas.group_schemas import GroupCreate, GroupInviteRequest
+from backup.legacy.schemas.group_post_schemas import GroupPostCreate
 import logging
 
 logging.basicConfig(level=logging.INFO)

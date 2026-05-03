@@ -1,0 +1,267 @@
+/* Notes Module Styles */
+.notes-dashboard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+}
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.header-content h1 {
+  margin: 0 0 5px;
+  font-size: 1.8rem;
+}
+
+.header-content p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.btn-primary {
+  background: white;
+  color: #f5576c;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: #f0f0f0;
+}
+
+/* Toolbar */
+.notes-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.search-box input {
+  padding: 10px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.filters select {
+  padding: 10px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 5px;
+}
+
+.view-toggle button {
+  padding: 10px 15px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-toggle button:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.view-toggle button:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.view-toggle button.active {
+  background: #f5576c;
+  color: white;
+  border-color: #f5576c;
+}
+
+/* Content */
+.notes-content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+/* Grid View */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.note-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.2s;
+}
+
+.note-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.note-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.note-info h4 {
+  margin: 0 0 5px;
+  color: #333;
+}
+
+.note-info .subject {
+  color: #f5576c;
+  font-size: 0.85rem;
+  margin: 0 0 10px;
+}
+
+.note-info .description {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.note-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.note-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-download {
+  flex: 1;
+  background: #f5576c;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-download:hover {
+  background: #e0465a;
+}
+
+.btn-icon {
+  background: #f0f0f0;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* List View */
+.notes-list {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.notes-list table {
+  width: 100%;
+}
+
+.notes-list th,
+.notes-list td {
+  padding: 15px 20px;
+  text-align: left;
+}
+
+.notes-list th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #555;
+}
+
+.title-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title-cell .icon {
+  font-size: 1.5rem;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px;
+  background: white;
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #666;
+}
+
+/* Loading */
+.notes-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .notes-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+  
+  .notes-toolbar {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .search-box input {
+    width: 100%;
+  }
+  
+  .notes-grid {
+    grid-template-columns: 1fr;
+  }
+}

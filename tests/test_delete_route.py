@@ -1,6 +1,6 @@
 
 from fastapi import FastAPI
-from app.web.routers.authority import router as authority_router
+from backup.web.routers.authority import router as authority_router
 from starlette.testclient import TestClient
 
 app = FastAPI()

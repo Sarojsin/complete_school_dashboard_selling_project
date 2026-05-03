@@ -6,7 +6,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import text
-from app.core.database import async_engine
+from backup.core.database import async_engine
 
 async def create_new_tables():
     async with async_engine.begin() as conn:

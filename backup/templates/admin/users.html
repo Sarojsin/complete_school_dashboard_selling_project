@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Nexus Elite | User Management</title>
+    <link href="{{ url_for('static', path='css/admin.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-symbols-outlined">shield_person</span>
+                </div>
+                <h1 class="sidebar-title">NEXUS ELITE</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/admin/dashboard" class="sidebar-link">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span>Command Center</span>
+                </a>
+                <a href="/admin/users" class="sidebar-link active">
+                    <span class="material-symbols-outlined">people</span>
+                    <span>User Management</span>
+                </a>
+                <a href="/admin/academic" class="sidebar-link">
+                    <span class="material-symbols-outlined">school</span>
+                    <span>Academic</span>
+                </a>
+                <a href="/admin/finance" class="sidebar-link">
+                    <span class="material-symbols-outlined">payments</span>
+                    <span>Finance</span>
+                </a>
+                <a href="/admin/features" class="sidebar-link">
+                    <span class="material-symbols-outlined">vitals</span>
+                    <span>Feature Matrix</span>
+                </a>
+                <a href="/admin/audit" class="sidebar-link">
+                    <span class="material-symbols-outlined">history_edu</span>
+                    <span>Audit Spectrum</span>
+                </a>
+                <a href="/admin/settings" class="sidebar-link">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span>System Tuning</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="admin-content">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h2 style="font-size: 1.875rem; font-weight: 800;">User Management</h2>
+                    <p style="color: var(--text-muted); font-weight: 500;">Manage all system users and their permissions</p>
+                </div>
+                <button class="btn btn-primary">
+                    <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.5rem;">person_add</span>
+                    Add New User
+                </button>
+            </header>
+
+            <!-- User Stats -->
+            <section class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+                <div class="stat-card" style="border-left: 4px solid #3b82f6;">
+                    <p class="stat-label">Total Users</p>
+                    <span class="stat-value">{{ stats.total_users }}</span>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #10b981;">
+                    <p class="stat-label">Active Users</p>
+                    <span class="stat-value">{{ stats.total_users }}</span>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+                    <p class="stat-label">Teachers</p>
+                    <span class="stat-value">{{ stats.total_teachers }}</span>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+                    <p class="stat-label">Students</p>
+                    <span class="stat-value">{{ stats.total_students }}</span>
+                </div>
+            </section>
+
+            <!-- User List -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">All Users</h3>
+                    <input type="text" placeholder="Search users..." style="padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--surface-color);" />
+                </div>
+                <div class="panel-body">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="text-align: left; padding: 1rem; color: var(--text-muted);">User</th>
+                                <th style="text-align: left; padding: 1rem; color: var(--text-muted);">Email</th>
+                                <th style="text-align: left; padding: 1rem; color: var(--text-muted);">Role</th>
+                                <th style="text-align: left; padding: 1rem; color: var(--text-muted);">Status</th>
+                                <th style="text-align: left; padding: 1rem; color: var(--text-muted);">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <img src="{{ user.profile_picture or 'https://ui-avatars.com/api/?name=' + user.full_name }}" style="width: 40px; height: 40px; border-radius: 50%;" />
+                                        <span style="font-weight: 600;">{{ user.full_name }}</span>
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem;">{{ user.email }}</td>
+                                <td style="padding: 1rem;">
+                                    <span style="padding: 0.25rem 0.75rem; background: var(--primary-color); color: white; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+                                        {{ user.role.value if user.role else user.role }}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <span style="color: #10b981; font-weight: 600;">Active</span>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <button class="btn btn-sm" style="background: var(--surface-color); border: 1px solid var(--border-color); margin-right: 0.5rem;">Edit</button>
+                                    <button class="btn btn-sm" style="background: #fee2e2; color: #dc2626; border: none;">Deactivate</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

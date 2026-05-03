@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, text
-from app.core.database import engine
+from backup.core.database import engine
 
 def check_enum_values():
     print("Checking 'userrole' enum values in database...")

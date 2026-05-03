@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.core.database import SessionLocal
-from app.models.models import User, Student, Course, Assignment, CourseEnrollment
-from app.repositories.student_repository import StudentRepository
-from app.repositories.assignment_repository import AssignmentRepository
+from backup.core.database import SessionLocal
+from backup.models.models import User, Student, Course, Assignment, CourseEnrollment
+from backup.repositories.student_repository import StudentRepository
+from backup.repositories.assignment_repository import AssignmentRepository
 
 def debug_student_access(email: str):
     db = SessionLocal()

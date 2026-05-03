@@ -1,0 +1,163 @@
+/* Authority Reports Page */
+.authority-reports-page {
+  padding: 30px;
+  background: #f5f7fa;
+  min-height: 100%;
+}
+
+.authority-reports-page .page-header {
+  margin-bottom: 30px;
+}
+
+.authority-reports-page .page-header h1 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.authority-reports-page .page-header p {
+  margin: 0;
+  color: #666;
+}
+
+.generate-section {
+  margin-bottom: 40px;
+}
+
+.generate-section h2 {
+  margin: 0 0 20px;
+  color: #333;
+}
+
+.report-types {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.report-type-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.2s;
+}
+
+.report-type-card:hover {
+  transform: translateY(-3px);
+}
+
+.report-type-card .icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.report-type-card h3 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.report-type-card p {
+  margin: 0 0 15px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.report-type-card button {
+  padding: 10px 25px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.report-type-card button:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.report-type-card button:disabled {
+  opacity: 0.7;
+}
+
+.existing-reports h2 {
+  margin: 0 0 20px;
+  color: #333;
+}
+
+.reports-table {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.reports-table table {
+  width: 100%;
+}
+
+.reports-table th,
+.reports-table td {
+  padding: 15px 20px;
+  text-align: left;
+}
+
+.reports-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #555;
+}
+
+.download-btn {
+  padding: 8px 16px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.download-btn:hover {
+  background: #219a52;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px;
+  background: white;
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #666;
+}
+
+.reports-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+@media (max-width: 1024px) {
+  .report-types {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .report-types {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,93 @@
+.card-custom {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  overflow: hidden;
+}
+
+.card-custom:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-header-custom {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+}
+
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(67, 97, 238, 0.1);
+  color: var(--primary);
+  font-size: 1.25rem;
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.card-action {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.card-body-custom {
+  padding: var(--spacing-lg);
+}
+
+.card-body-custom.no-padding {
+  padding: 0;
+}
+
+/* Card Variants */
+.card-flat {
+  box-shadow: none;
+  border: 1px solid #e2e8f0;
+}
+
+.card-flat:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+  .card-custom {
+    background: #1e293b;
+  }
+  
+  .card-header-custom {
+    background: #1e293b;
+    border-bottom-color: rgba(255,255,255,0.1);
+  }
+  
+  .card-icon {
+    background: rgba(67, 97, 238, 0.2);
+  }
+}

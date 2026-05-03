@@ -1,7 +1,7 @@
 import pytest
-from app.main import app
-from app.dependencies.auth import get_current_user
-from app.models.models import User
+from backup.main import app
+from backup.dependencies.auth import get_current_user
+from backup.models.models import User
 
 def test_authority_dashboard_authenticated(client, db):
     """Test that authority dashboard is accessible."""

@@ -3,7 +3,7 @@ import sys
 # Ensure project root is in sys.path for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from sqlalchemy import text
-from app.core.database import engine
+from backup.core.database import engine
 
 def add_parent_id_column():
     """Add nullable parent_id column with foreign key to parents.id if it does not exist."""

@@ -1,7 +1,7 @@
 
-from app.core.database import SessionLocal
-from app.models.models import Student, User, Course, CourseEnrollment
-from app.models.test_models import Test
+from backup.core.database import SessionLocal
+from backup.models.models import Student, User, Course, CourseEnrollment
+from backup.models.test_models import Test
 from datetime import datetime
 
 def debug_deep():

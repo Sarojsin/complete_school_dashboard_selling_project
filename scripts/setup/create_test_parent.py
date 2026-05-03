@@ -1,11 +1,11 @@
 """
 Script to create a test student and parent for verification
 """
-from app.core.database import SessionLocal
-from app.models.models import User, Student, Parent, UserRole
-from app.repositories.user_repository import UserRepository
-from app.repositories.student_repository import StudentRepository
-from app.repositories.parent_repository import ParentRepository
+from backup.core.database import SessionLocal
+from backup.models.models import User, Student, Parent, UserRole
+from backup.repositories.user_repository import UserRepository
+from backup.repositories.student_repository import StudentRepository
+from backup.repositories.parent_repository import ParentRepository
 
 db = SessionLocal()
 

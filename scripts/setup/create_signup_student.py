@@ -1,7 +1,7 @@
-from app.core.database import SessionLocal
-from app.models.models import User, Student, UserRole
-from app.repositories.user_repository import UserRepository
-from app.repositories.student_repository import StudentRepository
+from backup.core.database import SessionLocal
+from backup.models.models import User, Student, UserRole
+from backup.repositories.user_repository import UserRepository
+from backup.repositories.student_repository import StudentRepository
 
 db = SessionLocal()
 

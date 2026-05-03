@@ -6,9 +6,9 @@ from sqlalchemy import text
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.core.database import SessionLocal
+from backup.core.database import SessionLocal
 # Import ALL models to ensure mapper registry is populated and relationships work
-from app.models.models import *
+from backup.models.models import *
 
 def seed_courses():
     db = SessionLocal()

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Section Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Exam Section Dashboard</h2>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h5>Recent Results Published</h5>
+                    <a href="/exam-section/post-result" class="btn btn-primary btn-sm">
+                        Publish New Result
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if results %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Student</th>
+                                    <th>Exam Details</th>
+                                    <th>Total Marks</th>
+                                    <th>Percentage</th>
+                                    <th>Overall Status</th>
+                                    <th class="text-end pe-3">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="fw-bold">{{ result.student_name }}</div>
+                                        <div class="small text-muted">{{ result.student_id_code }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="text-capitalize text-primary fw-bold">{{ result.exam_type }}</div>
+                                        <div class="small text-muted">{{ result.semester }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ result.total_marks|round(1) }}</span>
+                                        <small class="text-muted">/ {{ result.total_max_marks|round(1) }}</small>
+                                    </td>
+                                    <td>
+                                        {% set percent = (result.total_marks / result.total_max_marks * 100) if
+                                        result.total_max_marks > 0 else 0 %}
+                                        <div class="fw-bold">{{ percent|round(1) }}%</div>
+                                    </td>
+                                    <td>
+                                        {% if result.is_pass %}
+                                        <span
+                                            class="badge bg-success-subtle text-success border border-success px-3 rounded-pill">PASS</span>
+                                        {% else %}
+                                        <span
+                                            class="badge bg-danger-subtle text-danger border border-danger px-3 rounded-pill">FAIL</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-3 small text-muted">
+                                        {{ result.published_at.strftime('%Y-%m-%d') }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No results published yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted"><i class="bi bi-file-earmark-check me-2"></i>Total Published</h6>
+                        <h3 class="fw-bold">{{ stats.results_published }}</h3>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted"><i class="bi bi-calendar-event me-2"></i>Exams Scheduled</h6>
+                        <h3 class="fw-bold">{{ stats.exams_scheduled }}</h3>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted"><i class="bi bi-people me-2"></i>Total Students</h6>
+                        <h3 class="fw-bold">{{ stats.total_students }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/exam-section/post-result" class="btn btn-success btn-block mb-2 w-100">
+                        <i class="bi bi-plus-circle me-2"></i>Publish Result
+                    </a>
+                    <a href="/exam-section/results" class="btn btn-info btn-block mb-2 w-100">
+                        <i class="bi bi-list-check me-2"></i>View All Results
+                    </a>
+                    <a href="/exam-section/notices/create" class="btn btn-warning btn-block mb-2 w-100">
+                        <i class="bi bi-megaphone me-2"></i>Post Exam Notice
+                    </a>
+                    <a href="/exam-section/notices" class="btn btn-secondary btn-block w-100">
+                        <i class="bi bi-info-circle me-2"></i>View All Notices
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

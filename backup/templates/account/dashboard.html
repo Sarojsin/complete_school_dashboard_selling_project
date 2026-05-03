@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Account Section Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Account Section Dashboard</h2>
+    
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Payments</h5>
+                    <h2>₹{{ "%.2f"|format(stats.total_teacher_payments) }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">This Month</h5>
+                    <h2>₹{{ "%.2f"|format(stats.payments_this_month) }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Payments</h5>
+                    <h2>{{ stats.pending_payments }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Teachers Paid</h5>
+                    <h2>{{ payments|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h5>Recent Teacher Payments</h5>
+                    <a href="/account/record-payment" class="btn btn-primary btn-sm">
+                        Record New Payment
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if payments %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Teacher</th>
+                                        <th>Amount</th>
+                                        <th>Month</th>
+                                        <th>Type</th>
+                                        <th>Paid By</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td>{{ payment.teacher_name }}</td>
+                                        <td>₹{{ "%.2f"|format(payment.amount) }}</td>
+                                        <td>{{ payment.month }}</td>
+                                        <td><span class="badge bg-info">{{ payment.payment_type }}</span></td>
+                                        <td>{{ payment.paid_by_name }}</td>
+                                        <td>{{ payment.paid_at.strftime('%Y-%m-%d') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No payments recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/account/record-payment" class="btn btn-success btn-block mb-2">
+                        Record Teacher Payment
+                    </a>
+                    <a href="#" class="btn btn-info btn-block mb-2">
+                        View All Payments
+                    </a>
+                    <a href="#" class="btn btn-warning btn-block">
+                        Generate Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

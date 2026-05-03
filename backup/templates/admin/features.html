@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Nexus Elite | Feature Matrix</title>
+    <link href="{{ url_for('static', path='css/admin.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-symbols-outlined">shield_person</span>
+                </div>
+                <h1 class="sidebar-title">NEXUS ELITE</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/admin/dashboard" class="sidebar-link">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span>Command Center</span>
+                </a>
+                <a href="/admin/features" class="sidebar-link active">
+                    <span class="material-symbols-outlined">vitals</span>
+                    <span>Feature Matrix</span>
+                </a>
+                <a href="/admin/audit" class="sidebar-link">
+                    <span class="material-symbols-outlined">history_edu</span>
+                    <span>Audit Spectrum</span>
+                </a>
+                <a href="/admin/settings" class="sidebar-link">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span>System Tuning</span>
+                </a>
+            </nav>
+
+            <div style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1)">
+                <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600;">SYSTEM LOAD
+                    </p>
+                    <div
+                        style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem;">
+                        <div style="width: {{ stats.features_enabled_pct }}%; height: 100%; background: #3b82f6;"></div>
+                    </div>
+                    <span style="font-weight: 800;">{{ stats.features_enabled_pct }}%</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h2 style="font-size: 1.875rem; font-weight: 800; letter-spacing: -0.025em;">Feature Orchestration
+                    </h2>
+                    <p style="color: var(--text-muted); font-weight: 500;">Manage system modules and capability toggles.
+                    </p>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <input type="text" id="featureSearch" placeholder="Filter modules..."
+                        style="padding: 0.625rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.875rem; width: 240px;" />
+                </div>
+            </header>
+
+            <!-- Category Filter -->
+            <nav style="display: flex; gap: 0.75rem; margin-bottom: 2rem;">
+                <a href="/admin/features" class="btn {{ 'btn-primary' if not selected_category else '' }}"
+                    style="font-size: 0.75rem; background: {{ 'var(--primary-color)' if not selected_category else 'white' }}; border: 1px solid {{ 'var(--primary-color)' if not selected_category else 'var(--border-color)' }}; color: {{ 'white' if not selected_category else 'var(--text-main)' }};">
+                    ALL MODULES
+                </a>
+                {% for cat in categories %}
+                <a href="/admin/features?category={{ cat }}" class="btn"
+                    style="font-size: 0.75rem; background: {{ 'var(--primary-color)' if selected_category == cat else 'white' }}; border: 1px solid {{ 'var(--primary-color)' if selected_category == cat else 'var(--border-color)' }}; color: {{ 'white' if selected_category == cat else 'var(--text-main)' }};">
+                    {{ cat|upper }}
+                </a>
+                {% endfor %}
+            </nav>
+
+            <!-- Feature Grid -->
+            <div class="feature-matrix" id="featureGrid">
+                {% for feature in features %}
+                <div class="feature-item">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div
+                            style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary-color);">
+                            <span class="material-symbols-outlined">extension</span>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                            <input type="checkbox" style="opacity: 0; width: 0; height: 0;" {{ 'checked' if
+                                feature.is_enabled else '' }}
+                                onchange="toggleFeature('{{ feature.feature_code }}', this.checked)">
+                            <span
+                                style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {{ '#3b82f6' if feature.is_enabled else '#cbd5e1' }}; transition: .4s; border-radius: 34px;">
+                                <span
+                                    style="position: absolute; content: ''; height: 18px; width: 18px; left: {{ '22px' if feature.is_enabled else '3px' }}; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <h3 style="font-weight: 700; margin-bottom: 0.5rem;">{{ feature.name }}</h3>
+                    <p
+                        style="font-size: 0.875rem; color: var(--text-muted); min-height: 2.5rem; margin-bottom: 1.5rem;">
+                        {{ feature.description }}</p>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary-color);">CODE: {{
+                            feature.feature_code }}</span>
+                        <a href="/admin/features/{{ feature.feature_code }}" class="btn"
+                            style="padding: 0.5rem; font-size: 0.75rem; border: 1px solid var(--border-color);">Configure</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function toggleFeature(code, enabled) {
+            try {
+                const response = await fetch(`/api/admin/features/${code}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_enabled: enabled })
+                });
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Toggle failed:', error);
+            }
+        }
+
+        document.getElementById('featureSearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.feature-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(term) ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+
+</html>

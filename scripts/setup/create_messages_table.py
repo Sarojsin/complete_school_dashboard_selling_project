@@ -1,5 +1,5 @@
-from app.core.database import engine, Base
-from app.models.models import Message
+from backup.core.database import engine, Base
+from backup.models.models import Message
 from sqlalchemy import inspect
 
 print("Creating messages table...")

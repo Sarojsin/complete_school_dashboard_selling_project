@@ -5,9 +5,9 @@ import os
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.core.database import SessionLocal
+from backup.core.database import SessionLocal
 # Import all models to ensure mapper registry is populated
-from app.models.models import User, Student, Teacher, Course, Assignment, AssignmentSubmission, CourseEnrollment
+from backup.models.models import User, Student, Teacher, Course, Assignment, AssignmentSubmission, CourseEnrollment
 
 def list_users():
     db = SessionLocal()

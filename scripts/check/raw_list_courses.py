@@ -6,7 +6,7 @@ from sqlalchemy import text
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.core.database import engine
+from backup.core.database import engine
 
 def list_courses_raw():
     try:

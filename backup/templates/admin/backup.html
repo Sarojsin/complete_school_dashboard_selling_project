@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Nexus Elite | Remote Backups</title>
+    <link href="{{ url_for('static', path='css/admin.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar placeholder -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo"><span class="material-symbols-outlined">shield_person</span></div>
+                <h1 class="sidebar-title">NEXUS ELITE</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/dashboard" class="sidebar-link"><span
+                        class="material-symbols-outlined">grid_view</span><span>Command Center</span></a>
+                <a href="/admin/system" class="sidebar-link"><span
+                        class="material-symbols-outlined">memory</span><span>System Monitor</span></a>
+                <a href="/admin/security" class="sidebar-link"><span
+                        class="material-symbols-outlined">security</span><span>Security</span></a>
+                <a href="/admin/backup" class="sidebar-link active"><span
+                        class="material-symbols-outlined">backup</span><span>Backups</span></a>
+                <a href="/admin/reports" class="sidebar-link"><span
+                        class="material-symbols-outlined">assessment</span><span>Reports</span></a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <header style="margin-bottom: 2rem;">
+                <h2 style="font-size: 1.875rem; font-weight: 800;">Data Backups</h2>
+                <p style="color: var(--text-muted); font-weight: 500;">Manage automated database snapshots</p>
+            </header>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Available Snapshots</h3>
+                    <button class="btn btn-primary btn-sm">Create New Backup</button>
+                </div>
+                <div class="panel-body">
+                    <p>Backup scheduling and manual trigger controls.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

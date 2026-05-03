@@ -1,0 +1,230 @@
+/* Timetable Module Styles */
+.timetable-dashboard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+}
+
+.timetable-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+}
+
+.header-content h1 {
+  margin: 0 0 5px;
+  font-size: 1.8rem;
+}
+
+.header-content p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.class-select {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: white;
+  color: #43e97b;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: #f0f0f0;
+}
+
+/* Tabs */
+.timetable-tabs {
+  display: flex;
+  background: white;
+  padding: 0 30px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.timetable-tabs .tab {
+  padding: 18px 25px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.timetable-tabs .tab:hover {
+  color: #43e97b;
+}
+
+.timetable-tabs .tab.active {
+  color: #43e97b;
+  border-bottom-color: #43e97b;
+  font-weight: 600;
+}
+
+/* Content */
+.timetable-content {
+  flex: 1;
+  padding: 30px;
+  overflow: auto;
+}
+
+.timetable-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.timetable-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.timetable-table th,
+.timetable-table td {
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+}
+
+.timetable-table th {
+  background: #43e97b;
+  color: white;
+  font-weight: 600;
+}
+
+.period-col {
+  width: 120px;
+}
+
+.period-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.period-number {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.period-time {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.class-block {
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.class-block .subject {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.class-block .teacher {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.empty-slot {
+  color: #ccc;
+  font-size: 1.2rem;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+/* Legend */
+.timetable-legend {
+  margin-top: 30px;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.timetable-legend h4 {
+  margin: 0 0 20px;
+  color: #333;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+/* Loading */
+.timetable-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .timetable-container {
+    overflow-x: auto;
+  }
+  
+  .timetable-table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  .timetable-header {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+}

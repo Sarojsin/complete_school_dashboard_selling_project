@@ -10,15 +10,15 @@ from sqlalchemy import text
 # Add project root directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from app.core.database import engine, Base
+from backup.core.database import engine, Base
 # Import all models to ensure they are registered with Base.metadata
-from app.models.models import (
+from backup.models.models import (
     User, Student, Teacher, Parent, Authority, 
     Course, CourseEnrollment, Assignment, AssignmentSubmission, 
     Grade, Attendance, FeeRecord, Notice, Note, Video, Message, Schedule
 )
-from app.models.test_models import Test, TestQuestion, TestSubmission
-from app.models import group_models, admin_models
+from backup.models.test_models import Test, TestQuestion, TestSubmission
+from backup.models import group_models, admin_models
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

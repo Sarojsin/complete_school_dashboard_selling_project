@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Overdue Books - Library{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Overdue Books</h2>
+            <p class="text-muted mb-0">Books that are past their due date</p>
+        </div>
+        <a href="/library/dashboard" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-2">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="/library/dashboard" class="btn btn-outline-primary {% if request.url.path == '/library/dashboard' %}active{% endif %}">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                        <a href="/library/issue-book" class="btn btn-outline-success {% if request.url.path == '/library/issue-book' %}active{% endif %}">
+                            <i class="bi bi-book me-1"></i>Issue Book
+                        </a>
+                        <a href="/library/return-book" class="btn btn-outline-info {% if request.url.path == '/library/return-book' %}active{% endif %}">
+                            <i class="bi bi-arrow-return-left me-1"></i>Return Book
+                        </a>
+                        <a href="/library/overdue" class="btn btn-outline-warning {% if request.url.path == '/library/overdue' %}active{% endif %}">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue Books
+                        </a>
+                        <a href="/library/books" class="btn btn-outline-secondary {% if request.url.path == '/library/books' %}active{% endif %}">
+                            <i class="bi bi-collection me-1"></i>Book Catalog
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-danger mb-0">Total Overdue Books</h6>
+                            <h3 class="mt-2 mb-0">{{ overdue|length }}</h3>
+                        </div>
+                        <i class="bi bi-exclamation-circle fs-1 text-danger opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-warning mb-0">Total Outstanding Fines</h6>
+                            <h3 class="mt-2 mb-0">₹{{ overdue|sum(attribute='fine_amount') }}</h3>
+                        </div>
+                        <i class="bi bi-cash-coin fs-1 text-warning opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-info mb-0">Students with Overdue</h6>
+                            <h3 class="mt-2 mb-0">{{ overdue|map(attribute='student_id')|unique|list|length }}</h3>
+                        </div>
+                        <i class="bi bi-people fs-1 text-info opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Books Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Overdue Books List</h5>
+        </div>
+        <div class="card-body">
+            {% if overdue %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Book Title</th>
+                                <th>Author</th>
+                                <th>Taken Date</th>
+                                <th>Due Date</th>
+                                <th>Days Overdue</th>
+                                <th>Fine Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in overdue %}
+                            {% set days_overdue = (today - loan.due_date).days if loan.due_date and today > loan.due_date else 0 %}
+                            {% set calculated_fine = days_overdue * 10 %}
+                            <tr class="table-warning">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-2" style="width: 35px; height: 35px; font-size: 0.9rem;">
+                                            {{ loan.student.full_name[0] if loan.student and loan.student.full_name else 'S' }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">{{ loan.student.full_name if loan.student else 'Unknown' }}</div>
+                                            <small class="text-muted">{{ loan.student.student_id if loan.student else '' }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ loan.book_title }}</td>
+                                <td>{{ loan.book_author }}</td>
+                                <td>{{ loan.taken_date.strftime('%d %b %Y') if loan.taken_date else 'N/A' }}</td>
+                                <td>
+                                    <span class="text-danger fw-bold">{{ loan.due_date.strftime('%d %b %Y') if loan.due_date else 'N/A' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">{{ days_overdue }} days</span>
+                                </td>
+                                <td>
+                                    <span class="text-danger fw-bold">₹{{ calculated_fine }}</span>
+                                </td>
+                                <td>
+                                    <form method="post" action="/library/return-book/{{ loan.id }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-lg me-1"></i>Return
+                                        </button>
+                                    </form>
+                                    <a href="/library/history/{{ loan.student_id }}" class="btn btn-info btn-sm">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle display-4 text-success"></i>
+                    <p class="mt-3 text-muted">No overdue books! All students have returned their books on time.</p>
+                    <a href="/library/dashboard" class="btn btn-primary mt-2">
+                        <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,7 +1,7 @@
 
 import asyncio
-from app.core.database import async_engine
-from app.repositories.teacher_repository import TeacherRepository
+from backup.core.database import async_engine
+from backup.repositories.teacher_repository import TeacherRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 

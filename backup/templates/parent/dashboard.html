@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Parent Dashboard - EduManage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="fw-bold">Welcome, {{ user.full_name }}</h2>
+            <p class="text-muted">Parent Dashboard</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Children Overview -->
+        <div class="col-md-8">
+            <h4 class="mb-3">My Children</h4>
+            {% if children %}
+            {% for child in children %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-person-circle me-2 text-primary"></i>
+                            {{ child.user.full_name }}
+                        </h5>
+                        <span class="badge bg-primary">{{ child.grade_level }} - {{ child.section }}</span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Student ID</small>
+                                <strong>{{ child.student_id }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Attendance</small>
+                                <strong>View Record</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Performance</small>
+                                <strong>View Grades</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/parent/child/{{ child.id }}/attendance" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-calendar-check me-1"></i> Attendance
+                        </a>
+                        <a href="/parent/child/{{ child.id }}/grades" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-graph-up me-1"></i> Grades
+                        </a>
+                        <a href="/parent/child/{{ child.id }}/homework" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-book me-1"></i> Homework
+                        </a>
+                        <a href="/parent/chat" class="btn btn-primary btn-sm ms-auto">
+                            <i class="bi bi-chat-dots me-1"></i> Chat with Teachers
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i> No children linked to your account yet. Please contact the school
+                administration.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar / Quick Links -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="/parent/notices"
+                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div><i class="bi bi-bell me-2 text-warning"></i> School Notices</div>
+                        <span class="badge bg-danger rounded-pill">New</span>
+                    </a>
+                    <a href="/parent/profile" class="list-group-item list-group-item-action">
+                        <i class="bi bi-person me-2 text-info"></i> My Profile
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="bi bi-calendar-event me-2 text-success"></i> School Calendar
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Need Help?</h5>
+                    <p class="card-text small text-muted">Contact the school administration for assistance with your
+                        account or student information.</p>
+                    <a href="#" class="btn btn-outline-secondary btn-sm w-100">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

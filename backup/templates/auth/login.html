@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Login - School Management System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="user-avatar mx-auto mb-3" style="width: 70px; height: 70px; font-size: 2rem;">
+                            <i class="bi bi-person-lock"></i>
+                        </div>
+                        <h3 class="fw-bold">Welcome Back</h3>
+                        <p class="text-muted">Sign in to your EduManage account</p>
+                    </div>
+
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-medium">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                        class="bi bi-person text-muted"></i></span>
+                                <input type="text" class="form-control bg-light border-start-0" id="username"
+                                    name="username" placeholder="Enter your username" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <label for="password" class="form-label fw-medium mb-0">Password</label>
+                                <a href="#" class="text-primary text-decoration-none small">Forgot Password?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                        class="bi bi-shield-lock text-muted"></i></span>
+                                <input type="password" class="form-control bg-light border-start-0" id="password"
+                                    name="password" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label text-muted small" for="rememberMe">Remember me on this
+                                device</label>
+                        </div>
+
+                        <button type="submit" id="loginBtn" class="btn btn-primary w-100 py-2 fw-bold mb-3">
+                            Sign In
+                        </button>
+                    </form>
+
+                    <div class="text-center">
+                        <p class="text-muted small mb-0">Don't have an account? <a href="/signup"
+                                class="text-primary text-decoration-none fw-medium">Create Account</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Login Info -->
+            <div class="alert alert-info mt-4 border-0 shadow-sm">
+                <h6 class="fw-bold mb-2"><i class="bi bi-info-circle-fill me-2"></i>Demo Accounts:</h6>
+                <ul class="small mb-0 list-unstyled">
+                    <li><strong>saroj / 123</strong> (Teacher/Student)</li>
+                    <li><strong>library_admin / 123</strong> (Library)</li>
+                    <li><strong>account_admin / 123</strong> (Accounts)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const loginBtn = document.getElementById('loginBtn');
+        const originalText = loginBtn.innerHTML;
+
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+
+        const formData = new FormData(this);
+
+        try {
+            // Using OAuth2 compatible endpoint
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Determine redirect path based on role
+                const role = result.user.role.toLowerCase();
+                let redirectPath = '/';
+
+                if (role === 'student') redirectPath = '/student/dashboard';
+                else if (role === 'teacher') redirectPath = '/teacher/dashboard';
+                else if (role === 'hod') redirectPath = '/hod/dashboard';
+                else if (role === 'exam_section') redirectPath = '/exam-section/dashboard';
+                else if (role === 'library_manager') redirectPath = '/library/dashboard';
+                else if (role === 'account_section') redirectPath = '/account/dashboard';
+                else if (role === 'authority') redirectPath = '/authority/dashboard';
+                else if (role === 'parent') redirectPath = '/parent/dashboard';
+                else if (role === 'admin') redirectPath = '/admin/dashboard';
+
+                window.location.href = redirectPath;
+            } else {
+                alert(result.detail || 'Login failed. Please check your credentials.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('An educational system error occurred. Please try again.');
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = originalText;
+        }
+    });
+</script>
+{% endblock %}

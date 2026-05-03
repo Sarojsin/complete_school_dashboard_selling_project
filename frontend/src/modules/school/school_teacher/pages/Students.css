@@ -1,0 +1,30 @@
+.students-page {
+  padding: 20px;
+}
+
+.course-filter {
+  margin-bottom: 20px;
+}
+
+.course-filter select {
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.students-table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.students-table th,
+.students-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.students-table th {
+  background-color: #f8f9fa;
+}

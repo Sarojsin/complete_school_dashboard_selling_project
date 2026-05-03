@@ -1,0 +1,56 @@
+{% extends "college/base.html" %}
+
+{% block title %}Faculty Dashboard - College Portal{% endblock %}
+
+{% block content %}
+<div class="faculty-dashboard">
+    <h1>Faculty Dashboard</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>My Courses</h3>
+            <p class="stat-number">{{ course_count|default(0) }}</p>
+            <a href="/college/faculty/courses">View Courses</a>
+        </div>
+        <div class="stat-card">
+            <h3>Total Students</h3>
+            <p class="stat-number">{{ student_count|default(0) }}</p>
+            <a href="/college/faculty/students">View Students</a>
+        </div>
+        <div class="stat-card">
+            <h3>Research Projects</h3>
+            <p class="stat-number">{{ research_count|default(0) }}</p>
+            <a href="/college/faculty/research">View Research</a>
+        </div>
+    </div>
+    
+    <div class="dashboard-sections">
+        <section class="my-courses">
+            <h2>My Courses</h2>
+            <div class="course-list">
+                {% if courses %}
+                {% for course in courses %}
+                <div class="course-card">
+                    <h3>{{ course.name }}</h3>
+                    <p>Code: {{ course.code }}</p>
+                    <p>Students: {{ course.student_count|default(0) }}</p>
+                    <a href="/college/faculty/course/{{ course.id }}">Manage</a>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p>No courses assigned</p>
+                {% endif %}
+            </div>
+        </section>
+        
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="action-buttons">
+                <a href="/college/faculty/attendance" class="btn">Take Attendance</a>
+                <a href="/college/faculty/grades" class="btn">Enter Grades</a>
+                <a href="/college/faculty/assignments" class="btn">Manage Assignments</a>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

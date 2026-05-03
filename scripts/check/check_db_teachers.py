@@ -1,6 +1,6 @@
 
 import asyncio
-from app.core.database import async_engine
+from backup.core.database import async_engine
 from sqlalchemy import text
 
 async def check_teachers():

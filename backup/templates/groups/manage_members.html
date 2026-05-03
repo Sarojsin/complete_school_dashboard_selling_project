@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Members - {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/groups">My Groups</a></li>
+            <li class="breadcrumb-item"><a href="/groups/{{ group.id }}">{{ group.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Manage Members</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Add Member Section -->
+        <div class="col-lg-5 mb-4 mb-lg-0">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Add Members</h5>
+                </div>
+                <div class="card-body">
+                    {% if request.session.get('message') %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ request.session.pop('message') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    {% if request.session.get('warning') %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        {{ request.session.pop('warning') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    {% if request.session.get('error') %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ request.session.pop('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
+                    <form action="/groups/{{ group.id }}/manage" method="GET" class="mb-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search" placeholder="Search by name or email"
+                                value="{{ search or '' }}">
+                            <button class="btn btn-outline-primary" type="submit">Search</button>
+                        </div>
+                    </form>
+
+                    {% if search_results %}
+                    <form action="/groups/{{ group.id }}/members/add" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label d-block">Select Users to Add</label>
+                            <div class="list-group" style="max-height: 300px; overflow-y: auto;">
+                                {% for user in search_results %}
+                                <label class="list-group-item d-flex gap-3">
+                                    <input class="form-check-input flex-shrink-0" type="checkbox" name="user_ids"
+                                        value="{{ user.id }}">
+                                    <span>
+                                        <strong>{{ user.name }}</strong>
+                                        <div class="small text-muted">{{ user.email }} ({{ user.current_role }})</div>
+                                    </span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role in Group</label>
+                            <select class="form-select" name="role" id="role">
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Add Selected Users</button>
+                    </form>
+                    {% elif search %}
+                    <p class="text-center text-muted">No users found matching "{{ search }}"</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Members List -->
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Current Members</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="nav nav-tabs nav-justified" id="membersTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="students-tab" data-bs-toggle="tab"
+                                data-bs-target="#students" type="button" role="tab">Students ({{ group.total_students
+                                }})</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers"
+                                type="button" role="tab">Teachers ({{ group.total_teachers }})</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="membersTabContent">
+                        <!-- Students Tab -->
+                        <div class="tab-pane fade show active" id="students" role="tabpanel">
+                            <div class="list-group list-group-flush">
+                                {% for student in group.students %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ student.name }}</h6>
+                                        <small class="text-muted">{{ student.email }}</small>
+                                    </div>
+                                    <form action="/groups/{{ group.id }}/members/{{ student.id }}/remove" method="POST"
+                                        onsubmit="return confirm('Remove this member?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-person-dash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% else %}
+                                <div class="p-4 text-center text-muted">No students in this group yet.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Teachers Tab -->
+                        <div class="tab-pane fade" id="teachers" role="tabpanel">
+                            <div class="list-group list-group-flush">
+                                {% for teacher in group.teachers %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ teacher.name }}</h6>
+                                        <small class="text-muted">{{ teacher.email }}</small>
+                                    </div>
+                                    {% if teacher.id != current_user.id %}
+                                    <form action="/groups/{{ group.id }}/members/{{ teacher.id }}/remove" method="POST"
+                                        onsubmit="return confirm('Remove this teacher?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-person-dash"></i>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="badge bg-secondary">You</span>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <div class="p-4 text-center text-muted">No teachers found.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

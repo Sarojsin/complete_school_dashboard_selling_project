@@ -25,7 +25,7 @@ except Exception as e:
 # Test 3: Test password hashing and verification
 print("\n3. Testing password hash and verify...")
 try:
-    from app.repositories.user_repository import UserRepository
+    from backup.repositories.user_repository import UserRepository
     
     # Hash a password
     test_password = "password"
@@ -55,7 +55,7 @@ except Exception as e:
 # Test 4: Test actual user authentication
 print("\n4. Testing user authentication from database...")
 try:
-    from app.core.database import SessionLocal
+    from backup.core.database import SessionLocal
     
     db = SessionLocal()
     user = UserRepository.authenticate(db, "teacher1", "password")

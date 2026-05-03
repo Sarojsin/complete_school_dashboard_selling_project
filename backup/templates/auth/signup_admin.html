@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Signup - School Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold">Admin Registration</h2>
+                        <p class="text-muted">Create an admin account</p>
+                    </div>
+
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+
+                    {% if success %}
+                    <div class="alert alert-success">
+                        <h5>Registration Successful!</h5>
+                        <p>Your admin account has been created.</p>
+                        <a href="/login" class="btn btn-primary">Go to Login</a>
+                    </div>
+                    {% else %}
+                    <form method="POST" action="/signup/admin">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="secret_key" class="form-label">Admin Secret Key</label>
+                            <input type="password" class="form-control" id="secret_key" name="secret_key" required>
+                            <div class="form-text">Contact system administrator for the secret key.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2">Register as Admin</button>
+                    </form>
+                    {% endif %}
+
+                    <div class="text-center mt-4">
+                        <a href="/login" class="text-muted">Already have an account? Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
