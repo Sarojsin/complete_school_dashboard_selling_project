@@ -14,6 +14,9 @@ class UserRole(str, enum.Enum):
     LIBRARY_MANAGER = "LIBRARY_MANAGER"
     ACCOUNT_SECTION = "ACCOUNT_SECTION"
     GROUP_CREATOR = "GROUP_CREATOR"
+    # College-specific roles
+    DEAN = "DEAN"
+    REGISTRAR = "REGISTRAR"
 
 class PortalType(str, enum.Enum):
     SCHOOL = "school"

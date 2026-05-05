@@ -1,9 +1,29 @@
 """
 College Registrar Module
 
-Module for college registrar (student records).
+Manages academic records, student enrollment oversight, and transcripts.
 """
 
-from .api import router
+from .router import router as registrar_router
+from .service import RegistrarService
+from .repository import RegistrarRepository
+from .models import CollegeStudent, Enrollment, Program
+from .schemas import (
+    RegistrarDashboardResponse,
+    StudentDetailSchema,
+    EnrollmentDetailSchema,
+    StudentAcademicRecord,
+)
 
-__all__ = ["router"]
+__all__ = [
+    "router",
+    "RegistrarService",
+    "RegistrarRepository",
+    "CollegeStudent",
+    "Enrollment",
+    "Program",
+    "RegistrarDashboardResponse",
+    "StudentDetailSchema",
+    "EnrollmentDetailSchema",
+    "StudentAcademicRecord",
+]

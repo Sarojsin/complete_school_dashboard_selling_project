@@ -54,6 +54,8 @@ require_hod = require_role(UserRole.HOD)
 require_exam_section = require_role(UserRole.EXAM_SECTION)
 require_library = require_role(UserRole.LIBRARY_MANAGER)
 require_account = require_role(UserRole.ACCOUNT_SECTION)
+require_dean = require_role(UserRole.DEAN)
+require_registrar = require_role(UserRole.REGISTRAR)
 
 # Portal type dependencies
 def require_portal(expected_portal: PortalType):

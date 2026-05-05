@@ -7,7 +7,7 @@ Async CRUD operations for college research management.
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
-from .models import ResearchProject, ResearchPublication, ResearchPatent
+from .models import ResearchProject, Publication, Patent
 
 
 # ── Project Repository ─────────────────────────────────────────
@@ -46,27 +46,27 @@ class PublicationRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    async def get_by_id(self, pub_id: int) -> Optional[ResearchPublication]:
-        result = await self.db.execute(select(ResearchPublication).filter(ResearchPublication.id == pub_id))
+    async def get_by_id(self, pub_id: int) -> Optional[Publication]:
+        result = await self.db.execute(select(Publication).filter(Publication.id == pub_id))
         return result.scalars().first()
     
-    async def list(self, skip: int = 0, limit: int = 100) -> List[ResearchPublication]:
-        result = await self.db.execute(select(ResearchPublication).offset(skip).limit(limit))
+    async def list(self, skip: int = 0, limit: int = 100) -> List[Publication]:
+        result = await self.db.execute(select(Publication).offset(skip).limit(limit))
         return list(result.scalars().all())
     
-    async def list_by_faculty(self, faculty_id: int, skip: int = 0, limit: int = 100) -> List[ResearchPublication]:
+    async def list_by_faculty(self, faculty_id: int, skip: int = 0, limit: int = 100) -> List[Publication]:
         result = await self.db.execute(
-            select(ResearchPublication).filter(ResearchPublication.faculty_id == faculty_id).offset(skip).limit(limit)
+            select(Publication).filter(Publication.faculty_id == faculty_id).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
     
-    async def create(self, publication: ResearchPublication) -> ResearchPublication:
+    async def create(self, publication: Publication) -> Publication:
         self.db.add(publication)
         await self.db.commit()
         await self.db.refresh(publication)
         return publication
     
-    async def update(self, publication: ResearchPublication) -> ResearchPublication:
+    async def update(self, publication: Publication) -> Publication:
         await self.db.commit()
         await self.db.refresh(publication)
         return publication
@@ -77,27 +77,27 @@ class PatentRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    async def get_by_id(self, patent_id: int) -> Optional[ResearchPatent]:
-        result = await self.db.execute(select(ResearchPatent).filter(ResearchPatent.id == patent_id))
+    async def get_by_id(self, patent_id: int) -> Optional[Patent]:
+        result = await self.db.execute(select(Patent).filter(Patent.id == patent_id))
         return result.scalars().first()
     
-    async def list(self, skip: int = 0, limit: int = 100) -> List[ResearchPatent]:
-        result = await self.db.execute(select(ResearchPatent).offset(skip).limit(limit))
+    async def list(self, skip: int = 0, limit: int = 100) -> List[Patent]:
+        result = await self.db.execute(select(Patent).offset(skip).limit(limit))
         return list(result.scalars().all())
     
-    async def list_by_faculty(self, faculty_id: int, skip: int = 0, limit: int = 100) -> List[ResearchPatent]:
+    async def list_by_faculty(self, faculty_id: int, skip: int = 0, limit: int = 100) -> List[Patent]:
         result = await self.db.execute(
-            select(ResearchPatent).filter(ResearchPatent.faculty_id == faculty_id).offset(skip).limit(limit)
+            select(Patent).filter(Patent.faculty_id == faculty_id).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
     
-    async def create(self, patent: ResearchPatent) -> ResearchPatent:
+    async def create(self, patent: Patent) -> Patent:
         self.db.add(patent)
         await self.db.commit()
         await self.db.refresh(patent)
         return patent
     
-    async def update(self, patent: ResearchPatent) -> ResearchPatent:
+    async def update(self, patent: Patent) -> Patent:
         await self.db.commit()
         await self.db.refresh(patent)
         return patent
