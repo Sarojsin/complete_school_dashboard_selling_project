@@ -35,20 +35,20 @@ from modules.super_admin.api import router as super_admin_router
 # College Modules
 from modules.college.college_faculty.router import router as college_faculty_router
 from modules.college.college_student.router import router as college_student_router
-from modules.college.college_hod.api import router as college_hod_router
-from modules.college.college_dean.api import router as college_dean_router
-from modules.college.college_registrar.api import router as college_registrar_router
-from modules.college.college_exam_section.api import router as college_exam_section_router
-from modules.college.college_account_section.api import router as college_account_section_router
+from modules.college.college_hod.router import router as college_hod_router
+from modules.college.college_dean.router import router as college_dean_router
+from modules.college.college_registrar.router import router as college_registrar_router
+from modules.college.college_exam_section.router import router as college_exam_section_router
+from modules.college.college_account_section.router import router as college_account_section_router
 from modules.college.college_placement.router import router as college_placement_router
 from modules.college.college_research.router import router as college_research_router
-from modules.college.college_hostel.api import router as college_hostel_router
+from modules.college.college_hostel.router import router as college_hostel_router
 from modules.college.college_lab.router import router as college_lab_router
-from modules.college.college_programs.api import router as college_programs_router
-from modules.college.college_courses.api import router as college_courses_router
-from modules.college.college_enrollments.api import router as college_enrollments_router
-from modules.college.college_semesters.api import router as college_semesters_router
-from modules.college.college_library.api import router as college_library_router
+from modules.college.college_programs.router import router as college_programs_router
+from modules.college.college_courses.router import router as college_courses_router
+from modules.college.college_enrollments.router import router as college_enrollments_router
+from modules.college.college_semesters.router import router as college_semesters_router
+from modules.college.college_library.router import router as college_library_router
 
 
 # Ensure all models are imported so they register with Base.metadata
@@ -70,6 +70,13 @@ from modules.college.college_student import models as college_student_models
 from modules.college.college_faculty import models as college_faculty_models
 from modules.college.college_library import models as college_library_models
 from modules.college.college_hostel import models as college_hostel_models
+# Import new college module models for table registration
+from modules.college.college_enrollments import models as college_enrollment_models
+from modules.college.college_programs import models as college_program_models
+from modules.college.college_semesters import models as college_semester_models
+from modules.college.college_exam_section import models as college_exam_models
+from modules.college.college_account_section import models as college_account_models
+# HOD/Dean/Registrar modules use existing backup models; no new tables
 from modules.school.school_exam_section import models as exam_models
 from modules.school.school_timetable import models as timetable_models
 from modules.school.school_videos import models as video_models
