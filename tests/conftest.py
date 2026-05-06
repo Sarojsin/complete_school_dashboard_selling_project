@@ -12,15 +12,18 @@ from modules.shared.database import get_db
 from modules.shared.models import User
 from modules.school.school_student.models import Student
 from modules.school.school_teacher.models import Teacher
-from modules.school.school_courses.models import Course
+from modules.school.school_courses.models import SchoolCourse as Course
 from modules.school.school_assignments.models import Assignment, AssignmentSubmission
 from modules.school.school_notices.models import Notice
-from modules.school.school_attendance.models import Attendance
+# from modules.school.school_attendance.models import Attendance  # Not needed; skip due to complex deps
 from modules.school.school_grades.models import Grade
 from modules.school.school_notes.models import Note
 from modules.school.school_videos.models import Video
-from modules.school.school_account_section.models import FeeRecord
+# from modules.school.school_account_section.models import FeeRecord  # Not needed
 from modules.school.school_groups.models import Group
+# Additional imports to satisfy foreign key dependencies
+from modules.school.school_parent.models import SchoolParent
+from modules.school.school_authority.models import SchoolAuthority
 
 # Set testing environment variable
 os.environ["TESTING"] = "True"
@@ -60,7 +63,7 @@ def client(db):
             yield db
         finally:
             pass
-            
+
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
         yield c
