@@ -1,0 +1,91 @@
+```mermaid
+graph TB
+    %% Frontend Layer
+    subgraph "Frontend Layer"
+        React[React Application<br/>Portals: School/College]
+        Mobile[Mobile App<br/>(Future)]
+    end
+
+    %% API Gateway / Load Balancer
+    subgraph "API Gateway"
+        Nginx[Nginx Reverse Proxy<br/>SSL Termination<br/>Rate Limiting]
+    end
+
+    %% Application Layer
+    subgraph "Application Layer"
+        FastAPI[FastAPI Application<br/>REST API<br/>Authentication]
+
+        subgraph "Core Modules"
+            Auth[Auth Module<br/>JWT & Roles]
+            Shared[Shared Utilities<br/>Logger, Health, Audit]
+        end
+
+        subgraph "School Modules"
+            SchoolCore[School Core<br/>Students, Teachers, Classes]
+            SchoolServices[School Services<br/>Library, Exams, Transport]
+        end
+
+        subgraph "College Modules"
+            CollegeCore[College Core<br/>Faculty, Students, Programs]
+            CollegeServices[College Services<br/>Exams, Accounts, Hostel]
+        end
+    end
+
+    %% Data Layer
+    subgraph "Data Layer"
+        subgraph "Primary Databases"
+            SchoolDB[(SQLite<br/>school.db<br/>School Data)]
+            CollegeDB[(PostgreSQL<br/>college.db<br/>College Data)]
+        end
+
+        subgraph "Supporting Services"
+            Redis[(Redis<br/>Cache & Sessions)]
+            S3[(AWS S3<br/>Files & Backups)]
+        end
+    end
+
+    %% External Services
+    subgraph "External Services"
+        Sentry[Sentry<br/>Error Tracking]
+        Prometheus[Prometheus<br/>Metrics]
+        SMTP[SMTP<br/>Notifications]
+    end
+
+    %% Connections
+    React --> Nginx
+    Mobile --> Nginx
+    Nginx --> FastAPI
+
+    FastAPI --> Auth
+    FastAPI --> Shared
+    FastAPI --> SchoolCore
+    FastAPI --> SchoolServices
+    FastAPI --> CollegeCore
+    FastAPI --> CollegeServices
+
+    Auth --> SchoolDB
+    Auth --> CollegeDB
+    SchoolCore --> SchoolDB
+    SchoolServices --> SchoolDB
+    CollegeCore --> CollegeDB
+    CollegeServices --> CollegeDB
+
+    FastAPI --> Redis
+    FastAPI --> S3
+    FastAPI --> Sentry
+    FastAPI --> Prometheus
+    FastAPI --> SMTP
+
+    %% Styling
+    style FastAPI fill:#e1f5fe
+    style Auth fill:#f3e5f5
+    style Shared fill:#fff3e0
+    style SchoolCore fill:#e8f5e8
+    style CollegeCore fill:#fff8e1
+    style SchoolDB fill:#e8f5e8
+    style CollegeDB fill:#fff8e1
+    style Redis fill:#fce4ec
+    style S3 fill:#f3e5f5
+    style Sentry fill:#ffebee
+    style Prometheus fill:#f3e5f5
+```

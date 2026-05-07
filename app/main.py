@@ -18,6 +18,9 @@ from modules.shared.sentry import init_sentry
 
 # Rate limiting
 from modules.shared.rate_limit import limiter, rate_limit_middleware, rate_limit_exceeded_handler
+
+# Feature flags
+from modules.shared.feature_flags import feature_flags, FeatureFlag
 from modules.shared.exceptions import (
     NotFoundError, ValidationError, ForbiddenError, 
     UnauthorizedError, ConflictError
@@ -216,23 +219,26 @@ app.include_router(timetable_router, prefix="/api/v1/school")
 app.include_router(dashboard_router, prefix="/api/v1/school")
 app.include_router(super_admin_router)
 
-# College Routers
-app.include_router(college_faculty_router, prefix="/api/v1/college")
-app.include_router(college_student_router, prefix="/api/v1/college")
-app.include_router(college_hod_router, prefix="/api/v1/college")
-app.include_router(college_dean_router, prefix="/api/v1/college")
-app.include_router(college_registrar_router, prefix="/api/v1/college")
-app.include_router(college_exam_section_router, prefix="/api/v1/college")
-app.include_router(college_account_section_router, prefix="/api/v1/college")
-app.include_router(college_placement_router, prefix="/api/v1/college")
-app.include_router(college_research_router, prefix="/api/v1/college")
-app.include_router(college_hostel_router, prefix="/api/v1/college")
-app.include_router(college_lab_router, prefix="/api/v1/college")
-app.include_router(college_programs_router, prefix="/api/v1/college")
-app.include_router(college_courses_router, prefix="/api/v1/college")
-app.include_router(college_enrollments_router, prefix="/api/v1/college")
-app.include_router(college_semesters_router, prefix="/api/v1/college")
-app.include_router(college_library_router, prefix="/api/v1/college")
+# College Routers (Feature Flagged)
+if feature_flags.is_enabled(FeatureFlag.COLLEGE_MODULE):
+    app.include_router(college_faculty_router, prefix="/api/v1/college")
+    app.include_router(college_student_router, prefix="/api/v1/college")
+    app.include_router(college_exam_section_router, prefix="/api/v1/college")
+    app.include_router(college_account_section_router, prefix="/api/v1/college")
+    app.include_router(college_enrollments_router, prefix="/api/v1/college")
+    app.include_router(college_programs_router, prefix="/api/v1/college")
+    app.include_router(college_courses_router, prefix="/api/v1/college")
+    app.include_router(college_semesters_router, prefix="/api/v1/college")
+    app.include_router(college_hostel_router, prefix="/api/v1/college")
+    app.include_router(college_lab_router, prefix="/api/v1/college")
+    app.include_router(college_placement_router, prefix="/api/v1/college")
+    app.include_router(college_research_router, prefix="/api/v1/college")
+    app.include_router(college_library_router, prefix="/api/v1/college")
+
+    # Administrative routers (enabled with college module)
+    app.include_router(college_hod_router, prefix="/api/v1/college")
+    app.include_router(college_dean_router, prefix="/api/v1/college")
+    app.include_router(college_registrar_router, prefix="/api/v1/college")
 
 
 

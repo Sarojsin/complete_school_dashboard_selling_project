@@ -17,10 +17,41 @@ from modules.shared.rate_limit import write_limit, read_limit
 from .service import CollegeFacultyService
 from .schemas import FacultyResponse, FacultyUpdate, FacultyCreate
 
-router = APIRouter(prefix="/faculty", tags=["College Faculty"], dependencies=[Depends(require_college_portal)])
+router = APIRouter(
+    prefix="/faculty",
+    tags=["College Faculty"],
+    dependencies=[Depends(require_college_portal)],
+    responses={
+        401: {"description": "Unauthorized - Invalid or missing authentication token"},
+        403: {"description": "Forbidden - Insufficient permissions for this operation"},
+        404: {"description": "Not Found - Faculty member not found"},
+        422: {"description": "Validation Error - Invalid input data"},
+        429: {"description": "Too Many Requests - Rate limit exceeded"}
+    }
+)
 
 
-@router.post("/", response_model=FacultyResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=FacultyResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new faculty member",
+    description="""
+    Create a new faculty member in the college system.
+
+    **Required Permissions:** Dean or Super Admin
+
+    **Rate Limit:** 30 requests per minute
+
+    **Audit:** This action is logged for compliance and security monitoring.
+
+    **Business Rules:**
+    - Employee ID must be unique and follow the format
+    - Department must exist if specified
+    - User account must already exist in the system
+    """,
+    response_description="Successfully created faculty member"
+)
 @write_limit()
 async def create_faculty(
     data: FacultyCreate,

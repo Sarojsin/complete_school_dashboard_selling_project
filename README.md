@@ -171,6 +171,229 @@ All shared college entity definitions (Department, Program, Semester, Faculty, C
 4. After login, `DashboardRedirector` reads `user.portal_type` and routes to correct dashboard
 5. Frontend `PrivateRoute` enforces portal separation on client-side navigation
 
+## Monitoring & Observability
+
+### Health Checks
+
+The application provides comprehensive health monitoring endpoints:
+
+```bash
+# Liveness check - basic ping
+curl http://localhost:8000/health/live
+
+# Readiness check - includes database connectivity
+curl http://localhost:8000/health/ready
+
+# Detailed health check with all services
+curl http://localhost:8000/health
+```
+
+### Metrics Endpoint
+
+Prometheus metrics are exposed at `/metrics` with custom college-specific metrics:
+
+```bash
+# View all metrics
+curl http://localhost:8000/metrics
+```
+
+Available metrics include:
+- HTTP request rates, latency, and error rates
+- Database connection status and query performance
+- College-specific metrics (enrollments, fee collection, active users)
+- Custom business metrics
+
+### Structured Logging
+
+All application logs are output in structured JSON format with correlation IDs for request tracing:
+
+```json
+{
+  "timestamp": "2026-05-07T10:30:00.123456+00:00",
+  "level": "info",
+  "event": "request_completed",
+  "method": "POST",
+  "path": "/college/faculty",
+  "status_code": 201,
+  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": 123
+}
+```
+
+### Error Tracking
+
+Sentry integration provides automatic error tracking and performance monitoring with data filtering for privacy compliance.
+
+## Security
+
+### Authentication & Authorization
+
+- JWT-based authentication with configurable expiration
+- Role-based access control (Super Admin, Dean, HOD, Faculty, Student, etc.)
+- Secure password hashing with bcrypt
+- Portal-specific access control (school vs college data separation)
+
+### Rate Limiting
+
+Comprehensive rate limiting prevents abuse:
+
+- Authentication endpoints: 5 requests/minute
+- Write operations: 30 requests/minute
+- Read operations: 100 requests/minute
+- Admin operations: 10 requests/minute
+
+### Input Validation
+
+All inputs are validated with Pydantic schemas including:
+- Field-level validation with custom validators
+- SQL injection prevention
+- XSS protection through proper sanitization
+- Business rule enforcement
+
+### Soft Deletes
+
+Critical models support soft deletion for data integrity:
+- Faculty, Students, Courses, Programs
+- Audit trails maintained for compliance
+- Recoverable deletion with proper authorization
+
+### Feature Flags
+
+Runtime feature toggling for controlled rollouts:
+
+```bash
+# Environment variables for feature control
+FEATURE_COLLEGE_MODULE=true
+FEATURE_ADVANCED_LOGGING=true
+FEATURE_METRICS_ENABLED=true
+FEATURE_RATE_LIMITING=true
+```
+
+## Backup & Recovery
+
+### Automated Backups
+
+The system includes automated backup capabilities:
+
+```bash
+# Manual backup execution
+./scripts/backup.sh
+
+# Restore from backup
+./scripts/restore.sh backup_file.sql
+```
+
+### Backup Features
+
+- Daily automated backups for both databases
+- Retention policy management (configurable retention period)
+- Offsite S3 storage support
+- Backup verification and integrity checks
+- Point-in-time recovery capabilities
+
+### Recovery Procedures
+
+1. **Database Recovery**: Use PostgreSQL restore utilities
+2. **File Recovery**: Restore uploaded files from backups
+3. **Verification**: Run integrity checks post-recovery
+4. **Audit**: Log all recovery operations
+
+## Deployment
+
+### Docker Deployment
+
+```bash
+# Build the application
+docker build -t college-management .
+
+# Run with environment variables
+docker run -p 8000:8000 \
+  -e DATABASE_URL="postgresql://..." \
+  -e COLLEGE_DATABASE_URL="postgresql://..." \
+  college-management
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/school_db
+      - COLLEGE_DATABASE_URL=postgresql://user:pass@db:5432/college_db
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=school_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+
+  redis:
+    image: redis:alpine
+```
+
+### Kubernetes Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: college-management
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: app
+        image: college-management:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: school-url
+        - name: COLLEGE_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: college-url
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8000
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8000
+```
+
+### Production Configuration
+
+```bash
+# Production environment variables
+ENVIRONMENT=production
+SECRET_KEY=your-production-secret-key
+SENTRY_DSN=https://dsn@sentry.io/project-id
+REDIS_URL=redis://redis:6379
+
+# Database
+DATABASE_URL=postgresql://user:pass@prod-db:5432/school_db
+COLLEGE_DATABASE_URL=postgresql://user:pass@prod-db:5432/college_db
+
+# CORS
+ALLOWED_ORIGINS=https://yourdomain.com,https://admin.yourdomain.com
+```
+
 ## Testing
 
 ### Backend Portal Guard Tests
