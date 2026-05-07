@@ -43,3 +43,4 @@ pytest
 pytest-asyncio
 httpx
 requests
+pillow>=12.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
