@@ -1,0 +1,3 @@
+timestamp,db_type,backup_file,operation,status,duration_seconds,verified,error_message
+2026-05-06T17:37:26.131129,school,backups\school\school_20260506_1735.backup.dump,verify,success,1.83,True,
+2026-05-06T17:37:38.966018,school,backups\college\college_20260506_1735.dump,verify,success,0.07,True,
