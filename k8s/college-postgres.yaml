@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: college-postgres
+  namespace: college-management
+  labels:
+    app: college-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: college-postgres
+  template:
+    metadata:
+      labels:
+        app: college-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "college_sell_db"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: college-management-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_INITDB_ARGS
+          value: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+        volumeMounts:
+        - name: college-db-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - college_sell_db
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - college_sell_db
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: college-db-storage
+        persistentVolumeClaim:
+          claimName: college-db-pvc
+      - name: init-scripts
+        configMap:
+          name: college-db-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: college-postgres
+  namespace: college-management
+  labels:
+    app: college-postgres
+spec:
+  selector:
+    app: college-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: college-db-init
+  namespace: college-management
+data:
+  "02-init-college.sql": |
+    -- College database initialization
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+    -- Create indexes for better performance
+    -- These will be created when tables are ready via migrations

@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: school-postgres
+  namespace: college-management
+  labels:
+    app: school-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: school-postgres
+  template:
+    metadata:
+      labels:
+        app: school-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "school_sell_db"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: college-management-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_INITDB_ARGS
+          value: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+        volumeMounts:
+        - name: school-db-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - school_sell_db
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - school_sell_db
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: school-db-storage
+        persistentVolumeClaim:
+          claimName: school-db-pvc
+      - name: init-scripts
+        configMap:
+          name: school-db-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: school-postgres
+  namespace: college-management
+  labels:
+    app: school-postgres
+spec:
+  selector:
+    app: school-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: school-db-init
+  namespace: college-management
+data:
+  "01-init-school.sql": |
+    -- School database initialization
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+    -- Create indexes for better performance
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_role ON users(role);
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_portal_type ON users(portal_type);
