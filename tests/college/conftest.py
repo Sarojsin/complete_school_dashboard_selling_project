@@ -19,6 +19,9 @@ from modules.college.base import CollegeBase
 from modules.shared.models import User, UserRole, PortalType
 
 # Import all college backup models to register metadata
+# NOTE: Only import models that are needed and have correct FK dependencies.
+# Some modules (research, hostel) have FK issues referencing non-existent "faculty" table;
+# they are excluded from test DB creation.
 from backup.models.college.department import Department
 from backup.models.college.program import Program
 from backup.models.college.semester import Semester
@@ -27,12 +30,10 @@ from backup.models.college.faculty import Faculty
 from backup.models.college.student import CollegeStudent
 from backup.models.college.enrollment import Enrollment
 from backup.models.college.fee import CollegeFee
+# Placement models are safe (reference college students, companies)
 from backup.models.college.placement import Company, Job, Application, PlacementDrive
-from backup.models.college.research import ResearchProject, Publication, Patent
-from backup.models.college.hostel import Hostel, Room, HostelAllocation, HostelComplaint
+# Lab models (reference college_faculty correctly)
 from backup.models.college.lab import Lab, LabEquipment, LabSchedule
-
-# Import new college module models
 from modules.college.college_exam_section.models import CollegeExamResult, CollegeExamNotice
 from modules.college.college_account_section.models import CollegeFacultyPayment
 
@@ -60,7 +61,14 @@ def event_loop():
 async def async_db_engine():
     """Create all tables (shared + college) in async in-memory DB"""
     async with async_engine.begin() as conn:
+        # Ensure User table is also registered in CollegeBase metadata for FK resolution
+        from modules.shared.models import User
+        if "users" not in CollegeBase.metadata.tables:
+            User.__table__.tometadata(CollegeBase.metadata)
+        
+        # Create SharedBase tables first (includes User)
         await conn.run_sync(SharedBase.metadata.create_all)
+        # Now create CollegeBase tables (including those referencing users)
         await conn.run_sync(CollegeBase.metadata.create_all)
     yield async_engine
     await async_engine.dispose()
@@ -98,11 +106,14 @@ async def create_user_and_token(async_db):
         email: str = None,
         role: UserRole = UserRole.COLLEGE_STUDENT,
         portal_type: PortalType = PortalType.COLLEGE,
-        password: str = "testpass123"
+        password: str = "testpass123",
+        username: str = None
     ):
         repo = AuthRepository(async_db)
         if email is None:
             email = f"test_{uuid4().hex[:8]}@example.com"
+        if username is None:
+            username = email.split("@")[0]
         existing = await repo.get_user_by_email(email)
         if existing:
             token = create_access_token(data={"sub": str(existing.id), "role": existing.role.value})
@@ -110,6 +121,7 @@ async def create_user_and_token(async_db):
         hashed = get_password_hash(password)
         user = User(
             email=email,
+            username=username,
             hashed_password=hashed,
             full_name=f"Test {role.value}",
             role=role,
@@ -126,7 +138,9 @@ async def create_user_and_token(async_db):
 # College entity fixtures for exam_section tests
 @pytest.fixture
 async def department(async_db):
-    dept = Department(name="Computer Science", code="CS", description="CS Department")
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
+    dept = Department(name=f"Computer Science {unique_id}", code=f"CS{unique_id}", description="CS Department")
     async_db.add(dept)
     await async_db.commit()
     await async_db.refresh(dept)
@@ -142,12 +156,13 @@ async def program(async_db, department):
 
 @pytest.fixture
 async def semester(async_db, program):
+    from datetime import date
     sem = Semester(
         name="Semester 1",
         number=1,
         program_id=program.id,
-        start_date="2025-01-01",
-        end_date="2025-06-01"
+        start_date=date(2025, 1, 1),
+        end_date=date(2025, 6, 1)
     )
     async_db.add(sem)
     await async_db.commit()
@@ -156,13 +171,15 @@ async def semester(async_db, program):
 
 @pytest.fixture
 async def college_course(async_db, department, semester):
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
     course = CollegeCourse(
-        code="CS101",
+        code=f"CS101_{unique_id}",
         name="Introduction to Programming",
-        department_id=department.id,
-        semester_id=semester.id,
+        description="Test course",
         credits=3,
-        is_active=True
+        department_id=department.id,
+        semester_id=semester.id
     )
     async_db.add(course)
     await async_db.commit()

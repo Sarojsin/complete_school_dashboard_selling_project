@@ -31,11 +31,12 @@ class TestExamSectionService:
             exam_date="2025-11-20",
             semester_id=None
         )
-        result = await service.create_notice(notice_data, created_by=user.id)
-        assert result.title == notice_data.title
-        assert result.content == notice_data.content
-        assert result.created_by == user.id
-        assert result.is_active is True
+        response = await service.create_notice(notice_data, created_by=user.id)
+        notice = response["notice"]
+        assert notice.title == notice_data.title
+        assert notice.content == notice_data.content
+        assert notice.created_by == user.id
+        assert notice.is_active is True
 
     async def test_get_notices_empty(self, async_db):
         service = ExamSectionService(async_db)
@@ -74,7 +75,8 @@ class TestExamSectionService:
             is_published=False,
             semester_id=None
         )
-        result = await service.publish_result(result_data, published_by=user.id)
+        response = await service.publish_result(result_data, published_by=user.id)
+        result = response["result"]
         assert result.student_id == college_student.id
         assert result.course_id == college_course.id
         assert result.grade == "A"  # 85% -> A
@@ -99,7 +101,8 @@ class TestExamSectionService:
                 max_marks=100,
                 exam_type="final"
             )
-            result = await service.publish_result(data, user.id)
+            response = await service.publish_result(data, user.id)
+            result = response["result"]
             assert result.grade == expected_grade, f"Marks {marks} should yield grade {expected_grade}"
 
     async def test_create_result_marks_exceed_max_raises(self, async_db, create_user_and_token, college_student, college_course):
@@ -254,8 +257,8 @@ class TestExamSectionAPI:
         resp = await async_client.post("/api/v1/college/exam_section/notices", json=payload, headers=headers)
         assert resp.status_code == 201
         data = resp.json()
-        assert data["notice"]["title"] == payload["title"]
-        assert data["notice"]["created_by"] == user.id
+        assert data["title"] == payload["title"]
+        assert data["created_by"] == user.id
 
     async def test_create_notice_validation_error(self, async_client, create_user_and_token):
         user, headers = await create_user_and_token(role=UserRole.EXAM_SECTION)
@@ -296,14 +299,14 @@ class TestExamSectionAPI:
         resp = await async_client.get(f"/api/v1/college/exam_section/notices/{notice.id}", headers=headers)
         assert resp.status_code == 200
         data = resp.json()
-        assert data["notice"]["id"] == notice.id
+        assert data["id"] == notice["notice"].id
 
     async def test_deactivate_notice_endpoint(self, async_client, create_user_and_token, async_db):
         user, headers = await create_user_and_token(role=UserRole.EXAM_SECTION)
         service = ExamSectionService(async_db)
         notice_data = CollegeExamNoticeCreate(title="To Deactivate", content="...", notice_type="general")
         notice = await service.create_notice(notice_data, created_by=user.id)
-        resp = await async_client.post(f"/api/v1/college/exam_section/notices/{notice.id}/deactivate", headers=headers)
+        resp = await async_client.post(f"/api/v1/college/exam_section/notices/{notice['notice'].id}/deactivate", headers=headers)
         assert resp.status_code == 200
         # DB check
         notice_in_db = await async_db.get(CollegeExamNotice, notice.id)
