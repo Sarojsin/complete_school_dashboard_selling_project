@@ -7,26 +7,29 @@ Business logic for college faculty management.
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List, Dict, Any
 
-from .repository import FacultyRepository
+from .repository import CollegeFacultyRepository
 from .schemas import FacultyCreate, FacultyUpdate
 
 
-class FacultyService:
+class CollegeFacultyService:
     """Service for faculty business logic"""
-    
+
     def __init__(self, db: AsyncSession):
-        self.repository = FacultyRepository(db)
+        self.repository = CollegeFacultyRepository(db)
     
     async def create_faculty(self, data: FacultyCreate) -> Dict[str, Any]:
         """Create a new faculty"""
         faculty = await self.repository.create(
             user_id=data.user_id,
             employee_id=data.employee_id,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            email=data.email,
             department_id=data.department_id,
             designation=data.designation,
-            specialization=data.specialization,
             qualification=data.qualification,
-            experience_years=data.experience_years
+            experience_years=data.experience_years,
+            phone=data.phone
         )
         return {"faculty": faculty}
     
@@ -52,11 +55,18 @@ class FacultyService:
             return {"faculty": faculty}
         return {"error": "Faculty not found"}
     
-    async def delete_faculty(self, faculty_id: int) -> Dict[str, Any]:
-        """Delete faculty"""
-        success = await self.repository.delete(faculty_id)
+    async def soft_delete_faculty(self, faculty_id: int) -> Dict[str, Any]:
+        """Soft delete faculty"""
+        success = await self.repository.soft_delete(faculty_id)
         if success:
             return {"message": "Faculty deleted successfully"}
+        return {"error": "Faculty not found"}
+
+    async def delete_faculty(self, faculty_id: int) -> Dict[str, Any]:
+        """Hard delete faculty (not recommended - use soft_delete instead)"""
+        success = await self.repository.delete(faculty_id)
+        if success:
+            return {"message": "Faculty hard deleted successfully"}
         return {"error": "Faculty not found"}
 
 

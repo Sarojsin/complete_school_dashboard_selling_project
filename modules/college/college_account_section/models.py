@@ -32,7 +32,7 @@ class CollegeFacultyPayment(Base):
 
     # Relationships
     faculty = relationship("Faculty", back_populates="payments")
-    paid_by = relationship("User")
+    # paid_by relationship omitted
 
 
 # Extend Faculty model to include payments relationship if not already present

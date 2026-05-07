@@ -40,7 +40,8 @@ async def publish_exam_result(
     """Publish an exam result (Exam Section only)"""
     service = ExamSectionService(db)
     try:
-        return await service.publish_result(result_data, current_user.id)
+        result = await service.publish_result(result_data, current_user.id)
+        return result["result"]
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -88,7 +89,7 @@ async def get_result_detail(
     """Get single exam result detail"""
     service = ExamSectionService(db)
     result = await service.get_result_detail(result_id)
-    return result
+    return result["result"]
 
 
 @router.patch("/results/{result_id}", response_model=CollegeExamResultResponse)
@@ -100,7 +101,8 @@ async def update_result(
 ):
     """Update exam result (marks, remarks) – Exam Section only"""
     service = ExamSectionService(db)
-    return await service.update_result(result_id, data)
+    result = await service.update_result(result_id, data)
+    return result["result"]
 
 
 @router.post("/results/{result_id}/publish", response_model=CollegeExamResultResponse)
@@ -111,7 +113,8 @@ async def publish_result(
 ):
     """Publish an unpublished result (makes it visible to students)"""
     service = ExamSectionService(db)
-    return await service.publish_result_by_id(result_id, current_user.id)
+    result = await service.publish_result_by_id(result_id, current_user.id)
+    return result["result"]
 
 
 @router.post("/results/{result_id}/unpublish", response_model=CollegeExamResultResponse)
@@ -122,7 +125,8 @@ async def unpublish_result(
 ):
     """Unpublish a result (hide from students)"""
     service = ExamSectionService(db)
-    return await service.unpublish_result(result_id)
+    result = await service.unpublish_result(result_id)
+    return result["result"]
 
 
 @router.delete("/results/{result_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -146,7 +150,8 @@ async def create_exam_notice(
 ):
     """Create exam notice (Exam Section only)"""
     service = ExamSectionService(db)
-    return await service.create_notice(notice_data, current_user.id)
+    result = await service.create_notice(notice_data, current_user.id)
+    return result["notice"]
 
 
 @router.get("/notices", response_model=List[CollegeExamNoticeResponse])
@@ -170,7 +175,7 @@ async def get_exam_notice(
     """Get single exam notice"""
     service = ExamSectionService(db)
     notice = await service.get_notice_detail(notice_id)
-    return notice
+    return notice["notice"]
 
 
 @router.post("/notices/{notice_id}/deactivate")

@@ -6,6 +6,7 @@ Business logic for faculty payment management.
 
 from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from .repository import AccountRepository
 from .schemas import CollegePaymentCreate, CollegePaymentUpdate, CollegePaymentResponse, AccountStats

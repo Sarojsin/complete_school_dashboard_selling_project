@@ -5,9 +5,9 @@ Handles student course enrollment management.
 """
 
 from .router import router as enrollment_router
-from .service import EnrollmentService
-from .repository import EnrollmentRepository
-from .models import EnrollmentModel
+from .service import CollegeEnrollmentService
+from .repository import CollegeEnrollmentRepository
+from .models import CollegeEnrollment
 from .schemas import (
     EnrollmentCreate,
     EnrollmentUpdate,
@@ -17,9 +17,9 @@ from .schemas import (
 
 __all__ = [
     "router",
-    "EnrollmentService",
-    "EnrollmentRepository",
-    "EnrollmentModel",
+    "CollegeEnrollmentService",
+    "CollegeEnrollmentRepository",
+    "CollegeEnrollment",
     "EnrollmentCreate",
     "EnrollmentUpdate",
     "EnrollmentResponse",

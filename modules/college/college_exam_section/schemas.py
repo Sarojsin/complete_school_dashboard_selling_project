@@ -37,7 +37,7 @@ class CollegeExamResultBase(BaseModel):
 
 
 class CollegeExamResultCreate(CollegeExamResultBase):
-    pass
+    is_published: bool = False
 
 
 class CollegeExamResultUpdate(BaseModel):

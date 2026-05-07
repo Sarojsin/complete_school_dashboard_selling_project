@@ -7,10 +7,10 @@ Exam results and notices for college system.
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, DateTime, Date, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from modules.college.base import CollegeBase as Base
+from modules.college.base import CollegeBase
 
 
-class CollegeExamResult(Base):
+class CollegeExamResult(CollegeBase):
     """
     Exam Result model for college.
     Stores individual student results for courses.
@@ -32,14 +32,13 @@ class CollegeExamResult(Base):
     remarks = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Relationships - one-way to avoid modifying backup models
-    student = relationship("CollegeStudent")
-    course = relationship("CollegeCourse")
-    publisher = relationship("User")
-    semester = relationship("Semester")
+    # Relationships
+    student = relationship("CollegeStudent", back_populates="exam_results")
+    course = relationship("CollegeCourse", back_populates="exam_results")
+    semester = relationship("CollegeSemester")
 
 
-class CollegeExamNotice(Base):
+class CollegeExamNotice(CollegeBase):
     """
     Exam Notice model for college.
     Used for exam schedules, hall tickets, result notifications.
@@ -58,8 +57,7 @@ class CollegeExamNotice(Base):
     is_active = Column(Boolean, default=True)
 
     # Relationships
-    creator = relationship("User")
-    semester = relationship("Semester")
+    semester = relationship("CollegeSemester")
 
 
 # Ensure CollegeCourse and CollegeStudent models have backrefs

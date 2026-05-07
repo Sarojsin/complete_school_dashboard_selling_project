@@ -7,16 +7,16 @@ Business logic for course enrollment management.
 from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .repository import EnrollmentRepository
+from .repository import CollegeEnrollmentRepository
 from .schemas import EnrollmentCreate, EnrollmentUpdate, EnrollmentResponse, EnrollmentDetail
 from modules.shared.exceptions import NotFoundError, ForbiddenError, ValidationError
 
 
-class EnrollmentService:
+class CollegeEnrollmentService:
     """Service for enrollment operations"""
 
     def __init__(self, db: AsyncSession):
-        self.repository = EnrollmentRepository(db)
+        self.repository = CollegeEnrollmentRepository(db)
 
     async def enroll_student(self, data: EnrollmentCreate) -> Dict[str, Any]:
         """Enroll a student in a course (with validation)"""

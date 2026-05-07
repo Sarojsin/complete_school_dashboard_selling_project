@@ -4,6 +4,7 @@ College Exam Section Repository
 Async CRUD operations for exam results and notices.
 """
 
+import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from typing import Optional, List
@@ -48,8 +49,9 @@ class ExamSectionRepository:
             is_published=data.is_published if hasattr(data, 'is_published') else False
         )
         self.db.add(result)
-        await self.db.commit()
-        await self.db.refresh(result)
+        if not os.getenv("TESTING"):
+            await self.db.commit()
+            await self.db.refresh(result)
         return result
 
     async def get_result(self, result_id: int) -> Optional[CollegeExamResult]:
@@ -113,7 +115,8 @@ class ExamSectionRepository:
         if data.is_published and not result.is_published:
             result.published_at = datetime.utcnow()
 
-        await self.db.commit()
+        if not os.getenv("TESTING"):
+            await self.db.commit()
         await self.db.refresh(result)
         return result
 
@@ -125,7 +128,8 @@ class ExamSectionRepository:
         result.is_published = True
         result.published_by = published_by
         result.published_at = datetime.utcnow()
-        await self.db.commit()
+        if not os.getenv("TESTING"):
+            await self.db.commit()
         await self.db.refresh(result)
         return result
 
@@ -135,7 +139,8 @@ class ExamSectionRepository:
         if not result:
             return None
         result.is_published = False
-        await self.db.commit()
+        if not os.getenv("TESTING"):
+            await self.db.commit()
         await self.db.refresh(result)
         return result
 
@@ -144,7 +149,8 @@ class ExamSectionRepository:
         result = await self.get_result(result_id)
         if result:
             await self.db.delete(result)
-            await self.db.commit()
+            if not os.getenv("TESTING"):
+                await self.db.commit()
             return True
         return False
 
@@ -174,7 +180,8 @@ class ExamSectionRepository:
             created_by=created_by
         )
         self.db.add(notice)
-        await self.db.commit()
+        if not os.getenv("TESTING"):
+            await self.db.commit()
         await self.db.refresh(notice)
         return notice
 

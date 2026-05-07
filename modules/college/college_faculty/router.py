@@ -4,32 +4,86 @@ College Faculty Router
 FastAPI endpoints for college faculty operations.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+import time
 from modules.college.database import get_college_async_db
 from modules.auth.dependencies import get_current_user, require_college_portal
 from modules.shared.models import User
-from .service import FacultyService
+from modules.shared.audit_logger import AuditLogger
+from modules.shared.logger import logger, log_request_start, log_request_complete
+from modules.shared.rate_limit import write_limit, read_limit
+from .service import CollegeFacultyService
 from .schemas import FacultyResponse, FacultyUpdate, FacultyCreate
 
 router = APIRouter(prefix="/faculty", tags=["College Faculty"], dependencies=[Depends(require_college_portal)])
 
 
 @router.post("/", response_model=FacultyResponse, status_code=status.HTTP_201_CREATED)
+@write_limit()
 async def create_faculty(
     data: FacultyCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """Create a new faculty member (Protected - Dean only)"""
-    if current_user.role not in ["dean", "super_admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to create faculty"
+    start_time = time.time()
+    correlation_id = getattr(request.state, 'correlation_id', 'unknown')
+
+    log_request_start("POST", "/faculty", correlation_id, user_id=current_user.id)
+
+    try:
+        if current_user.role not in ["dean", "super_admin"]:
+            logger.warning(
+                "unauthorized_faculty_creation_attempt",
+                user_id=current_user.id,
+                user_role=current_user.role,
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to create faculty"
+            )
+
+        service = CollegeFacultyService(db)
+        result = await service.create_faculty(data)
+
+        duration = time.time() - start_time
+        logger.info(
+            "faculty_created_successfully",
+            faculty_id=result.get("faculty", {}).id if result.get("faculty") else None,
+            user_id=current_user.id,
+            duration_seconds=round(duration, 3),
+            correlation_id=correlation_id
         )
-    service = FacultyService(db)
-    return await service.create(data)
+
+        # Audit logging
+        if result.get("faculty"):
+            audit_logger = AuditLogger(db)
+            await audit_logger.log_create(
+                user_id=current_user.id,
+                resource_type="college_faculty",
+                resource_id=str(result["faculty"].id),
+                new_values=data.model_dump(),
+                ip_address=getattr(request.client, "host", None) if request.client else None,
+                user_agent=request.headers.get("user-agent")
+            )
+
+        log_request_complete("POST", "/faculty", 201, duration, correlation_id)
+        return result
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(
+            "faculty_creation_failed",
+            error=str(e),
+            user_id=current_user.id,
+            duration_seconds=round(duration, 3),
+            correlation_id=correlation_id
+        )
+        raise
 
 
 @router.get("/", response_model=List[FacultyResponse])
@@ -41,7 +95,7 @@ async def list_faculty(
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """List all faculty members (Protected)"""
-    service = FacultyService(db)
+    service = CollegeFacultyService(db)
     
     if department_id:
         return await service.list_by_department(department_id, skip, limit)
@@ -54,7 +108,7 @@ async def get_my_profile(
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get current faculty profile (Protected)"""
-    service = FacultyService(db)
+    service = CollegeFacultyService(db)
     faculty = await service.get_my_profile(current_user.id)
     if not faculty:
         raise HTTPException(
@@ -71,7 +125,7 @@ async def update_my_profile(
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """Update current faculty profile (Protected)"""
-    service = FacultyService(db)
+    service = CollegeFacultyService(db)
     faculty = await service.update_profile(current_user.id, faculty_data)
     if not faculty:
         raise HTTPException(
@@ -88,7 +142,7 @@ async def get_faculty(
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get faculty by ID (Protected)"""
-    service = FacultyService(db)
+    service = CollegeFacultyService(db)
     faculty = await service.get_faculty(faculty_id)
     if not faculty:
         raise HTTPException(
@@ -99,9 +153,11 @@ async def get_faculty(
 
 
 @router.put("/{faculty_id}", response_model=FacultyResponse)
+@write_limit()
 async def update_faculty(
     faculty_id: int,
     data: FacultyUpdate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_college_async_db)
 ):
@@ -111,19 +167,43 @@ async def update_faculty(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update faculty"
         )
-    service = FacultyService(db)
-    faculty = await service.update(faculty_id, data)
+
+    # Get current faculty data for audit logging
+    service = CollegeFacultyService(db)
+    current_faculty = await service.get_faculty(faculty_id)
+    if not current_faculty:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Faculty not found"
+        )
+
+    faculty = await service.update_faculty(faculty_id, data)
     if not faculty:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Faculty not found"
         )
+
+    # Audit logging
+    audit_logger = AuditLogger(db)
+    await audit_logger.log_update(
+        user_id=current_user.id,
+        resource_type="college_faculty",
+        resource_id=str(faculty_id),
+        old_values=current_faculty.model_dump() if hasattr(current_faculty, 'model_dump') else {},
+        new_values=data.model_dump(exclude_unset=True),
+        ip_address=getattr(request.client, "host", None) if request.client else None,
+        user_agent=request.headers.get("user-agent")
+    )
+
     return faculty
 
 
 @router.delete("/{faculty_id}", status_code=status.HTTP_204_NO_CONTENT)
+@write_limit()
 async def delete_faculty(
     faculty_id: int,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_college_async_db)
 ):
@@ -133,13 +213,33 @@ async def delete_faculty(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete faculty"
         )
-    service = FacultyService(db)
-    success = await service.delete(faculty_id)
+
+    # Get faculty data for audit logging before deletion
+    service = CollegeFacultyService(db)
+    faculty = await service.get_faculty(faculty_id)
+    if not faculty:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Faculty not found"
+        )
+
+    success = await service.soft_delete_faculty(faculty_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Faculty not found"
         )
+
+    # Audit logging for deletion
+    audit_logger = AuditLogger(db)
+    await audit_logger.log_delete(
+        user_id=current_user.id,
+        resource_type="college_faculty",
+        resource_id=str(faculty_id),
+        deleted_values=faculty.model_dump() if hasattr(faculty, 'model_dump') else {},
+        ip_address=getattr(request.client, "host", None) if request.client else None,
+        user_agent=request.headers.get("user-agent")
+    )
 
 
 # ── Faculty Dashboard ──────────────────────────────────────────
@@ -149,7 +249,7 @@ async def get_faculty_dashboard(
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get faculty dashboard (Protected)"""
-    service = FacultyService(db)
+    service = CollegeFacultyService(db)
     faculty = await service.get_my_profile(current_user.id)
     if not faculty:
         raise HTTPException(
@@ -173,7 +273,7 @@ async def get_my_courses(
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get courses taught by current faculty (Protected)"""
-    service = FacultyService(db)
+    service = CollegeFacultyService(db)
     return await service.get_my_courses(current_user.id)
 
 
@@ -184,7 +284,7 @@ async def get_my_students(
     db: AsyncSession = Depends(get_college_async_db)
 ):
     """Get students in faculty's courses (Protected)"""
-    service = FacultyService(db)
+    service = CollegeFacultyService(db)
     return await service.get_my_students(current_user.id)
 
 
