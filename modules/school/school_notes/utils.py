@@ -40,12 +40,12 @@ def generate_file_name(original_filename: str, teacher_id: int) -> str:
 
 
 def calculate_file_hash(file_path: str) -> str:
-    """Calculate file hash for verification"""
-    hash_md5 = hashlib.md5()
+    """Calculate file hash for verification using SHA256"""
+    hash_sha256 = hashlib.sha256()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+            hash_sha256.update(chunk)
+    return hash_sha256.hexdigest()
 
 
 def format_file_size(size_bytes: int) -> str:

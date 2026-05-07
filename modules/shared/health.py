@@ -1,185 +1,162 @@
 """
 Health Check Module
 
-Provides health check endpoints for monitoring:
-- /health - Overall system health
-- /health/db - Database health
-- /health/modules - Module import health
-- /metrics - Live system metrics
+Provides comprehensive health checks for database connectivity,
+external services, and system status.
 """
 
-from fastapi import APIRouter
-from sqlalchemy import text
-import time
-import psutil
 import os
-from collections import defaultdict
+import time
+from typing import Dict, Any, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
-health_router = APIRouter()
-
-
-@health_router.get("/health", tags=["Health"])
-def health_check():
-    """Overall system health. Returns 200 if all systems go."""
-    checks = {}
-    status = "healthy"
-
-    # 1. Database check
-    try:
-        from modules.shared.database import SessionLocal
-        db = SessionLocal()
-        db.execute(text("SELECT 1"))
-        db.close()
-        checks["database"] = "connected"
-    except Exception as e:
-        checks["database"] = f"error: {str(e)[:50]}"
-        status = "degraded"
-
-    # 2. Memory check
-    mem = psutil.virtual_memory()
-    mem_used_pct = mem.percent
-    checks["memory"] = f"{mem_used_pct:.1f}% used"
-    if mem_used_pct > 90:
-        status = "degraded"
-
-    # 3. Disk check
-    try:
-        disk = psutil.disk_usage("/")
-        disk_used_pct = disk.percent
-        checks["disk"] = f"{disk_used_pct:.1f}% used"
-    except:
-        checks["disk"] = "unknown"
-
-    # 4. App uptime
-    try:
-        uptime_seconds = int(time.time() - psutil.Process(os.getpid()).create_time())
-        checks["uptime_seconds"] = uptime_seconds
-    except:
-        checks["uptime_seconds"] = "unknown"
-
-    return {
-        "status": status,
-        "checks": checks,
-        "version": "2.0.0"
-    }
+from .logger import logger
 
 
-@health_router.get("/health/db", tags=["Health"])
-def db_health():
-    """Detailed database health."""
-    try:
-        from modules.shared.database import SessionLocal
-        db = SessionLocal()
-        
-        # Count records in key tables
-        tables = ["users", "teachers", "students", "exams"]
-        counts = {}
-        for t in tables:
-            try:
-                count = db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
-                counts[t] = count
-            except:
-                counts[t] = "error"
-        
-        db.close()
-        return {"status": "connected", "table_counts": counts}
-    except Exception as e:
-        return {"status": "error", "detail": str(e)[:100]}
+class HealthChecker:
+    """Comprehensive health checking for all system components"""
 
+    def __init__(self):
+        self.checks = {
+            "database": self.check_database,
+            "redis": self.check_redis,
+        }
 
-@health_router.get("/health/modules", tags=["Health"])
-def modules_health():
-    """Check all modules can be imported."""
-    results = {}
-    modules_to_check = [
-        "modules.auth.api",
-        "modules.super_admin.api",
-        "modules.school_authority.api",
-        "modules.school_teacher.api",
-        "modules.school_student.api",
-        "modules.school_parent.api",
-        "modules.school_exam_section.api",
-        "modules.school_account_section.api",
-        "modules.school_library.api",
-        "modules.school_attendance.api",
-        "modules.college_faculty.api",
-        "modules.college_student.api",
-        "modules.college_hod.api",
-        "modules.chat.api",
-        "modules.groups.api",
-        "modules.notices.api",
-    ]
-    
-    import importlib
-    for mod in modules_to_check:
+    async def check_database(self) -> Dict[str, Any]:
+        """
+        Check database connectivity and basic functionality.
+
+        Returns:
+            Health check result dictionary
+        """
+        start_time = time.time()
+
         try:
-            importlib.import_module(mod)
-            results[mod] = "ok"
+            # Import database connection here to avoid circular imports
+            from .database import get_async_db
+
+            # Test basic connectivity
+            async for db in get_async_db():
+                # Simple query to test connection
+                result = await db.execute(text("SELECT 1 as test"))
+                row = result.first()
+                if row and row[0] == 1:
+                    response_time = time.time() - start_time
+                    return {
+                        "status": "healthy",
+                        "response_time": round(response_time, 3),
+                        "message": "Database connection successful"
+                    }
+                else:
+                    return {
+                        "status": "unhealthy",
+                        "message": "Database query returned unexpected result"
+                    }
+
         except Exception as e:
-            results[mod] = f"error: {str(e)[:30]}"
+            response_time = time.time() - start_time
+            logger.error("database_health_check_failed", error=str(e), response_time=response_time)
 
-    failed = [k for k, v in results.items() if v.startswith("error")]
-    return {
-        "status": "ok" if not failed else "degraded",
-        "total_modules": len(modules_to_check),
-        "failed_count": len(failed),
-        "failed_modules": failed[:5] if failed else [],
-        "modules": results
-    }
+            return {
+                "status": "unhealthy",
+                "response_time": round(response_time, 3),
+                "message": f"Database connection failed: {str(e)}"
+            }
 
+    async def check_redis(self) -> Dict[str, Any]:
+        """
+        Check Redis connectivity if configured.
 
-# Simple in-memory metrics (use Prometheus in production)
-class MetricsCollector:
-    _instance = None
+        Returns:
+            Health check result dictionary
+        """
+        redis_url = os.getenv("REDIS_URL")
+        if not redis_url:
+            return {
+                "status": "not_configured",
+                "message": "Redis not configured"
+            }
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.request_counts = defaultdict(int)
-            cls._instance.error_counts = defaultdict(int)
-            cls._instance.response_times = defaultdict(list)
-            cls._instance.start_time = time.time()
-        return cls._instance
+        start_time = time.time()
 
-    def record_request(self, path: str, method: str, status: int, duration_ms: float):
-        key = f"{method}:{path}"
-        self.request_counts[key] += 1
-        self.response_times[key].append(duration_ms)
-        if status >= 500:
-            self.error_counts[key] += 1
+        try:
+            # Import redis here to avoid dependency if not used
+            import redis.asyncio as redis
 
-    def get_summary(self):
-        import statistics
-        summary = {}
-        for key, times in self.response_times.items():
-            if times:
-                summary[key] = {
-                    "total_requests": self.request_counts[key],
-                    "error_count": self.error_counts[key],
-                    "avg_ms": round(statistics.mean(times), 2) if times else 0,
-                    "p95_ms": round(sorted(times)[int(len(times) * 0.95) - 1], 2) if len(times) >= 2 else 0,
+            # Parse Redis URL
+            # redis://username:password@host:port/db
+            url_parts = redis_url.replace("redis://", "").split("/")
+            host_port = url_parts[0].split("@")[-1]  # Get host:port part
+            host, port = host_port.split(":")
+
+            # Create Redis client
+            client = redis.Redis(
+                host=host,
+                port=int(port),
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5
+            )
+
+            # Test connection
+            await client.ping()
+
+            response_time = time.time() - start_time
+            return {
+                "status": "healthy",
+                "response_time": round(response_time, 3),
+                "message": "Redis connection successful"
+            }
+
+        except ImportError:
+            return {
+                "status": "not_available",
+                "message": "redis library not installed"
+            }
+
+        except Exception as e:
+            response_time = time.time() - start_time
+            logger.error("redis_health_check_failed", error=str(e), response_time=response_time)
+
+            return {
+                "status": "unhealthy",
+                "response_time": round(response_time, 3),
+                "message": f"Redis connection failed: {str(e)}"
+            }
+
+    async def run_all_checks(self) -> Dict[str, Any]:
+        """
+        Run all health checks and return comprehensive status.
+
+        Returns:
+            Dictionary with overall status and individual check results
+        """
+        results = {}
+        overall_status = "healthy"
+
+        for check_name, check_func in self.checks.items():
+            try:
+                result = await check_func()
+                results[check_name] = result
+
+                if result["status"] not in ["healthy", "not_configured", "not_available"]:
+                    overall_status = "unhealthy"
+
+            except Exception as e:
+                logger.error(f"health_check_error", check=check_name, error=str(e))
+                results[check_name] = {
+                    "status": "error",
+                    "message": f"Check failed: {str(e)}"
                 }
-        return summary
+                overall_status = "unhealthy"
+
+        return {
+            "status": overall_status,
+            "checks": results,
+            "timestamp": time.time()
+        }
 
 
-metrics = MetricsCollector()
-
-
-@health_router.get("/metrics", tags=["Health"])
-def get_metrics():
-    """Live system metrics — request counts, error rates, response times."""
-    uptime = int(time.time() - metrics.start_time)
-    return {
-        "uptime_seconds": uptime,
-        "total_requests": sum(metrics.request_counts.values()),
-        "total_errors": sum(metrics.error_counts.values()),
-        "endpoints": metrics.get_summary()
-    }
-
-
-# Endpoint to manually record metrics (for use with middleware)
-@health_router.post("/metrics/record", tags=["Health"])
-def record_metric(path: str, method: str, status: int, duration_ms: float):
-    """Record a metric (used by middleware)"""
-    metrics.record_request(path, method, status, duration_ms)
-    return {"recorded": True}
+# Global health checker instance
+health_checker = HealthChecker()
