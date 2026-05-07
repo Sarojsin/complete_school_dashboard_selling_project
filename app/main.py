@@ -5,6 +5,19 @@ from contextlib import asynccontextmanager
 import os
 
 from modules.shared.config import settings
+from modules.shared.logger import logger
+from modules.shared.middleware.correlation_id import CorrelationIDMiddleware
+from modules.shared.middleware.audit_middleware import AuditLoggingMiddleware
+
+# Prometheus metrics
+from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Gauge, Counter
+
+# Sentry error tracking
+from modules.shared.sentry import init_sentry
+
+# Rate limiting
+from modules.shared.rate_limit import limiter, rate_limit_middleware, rate_limit_exceeded_handler
 from modules.shared.exceptions import (
     NotFoundError, ValidationError, ForbiddenError, 
     UnauthorizedError, ConflictError
@@ -117,8 +130,17 @@ app.add_middleware(
     allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Correlation-ID"],
 )
+
+# Correlation ID Middleware for request tracing
+app.add_middleware(CorrelationIDMiddleware)
+
+# Audit Logging Middleware for security and compliance
+app.add_middleware(AuditLoggingMiddleware)
+
+# Rate Limiting Middleware for abuse prevention
+app.add_middleware(rate_limit_middleware)
 
 # Custom Exception Handlers
 @app.exception_handler(NotFoundError)
@@ -140,6 +162,35 @@ async def unauthorized_exception_handler(request, exc):
 @app.exception_handler(ConflictError)
 async def conflict_exception_handler(request, exc):
     return JSONResponse(status_code=409, content={"detail": exc.message})
+
+# Rate limit exceeded exception handler
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request, exc):
+    return rate_limit_exceeded_handler(request, exc)
+
+# Prometheus Metrics Setup
+# Instrument the app with default metrics
+Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+# Custom metrics for college-specific monitoring
+college_enrollments_total = Counter(
+    'college_enrollments_total',
+    'Total college enrollments',
+    ['program', 'semester']
+)
+
+college_fee_collection_usd = Gauge(
+    'college_fee_collection_usd',
+    'Total fee collection in USD'
+)
+
+active_users = Gauge(
+    'active_users',
+    'Currently online users'
+)
+
+# Initialize Sentry error tracking
+init_sentry()
 
 # Include Routers
 app.include_router(auth_router, prefix="/api/v1/auth")
@@ -206,31 +257,35 @@ async def health_check():
 
 @app.get("/health/ready")
 async def readiness_check():
-    """Readiness check - includes database connectivity"""
-    from modules.shared.database import engine
-    from sqlalchemy import text
-    
-    try:
-        # Test database connectivity using sync approach for simplicity
-        # This works with both sync and async engines
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        db_status = "connected"
-    except Exception as e:
-        db_status = f"disconnected: {str(e)}"
+    """Readiness check - includes database and external service connectivity"""
+    from modules.shared.health import health_checker
+
+    health_results = await health_checker.run_all_checks()
+
+    # Check if all critical services are healthy
+    critical_checks = ["database"]  # Database is always critical
+    if os.getenv("REDIS_URL"):
+        critical_checks.append("redis")
+
+    all_critical_healthy = all(
+        health_results["checks"].get(check, {}).get("status") == "healthy"
+        for check in critical_checks
+    )
+
+    if not all_critical_healthy:
         return JSONResponse(
             status_code=503,
             content={
                 "status": "not ready",
-                "database": db_status,
-                "app": settings.APP_NAME
+                "app": settings.APP_NAME,
+                "checks": health_results["checks"]
             }
         )
-    
+
     return {
         "status": "ready",
-        "database": db_status,
-        "app": settings.APP_NAME
+        "app": settings.APP_NAME,
+        "checks": health_results["checks"]
     }
 
 
